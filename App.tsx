@@ -1,0 +1,1084 @@
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import type { QuoteState, ProductOption, ColorOption, User, SavedQuote, StoredUser, QuoteItem } from './types';
+import { PRICE_LIST, STEPS, STANDARD_WIDTHS, STANDARD_LENGTHS, SOFTUM_WIDTHS, SOFTUM_LENGTHS, SHOWER_MODELS, SHOWER_EXTRAS, SOFTUM_EXTRAS } from './constants';
+import { authorizedUsers } from './authorizedUsers';
+
+import StepTracker from './components/StepTracker';
+import Step1ModelSelection from './components/steps/Step1ModelSelection';
+import Step1Dimensions from './components/steps/Step1Dimensions';
+import Step2Model from './components/steps/Step2Model';
+import Step3Color from './components/steps/Step3Color';
+import Step4Extras from './components/steps/Step4Extras';
+import Step5Summary from './components/steps/Step5Summary';
+import NextPrevButtons from './components/NextPrevButtons';
+import AuthPage from './components/auth/AuthPage';
+import MyQuotesPage from './components/MyQuotesPage';
+import LivePreview from './components/LivePreview';
+
+// Declare jsPDF on window for TypeScript
+declare global {
+    interface Window {
+        jspdf: any;
+    }
+}
+
+// --- SettingsModal Component Definition ---
+interface SettingsModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onSave: (settings: { commercialName: string; preparedBy: string }) => void;
+    user: User;
+}
+
+const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, user }) => {
+    const [preparedBy, setPreparedBy] = useState(user.preparedBy || '');
+    const [commercialName, setCommercialName] = useState(user.commercialName || user.companyName || '');
+
+    useEffect(() => {
+        if (isOpen) {
+            setPreparedBy(user.preparedBy || '');
+            setCommercialName(user.commercialName || user.companyName || '');
+        }
+    }, [isOpen, user]);
+
+    if (!isOpen) return null;
+
+    const handleSave = () => {
+        onSave({ preparedBy, commercialName });
+        onClose();
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
+            <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-lg w-full" onClick={e => e.stopPropagation()}>
+                <div className="flex justify-between items-start mb-6">
+                    <div>
+                        <h3 className="text-xl font-bold text-slate-800">Ajustes de PDF</h3>
+                        <p className="text-sm text-slate-500">Personaliza la información que aparece en tus presupuestos.</p>
+                    </div>
+                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
+                </div>
+
+                <div className="space-y-6">
+                     <div>
+                        <label htmlFor="commercial-name" className="block text-sm font-medium text-slate-700 mb-2">
+                            Nombre Comercial (en PDF)
+                        </label>
+                        <input
+                            id="commercial-name"
+                            type="text"
+                            value={commercialName}
+                            onChange={(e) => setCommercialName(e.target.value)}
+                            placeholder="Nombre de tu tienda o empresa"
+                            className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition"
+                        />
+                         <p className="text-xs text-slate-500 mt-1">Este es el nombre que aparecerá como remitente.</p>
+                    </div>
+                    <div>
+                        <label htmlFor="prepared-by" className="block text-sm font-medium text-slate-700 mb-2">
+                            Preparado por (nombre del comercial)
+                        </label>
+                        <input
+                            id="prepared-by"
+                            type="text"
+                            value={preparedBy}
+                            onChange={(e) => setPreparedBy(e.target.value)}
+                            placeholder="Ej: Sandra Martínez"
+                            className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition"
+                        />
+                         <p className="text-xs text-slate-500 mt-1">Este nombre aparecerá en los PDFs generados.</p>
+                    </div>
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-slate-200 flex justify-end gap-3">
+                    <button onClick={onClose} className="px-6 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors">
+                        Cancelar
+                    </button>
+                    <button onClick={handleSave} className="px-8 py-2 font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Guardar Cambios
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+// --- DiscountModal Component Definition ---
+interface DiscountModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: (discount: number) => void;
+}
+
+const DiscountModal: React.FC<DiscountModalProps> = ({ isOpen, onClose, onConfirm }) => {
+    const [discount, setDiscount] = useState(0);
+
+    if (!isOpen) return null;
+
+    const handleConfirm = () => {
+        onConfirm(discount);
+        onClose();
+        setDiscount(0);
+    };
+
+    const handleDiscountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = parseInt(e.target.value, 10);
+        if (!isNaN(value) && value >= 0 && value <= 100) {
+            setDiscount(value);
+        } else if (e.target.value === '') {
+            setDiscount(0);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
+            <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-sm w-full" onClick={e => e.stopPropagation()}>
+                <div className="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 className="text-xl font-bold text-slate-800">Aplicar Descuento</h3>
+                        <p className="text-sm text-slate-500">Introduce un descuento para este PDF.</p>
+                    </div>
+                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
+                </div>
+
+                <div className="space-y-4">
+                    <div>
+                        <label htmlFor="discount" className="block text-sm font-medium text-slate-700 mb-2">
+                            Descuento (%)
+                        </label>
+                        <input
+                            id="discount"
+                            type="number"
+                            value={discount}
+                            onChange={handleDiscountChange}
+                            min="0"
+                            max="100"
+                            className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+                         <p className="text-xs text-slate-500 mt-1">El descuento se aplicará sobre la base imponible.</p>
+                    </div>
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-slate-200 flex justify-end gap-3">
+                     <button onClick={onClose} className="px-6 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors">
+                        Cancelar
+                    </button>
+                    <button onClick={handleConfirm} className="px-8 py-2 font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors">
+                        Generar PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// --- SaveQuoteModal Component Definition ---
+interface SaveQuoteModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: (details: { customerName: string; projectReference: string }) => void;
+    disabled: boolean;
+}
+
+const SaveQuoteModal: React.FC<SaveQuoteModalProps> = ({ isOpen, onClose, onConfirm, disabled }) => {
+    const [customerName, setCustomerName] = useState('');
+    const [projectReference, setProjectReference] = useState('');
+
+    if (!isOpen) return null;
+
+    const handleConfirm = () => {
+        if (customerName.trim()) {
+            onConfirm({ customerName, projectReference });
+            onClose();
+            setCustomerName('');
+            setProjectReference('');
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
+            <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-md w-full" onClick={e => e.stopPropagation()}>
+                <div className="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 className="text-xl font-bold text-slate-800">Guardar Presupuesto</h3>
+                        <p className="text-sm text-slate-500">Añade los detalles para identificar este presupuesto.</p>
+                    </div>
+                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
+                </div>
+
+                <div className="space-y-4">
+                    <div>
+                        <label htmlFor="customerName" className="block text-sm font-medium text-slate-700 mb-2">
+                            Nombre del Cliente <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            id="customerName"
+                            type="text"
+                            value={customerName}
+                            onChange={(e) => setCustomerName(e.target.value)}
+                            placeholder="Ej: Juan Pérez"
+                            className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition"
+                        />
+                    </div>
+                     <div>
+                        <label htmlFor="projectReference" className="block text-sm font-medium text-slate-700 mb-2">
+                            Referencia del Proyecto (Opcional)
+                        </label>
+                        <input
+                            id="projectReference"
+                            type="text"
+                            value={projectReference}
+                            onChange={(e) => setProjectReference(e.target.value)}
+                            placeholder="Ej: Obra Baño Principal"
+                            className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition"
+                        />
+                    </div>
+                </div>
+                {disabled && (
+                    <p className="text-sm text-amber-700 bg-amber-100 p-3 rounded-md mt-4">
+                        Debes añadir al menos un artículo al presupuesto antes de guardarlo.
+                    </p>
+                )}
+                <div className="mt-8 pt-6 border-t border-slate-200 flex justify-end gap-3">
+                     <button onClick={onClose} className="px-6 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors">
+                        Cancelar
+                    </button>
+                    <button onClick={handleConfirm} disabled={disabled || !customerName.trim()} className="px-8 py-2 font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:bg-indigo-300 transition-colors">
+                        Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// --- CustomQuoteModal Component Definition ---
+interface CustomQuoteModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+}
+
+const CustomQuoteModal: React.FC<CustomQuoteModalProps> = ({ isOpen, onClose }) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
+            <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-lg w-full" onClick={e => e.stopPropagation()}>
+                <div className="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 className="text-xl font-bold text-slate-800">Colección CUSTOM</h3>
+                        <p className="text-sm text-slate-500">Información sobre presupuestos personalizados.</p>
+                    </div>
+                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
+                </div>
+
+                <div className="space-y-4 text-slate-600">
+                    <p>
+                        El modelo <strong>CUSTOM</strong> se diseña a medida para satisfacer necesidades específicas y requiere un presupuesto detallado.
+                    </p>
+                    <p>
+                        Para solicitar un presupuesto para esta colección, por favor, envía los detalles de tu proyecto a:
+                    </p>
+                    <div className="text-center my-4">
+                         <a href="mailto:sandra.martinez@aqgbathrooms.com" className="font-semibold text-indigo-600 bg-indigo-100 px-4 py-2 rounded-md hover:bg-indigo-200 transition-colors">
+                            sandra.martinez@aqgbathrooms.com
+                        </a>
+                    </div>
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-slate-200 flex justify-end">
+                    <button onClick={onClose} className="px-8 py-2 font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors">
+                        Entendido
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+const App: React.FC = () => {
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [appView, setAppView] = useState<'quoter' | 'myQuotes'>('quoter');
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [isDiscountOpen, setIsDiscountOpen] = useState(false);
+    const [isSaveQuoteOpen, setIsSaveQuoteOpen] = useState(false);
+    const [isCustomQuoteModalOpen, setIsCustomQuoteModalOpen] = useState(false);
+    const [quoteForPdf, setQuoteForPdf] = useState<SavedQuote | null>(null);
+    
+    useEffect(() => {
+        // 1. Initialize users in localStorage if not present
+        try {
+            if (!localStorage.getItem('users')) {
+                localStorage.setItem('users', JSON.stringify(authorizedUsers));
+            }
+        } catch (error) {
+            console.error("Failed to initialize user database:", error);
+        }
+        
+        // 2. Check for an active session
+        const checkSession = () => {
+            try {
+                // Check long-term storage first
+                let sessionUserJson = localStorage.getItem('currentUser');
+                if (sessionUserJson) {
+                    setCurrentUser(JSON.parse(sessionUserJson));
+                    setAppView('myQuotes');
+                    return;
+                }
+                
+                // Then check short-term storage
+                sessionUserJson = sessionStorage.getItem('currentUser');
+                if (sessionUserJson) {
+                    setCurrentUser(JSON.parse(sessionUserJson));
+                    setAppView('myQuotes');
+                    return;
+                }
+            } catch (error) {
+                console.error("Failed to parse user from storage", error);
+                localStorage.removeItem('currentUser');
+                sessionStorage.removeItem('currentUser');
+            }
+        };
+        checkSession();
+    }, []);
+
+    const handleAuthentication = async (email: string, password: string, rememberMe: boolean) => {
+        const storedUsers = JSON.parse(localStorage.getItem('users') || '[]') as StoredUser[];
+        const userRecord = storedUsers.find(
+            (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
+        );
+
+        if (userRecord) {
+            const { password, ...userToLogin } = userRecord;
+            const storage = rememberMe ? localStorage : sessionStorage;
+            storage.setItem('currentUser', JSON.stringify(userToLogin));
+            setCurrentUser(userToLogin);
+            setAppView('myQuotes');
+        } else {
+            throw new Error('Email o contraseña incorrectos.');
+        }
+    };
+
+    const handleRegister = async (newUser: Omit<StoredUser, 'logo'>) => {
+        const storedUsers = JSON.parse(localStorage.getItem('users') || '[]') as StoredUser[];
+        const emailExists = storedUsers.some(u => u.email.toLowerCase() === newUser.email.toLowerCase());
+        
+        if (emailExists) {
+            throw new Error('Ya existe una cuenta con este email.');
+        }
+
+        const userToStore: StoredUser = { ...newUser };
+        const updatedUsers = [...storedUsers, userToStore];
+        localStorage.setItem('users', JSON.stringify(updatedUsers));
+
+        // Automatically log in the user after registration
+        await handleAuthentication(newUser.email, newUser.password, true);
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem('currentUser');
+        sessionStorage.removeItem('currentUser');
+        setCurrentUser(null);
+        handleReset();
+    };
+
+    const initialQuoteState: QuoteState = {
+        productLine: null,
+        width: STANDARD_WIDTHS[1],
+        length: STANDARD_LENGTHS[4],
+        quantity: 1,
+        model: null,
+        color: null,
+        extras: [],
+        ralCode: '',
+        bitonoColor: null,
+        bitonoRalCode: '',
+    };
+
+    const [currentStep, setCurrentStep] = useState(1);
+    const [currentItemConfig, setCurrentItemConfig] = useState<QuoteState>(initialQuoteState);
+    const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([]);
+    const [editingItemId, setEditingItemId] = useState<string | null>(null);
+
+    const isNextDisabled = useMemo(() => {
+        if (currentStep === 1 && (!currentItemConfig.productLine || currentItemConfig.productLine === 'CUSTOM' || currentItemConfig.quantity < 1)) return true;
+        if (currentStep === 3 && !currentItemConfig.model) return true;
+        if (currentStep === 4) {
+             const hasRalExtra = currentItemConfig.extras.some(e => e.id === 'ral');
+             if (!currentItemConfig.color && !hasRalExtra) {
+                 return true;
+             }
+             if (hasRalExtra && (!currentItemConfig.ralCode || currentItemConfig.ralCode.trim() === '')) {
+                 return true;
+             }
+        }
+        if (currentStep === 5) {
+            const hasBitono = currentItemConfig.extras.some(e => e.id === 'bitono');
+            if (hasBitono && !currentItemConfig.bitonoColor) {
+                return true;
+            }
+        }
+        return false;
+    }, [currentStep, currentItemConfig]);
+    
+    const handleSaveAndFinishItem = useCallback(() => {
+        setQuoteItems(prevItems => {
+            const existingIndex = prevItems.findIndex(item => item.id === editingItemId);
+            const newItem: QuoteItem = { ...currentItemConfig, id: editingItemId || `item_${Date.now()}`};
+
+            if (existingIndex > -1) {
+                const updatedItems = [...prevItems];
+                updatedItems[existingIndex] = newItem;
+                return updatedItems;
+            } else {
+                return [...prevItems, newItem];
+            }
+        });
+        setCurrentItemConfig(initialQuoteState);
+        setEditingItemId(null);
+        setCurrentStep(6);
+
+    }, [currentItemConfig, editingItemId, initialQuoteState]);
+
+
+    const handleNext = useCallback(() => {
+        if (currentStep === STEPS.length - 1) {
+            handleSaveAndFinishItem();
+            return;
+        }
+        
+        setCurrentStep(currentStep + 1);
+    }, [currentStep, handleSaveAndFinishItem]);
+
+    const handlePrev = useCallback(() => {
+        if (currentStep > 1) {
+            setCurrentStep(currentStep - 1);
+        }
+    }, [currentStep]);
+    
+    const handleReset = useCallback((initialItems: QuoteItem[] | null = null) => {
+        setQuoteItems(initialItems || []);
+        setCurrentItemConfig(initialQuoteState);
+        setEditingItemId(null);
+        setCurrentStep(initialItems ? 6 : 1);
+        setAppView('quoter');
+    }, [initialQuoteState]);
+
+    const calculateItemPrice = (item: QuoteState, includeVat: boolean = true) => {
+        const { productLine, width, length, model, color, extras, quantity } = item;
+        if (!model || !productLine) return 0;
+
+        const basePrice = PRICE_LIST[productLine]?.[width]?.[length] || 0;
+        
+        const modelPrice = basePrice * (model.priceFactor || 1);
+        
+        const colorPrice = color?.price || 0;
+        const extrasPrice = extras.reduce((sum, extra) => sum + extra.price, 0);
+        
+        const singleUnitPrice = modelPrice + colorPrice + extrasPrice;
+        const totalBasePrice = singleUnitPrice * (quantity || 1);
+
+        return includeVat ? totalBasePrice * 1.21 : totalBasePrice;
+    };
+    
+    const currentItemPrice = useMemo(() => {
+        return calculateItemPrice(currentItemConfig);
+    }, [currentItemConfig]);
+
+    const totalQuotePrice = useMemo(() => {
+        return quoteItems.reduce((total, item) => total + calculateItemPrice(item), 0);
+    }, [quoteItems, calculateItemPrice]);
+
+    const handleSaveQuoteRequest = () => {
+        setIsSaveQuoteOpen(true);
+    };
+    
+    const handleStartNewItem = () => {
+        setCurrentItemConfig(initialQuoteState);
+        setEditingItemId(null);
+        setCurrentStep(1);
+    };
+
+    const handleEditItem = (itemId: string) => {
+        const itemToEdit = quoteItems.find(item => item.id === itemId);
+        if (itemToEdit) {
+            setCurrentItemConfig(itemToEdit);
+            setEditingItemId(itemId);
+            setCurrentStep(1);
+        }
+    };
+
+    const handleDeleteItem = (itemId: string) => {
+        setQuoteItems(prev => prev.filter(item => item.id !== itemId));
+    };
+
+
+    const handleConfirmSaveQuote = useCallback((details: { customerName: string; projectReference: string }) => {
+        if (!currentUser || quoteItems.length === 0) return;
+
+        const newQuote: SavedQuote = {
+            id: `quote_${Date.now()}`,
+            timestamp: Date.now(),
+            userEmail: currentUser.email,
+            quoteItems: quoteItems,
+            totalPrice: totalQuotePrice,
+            customerName: details.customerName,
+            projectReference: details.projectReference
+        };
+
+        const allQuotes = JSON.parse(localStorage.getItem('quotes') || '[]') as SavedQuote[];
+        allQuotes.push(newQuote);
+        localStorage.setItem('quotes', JSON.stringify(allQuotes));
+        
+        setAppView('myQuotes');
+    }, [currentUser, quoteItems, totalQuotePrice]);
+    
+    const generatePdfWithDiscount = useCallback(async (savedQuote: SavedQuote, discountPercentage: number = 0) => {
+        if (!window.jspdf || !currentUser) {
+            throw new Error("PDF generation library not loaded or no user logged in.");
+        }
+    
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const { quoteItems, totalPrice: originalTotalPrice } = savedQuote;
+        
+        const PRIMARY_COLOR = '#00A86B';
+        const TEXT_COLOR = '#1F2937';
+        const SECONDARY_TEXT_COLOR = '#6B7280';
+        const BORDER_COLOR = '#D1D5DB';
+        const PAGE_MARGIN = 15;
+        const CONTENT_WIDTH = 210 - (PAGE_MARGIN * 2);
+    
+        let yPos = 0;
+    
+        const checkPageBreak = (spaceNeeded: number) => {
+            if (yPos + spaceNeeded > 297 - PAGE_MARGIN - 15) {
+                doc.addPage();
+                yPos = PAGE_MARGIN;
+            }
+        };
+    
+        yPos = 30;
+
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(TEXT_COLOR);
+        doc.setFontSize(10);
+        doc.text((currentUser.commercialName || currentUser.companyName).toUpperCase(), PAGE_MARGIN, yPos);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(SECONDARY_TEXT_COLOR);
+        yPos += 5;
+        doc.text(currentUser.email, PAGE_MARGIN, yPos);
+        if (currentUser.preparedBy) {
+            yPos += 5;
+            doc.text(`Att: ${currentUser.preparedBy}`, PAGE_MARGIN, yPos);
+        }
+
+        const titleX = 210 - PAGE_MARGIN;
+        yPos = 30;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(24);
+        doc.setTextColor(PRIMARY_COLOR);
+        doc.text("PRESUPUESTO", titleX, yPos, { align: 'right' });
+
+        yPos += 10;
+        doc.setFontSize(10);
+        const addHeaderDetail = (label: string, value: string) => {
+             const labelX = 150;
+             const valueX = 153;
+             const valueWidth = titleX - valueX;
+
+             const valueLines = doc.splitTextToSize(value, valueWidth);
+
+             doc.setFont('helvetica', 'bold');
+             doc.setTextColor(TEXT_COLOR);
+             doc.text(label, labelX, yPos, { align: 'right', baseline: 'top' });
+             
+             doc.setFont('helvetica', 'normal');
+             doc.setTextColor(SECONDARY_TEXT_COLOR);
+             doc.text(valueLines, valueX, yPos, { align: 'left', baseline: 'top' });
+             
+             yPos += (valueLines.length * 5) + 2;
+        };
+
+        addHeaderDetail('Nº Presupuesto:', savedQuote.id.replace('quote_', ''));
+        addHeaderDetail('Fecha:', new Date(savedQuote.timestamp).toLocaleDateString('es-ES'));
+        yPos += 4;
+        addHeaderDetail('Cliente:', savedQuote.customerName || 'Cliente sin especificar');
+        if (savedQuote.projectReference) {
+            addHeaderDetail('Ref. Proyecto:', savedQuote.projectReference);
+        }
+
+        yPos = Math.max(yPos, 80) + 15;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor('#FFFFFF');
+        doc.setFillColor(PRIMARY_COLOR);
+        doc.rect(PAGE_MARGIN, yPos, CONTENT_WIDTH, 10, 'F');
+        yPos += 7;
+        doc.text("DESCRIPCIÓN", PAGE_MARGIN + 5, yPos);
+        doc.text("CANT.", 140, yPos, { align: 'center' });
+        doc.text("P. UNITARIO", 168, yPos, { align: 'right' });
+        doc.text("TOTAL", 210 - PAGE_MARGIN - 5, yPos, { align: 'right' });
+        yPos += 3;
+
+        for (const [index, item] of quoteItems.entries()) {
+            const startY = yPos;
+            const isEven = index % 2 === 0;
+
+            const mainDesc = `Plato de ducha ${item.productLine} - ${item.model?.name}`;
+            const subDescLines: string[] = [
+                `  · Dimensiones: ${item.width}cm x ${item.length}cm`,
+                `  · Color: ${item.color?.name || `RAL ${item.ralCode}`}`,
+            ];
+             if (item.extras.length > 0) {
+                const extraNames = item.extras.map(extra => {
+                     let extraText = extra.name;
+                     if (extra.id === 'bitono') {
+                         if (item.bitonoColor) extraText += ` (Tapa: ${item.bitonoColor.name})`;
+                     }
+                     return extraText;
+                }).join(', ');
+                subDescLines.push(`  · Extras: ${extraNames}`);
+            }
+            
+            let rowHeight = 8;
+            doc.setFontSize(10);
+            const mainDescSplit = doc.splitTextToSize(mainDesc, 115);
+            rowHeight += mainDescSplit.length * 6;
+            doc.setFontSize(9);
+            subDescLines.forEach(line => {
+                const subDescSplit = doc.splitTextToSize(line, 110);
+                rowHeight += subDescSplit.length * 5;
+            });
+            rowHeight += 4;
+            
+            checkPageBreak(rowHeight);
+
+            if (isEven) {
+                doc.setFillColor(249, 250, 251);
+                doc.rect(PAGE_MARGIN, startY, CONTENT_WIDTH, rowHeight, 'F');
+            }
+            doc.setDrawColor(BORDER_COLOR);
+            doc.rect(PAGE_MARGIN, startY, CONTENT_WIDTH, rowHeight);
+            
+            let currentY = startY + 6;
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(TEXT_COLOR);
+            doc.text(mainDescSplit, PAGE_MARGIN + 5, currentY);
+            currentY += mainDescSplit.length * 6;
+
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(SECONDARY_TEXT_COLOR);
+            subDescLines.forEach(line => {
+                const subDescSplit = doc.splitTextToSize(line, 110);
+                doc.text(subDescSplit, PAGE_MARGIN + 5, currentY);
+                currentY += subDescSplit.length * 5;
+            });
+
+            const verticalCenter = startY + rowHeight / 2 + 1.5;
+            const itemBasePrice = calculateItemPrice(item, false);
+            const unitPrice = itemBasePrice / (item.quantity || 1);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(TEXT_COLOR);
+            doc.text((item.quantity || 1).toString(), 140, verticalCenter, { align: 'center' });
+            doc.text(unitPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }), 168, verticalCenter, { align: 'right' });
+            doc.text(itemBasePrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }), 210 - PAGE_MARGIN - 5, verticalCenter, { align: 'right' });
+
+            yPos = startY + rowHeight;
+        }
+
+        yPos += 10;
+        checkPageBreak(60);
+
+        const VAT_RATE = 0.21;
+        const basePrice = originalTotalPrice / (1 + VAT_RATE);
+        let discountAmount = 0;
+        let discountedBasePrice = basePrice;
+        if (discountPercentage > 0) {
+            discountAmount = basePrice * (discountPercentage / 100);
+            discountedBasePrice = basePrice - discountAmount;
+        }
+        const taxAmount = discountedBasePrice * VAT_RATE;
+        const finalPrice = discountedBasePrice + taxAmount;
+        
+        const totalsX = 130;
+        
+        const addPriceLine = (label: string, amount: number, bold: boolean = false, isTotal: boolean = false) => {
+             checkPageBreak(12);
+             if (isTotal) {
+                doc.setFillColor(243, 244, 246);
+                doc.rect(totalsX - 5, yPos - 7, 210 - PAGE_MARGIN - totalsX + 10, 12, 'F');
+                doc.setFontSize(14);
+                doc.setTextColor(PRIMARY_COLOR);
+             } else {
+                 doc.setFontSize(10);
+                 doc.setTextColor(SECONDARY_TEXT_COLOR);
+             }
+             doc.setFont('helvetica', bold ? 'bold' : 'normal');
+             doc.text(label, totalsX, yPos);
+             doc.text(amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }), 210 - PAGE_MARGIN, yPos, { align: 'right' });
+             yPos += isTotal ? 12 : 8;
+        };
+
+        addPriceLine("Subtotal", basePrice);
+        if (discountPercentage > 0) {
+            addPriceLine(`Descuento (${discountPercentage}%)`, -discountAmount);
+            yPos += 2;
+            doc.setDrawColor(BORDER_COLOR);
+            doc.line(totalsX, yPos - 4, 210 - PAGE_MARGIN, yPos - 4);
+            addPriceLine("Base con dto.", discountedBasePrice, true);
+        }
+        addPriceLine(`IVA (${(VAT_RATE * 100).toFixed(0)}%)`, taxAmount);
+        yPos += 2;
+        addPriceLine("TOTAL", finalPrice, true, true);
+
+        const totalPages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(SECONDARY_TEXT_COLOR);
+            const footerY = 297 - 10;
+            doc.setDrawColor(BORDER_COLOR);
+            doc.line(PAGE_MARGIN, footerY - 5, 210 - PAGE_MARGIN, footerY - 5);
+            doc.text('Presupuesto generado con la aplicación de AQG Bathrooms. Precios sin IVA.', PAGE_MARGIN, footerY);
+            doc.text(`Página ${i} de ${totalPages}`, 210 - PAGE_MARGIN, footerY, { align: 'right' });
+        }
+        
+        doc.output('dataurlnewwindow');
+    }, [currentUser, calculateItemPrice]);
+
+    const handleOpenDiscountModal = (quoteToProcess: SavedQuote) => {
+        setQuoteForPdf(quoteToProcess);
+        setIsDiscountOpen(true);
+    };
+
+    const handleConfirmDiscount = async (discount: number) => {
+        if (quoteForPdf) {
+            try {
+                await generatePdfWithDiscount(quoteForPdf, discount);
+            } catch (error) {
+                console.error("Failed to generate PDF:", error);
+                const errorMessage = error instanceof Error ? error.message : "Ha ocurrido un error desconocido.";
+                alert(`No se pudo generar el PDF: ${errorMessage}`);
+            }
+        }
+        setIsDiscountOpen(false);
+        setQuoteForPdf(null);
+    };
+
+    const handleUpdateUserSettings = useCallback((settings: { commercialName: string; preparedBy: string; }) => {
+        if (!currentUser) return;
+        
+        const updatedUser = { 
+            ...currentUser,
+            commercialName: settings.commercialName,
+            preparedBy: settings.preparedBy || undefined
+        };
+        setCurrentUser(updatedUser);
+
+        if (localStorage.getItem('currentUser')) {
+            localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+        } else if (sessionStorage.getItem('currentUser')) {
+            sessionStorage.setItem('currentUser', JSON.stringify(updatedUser));
+        }
+
+    }, [currentUser]);
+
+
+    const updateProductLine = (productLine: string) => {
+        if (productLine === 'CUSTOM') {
+            setCurrentItemConfig(prev => ({ ...prev, productLine }));
+            setIsCustomQuoteModalOpen(true);
+            return;
+        }
+        
+        const isSoftum = productLine === 'SOFTUM';
+        const isLuxe = productLine === 'LUXE';
+
+        const sandModel = SHOWER_MODELS.find(m => m.id === 'sand');
+        const pizarraModel = SHOWER_MODELS.find(m => m.id === 'pizarra');
+        const rejillaExtra = SHOWER_EXTRAS.find(e => e.id === 'rejilla');
+
+        setCurrentItemConfig(prev => ({
+            ...initialQuoteState,
+            productLine,
+            model: isSoftum ? sandModel || null : (isLuxe ? pizarraModel || null : null),
+            width: isSoftum ? SOFTUM_WIDTHS[0] : STANDARD_WIDTHS[1],
+            length: isSoftum ? SOFTUM_LENGTHS[0] : STANDARD_LENGTHS[4],
+            quantity: prev.quantity,
+            extras: isLuxe && rejillaExtra ? [{ ...rejillaExtra, price: 0 }] : [],
+        }));
+    };
+    
+    const handleCloseCustomQuoteModal = () => {
+        setIsCustomQuoteModalOpen(false);
+        setCurrentItemConfig(prev => ({ ...prev, productLine: null }));
+    };
+    
+    const updateQuantity = (quantity: number) => {
+        const q = Math.max(1, quantity);
+        setCurrentItemConfig(prev => ({ ...prev, quantity: isNaN(q) ? 1 : q }));
+    };
+
+
+    const updateDimensions = (width: number, length: number) => {
+        setCurrentItemConfig(prev => ({ ...prev, width, length }));
+    };
+
+    const selectModel = (model: ProductOption) => {
+        setCurrentItemConfig(prev => ({ ...prev, model }));
+        handleNext();
+    };
+
+    const selectColor = (color: ColorOption) => {
+        setCurrentItemConfig(prev => {
+            const newExtras = prev.extras.filter(e => e.id !== 'ral');
+            const ralWasRemoved = newExtras.length < prev.extras.length;
+
+            return { 
+                ...prev, 
+                color,
+                extras: newExtras,
+                ralCode: ralWasRemoved ? '' : prev.ralCode
+            };
+        });
+        handleNext();
+    };
+    
+    const handleToggleRal = () => {
+        const ralExtra = SHOWER_EXTRAS.find(e => e.id === 'ral');
+        if (ralExtra) {
+            toggleExtra(ralExtra);
+        }
+    };
+    
+    const toggleExtra = (extra: ProductOption) => {
+        setCurrentItemConfig(prev => {
+            const isSelected = prev.extras.some(e => e.id === extra.id);
+            let newExtras;
+            let newRalCode = prev.ralCode;
+            let newColor = prev.color;
+            let newBitonoColor = prev.bitonoColor;
+            let newBitonoRalCode = prev.bitonoRalCode;
+
+            if (isSelected) {
+                newExtras = prev.extras.filter(e => e.id !== extra.id);
+                if (extra.id === 'ral') newRalCode = '';
+                if (extra.id === 'bitono') {
+                    newBitonoColor = null;
+                    newBitonoRalCode = '';
+                }
+            } else {
+                let currentExtras = [...prev.extras];
+                
+                if (prev.productLine === 'LUXE') {
+                    if (extra.id === 'tapeta-luxe') {
+                        currentExtras = currentExtras.filter(e => e.id !== 'rejilla');
+                    } else if (extra.id === 'rejilla') {
+                        currentExtras = currentExtras.filter(e => e.id !== 'tapeta-luxe');
+                    }
+                }
+
+                newExtras = [...currentExtras, extra];
+                
+                if (extra.id === 'ral') {
+                    newColor = null; 
+                }
+            }
+            return { ...prev, extras: newExtras, ralCode: newRalCode, color: newColor, bitonoColor: newBitonoColor, bitonoRalCode: newBitonoRalCode };
+        });
+    };
+
+    const updateRalCode = (code: string) => {
+        setCurrentItemConfig(prev => ({ ...prev, ralCode: code }));
+    };
+
+    const selectBitonoColor = (color: ColorOption) => {
+        setCurrentItemConfig(prev => ({
+            ...prev,
+            bitonoColor: color,
+            bitonoRalCode: '',
+        }));
+    };
+
+    const renderQuoter = () => {
+        switch (currentStep) {
+            case 1:
+                return <Step1ModelSelection 
+                    onUpdate={updateProductLine} 
+                    selectedProductLine={currentItemConfig.productLine} 
+                    quantity={currentItemConfig.quantity}
+                    onUpdateQuantity={updateQuantity}
+                />;
+            case 2:
+                return <Step1Dimensions quote={currentItemConfig} onUpdate={updateDimensions} />;
+            case 3:
+                return <Step2Model onSelect={selectModel} selectedModel={currentItemConfig.model} productLine={currentItemConfig.productLine} />;
+            case 4:
+                return <Step3Color 
+                    onSelectColor={selectColor} 
+                    selectedColor={currentItemConfig.color} 
+                    productLine={currentItemConfig.productLine}
+                    onToggleRal={handleToggleRal}
+                    isRalSelected={currentItemConfig.extras.some(e => e.id === 'ral')}
+                    ralCode={currentItemConfig.ralCode || ''}
+                    onRalCodeChange={updateRalCode}
+                 />;
+            case 5:
+                return <Step4Extras 
+                    onToggle={toggleExtra} 
+                    selectedExtras={currentItemConfig.extras} 
+                    productLine={currentItemConfig.productLine}
+                    mainColor={currentItemConfig.color}
+                    bitonoColor={currentItemConfig.bitonoColor}
+                    onSelectBitonoColor={selectBitonoColor}
+                />;
+            case 6:
+                return <Step5Summary 
+                    items={quoteItems}
+                    totalPrice={totalQuotePrice} 
+                    onReset={() => handleReset()} 
+                    onSaveRequest={handleSaveQuoteRequest}
+                    onGeneratePdfRequest={() => {
+                        if(!currentUser) return;
+                        const temporaryQuote: SavedQuote = {
+                            id: `temp_${Date.now()}`,
+                            timestamp: Date.now(),
+                            userEmail: currentUser.email,
+                            quoteItems: quoteItems,
+                            totalPrice: totalQuotePrice,
+                            customerName: 'Cliente (no guardado)'
+                        };
+                        handleOpenDiscountModal(temporaryQuote);
+                    }}
+                    onStartNew={handleStartNewItem}
+                    onEdit={handleEditItem}
+                    onDelete={handleDeleteItem}
+                    calculateItemPrice={calculateItemPrice}
+                />;
+            default:
+                return null;
+        }
+    };
+    
+    if (!currentUser) {
+        return (
+             <div className="bg-slate-100 min-h-screen font-sans flex items-center justify-center p-4">
+                <AuthPage onLogin={handleAuthentication} onRegister={handleRegister} />
+            </div>
+        )
+    }
+
+    return (
+        <div className="bg-slate-100 min-h-screen font-sans flex items-center justify-center p-4">
+            <main className="w-full max-w-6xl bg-white rounded-2xl shadow-2xl flex flex-col md:flex-row overflow-hidden" style={{height: '90vh', maxHeight: '800px'}}>
+                <div className="w-full md:w-1/3 bg-slate-800 p-8 text-white flex flex-col">
+                    <div>
+                      <h1 className="text-2xl font-bold mb-2">PRESUPUESTOS AQG</h1>
+                      <p className="text-slate-300 mb-8 text-sm">Configure su plato de ducha a medida.</p>
+                      
+                      {appView === 'quoter' ? (
+                        <>
+                            <button 
+                                onClick={() => setAppView('myQuotes')}
+                                className="w-full text-left px-4 py-3 mb-6 rounded-md font-semibold transition-colors bg-slate-700 hover:bg-slate-600 flex items-center gap-3"
+                                aria-label="Volver a Mis Presupuestos"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.707-10.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L9.414 11H13a1 1 0 100-2H9.414l1.293-1.293z" clipRule="evenodd" />
+                                </svg>
+                                <span>Volver al listado</span>
+                            </button>
+                            <StepTracker currentStep={currentStep} steps={STEPS} />
+                        </>
+                      ) : (
+                        <nav className="space-y-2 mt-8">
+                             <button onClick={() => handleReset()} className="w-full text-left px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 font-semibold transition-colors">
+                                Nuevo Presupuesto
+                            </button>
+                             <button onClick={() => setAppView('myQuotes')} className={`w-full text-left px-4 py-2 rounded-md font-semibold transition-colors ${appView === 'myQuotes' ? 'bg-slate-700' : 'hover:bg-slate-700/50'}`}>
+                                Mis Presupuestos
+                            </button>
+                            <button onClick={() => setIsSettingsOpen(true)} className="w-full text-left px-4 py-2 rounded-md font-semibold transition-colors hover:bg-slate-700/50">
+                                Ajustes
+                            </button>
+                        </nav>
+                      )}
+                    </div>
+                    <div className="mt-auto pt-8">
+                        <p className="text-sm text-slate-400 mb-1">Cliente:</p>
+                        <p className="font-bold text-white truncate" title={currentUser.companyName}>{currentUser.companyName}</p>
+                        <p className="text-sm text-slate-300 truncate" title={currentUser.email}>{currentUser.email}</p>
+                        <button 
+                            onClick={handleLogout}
+                            className="w-full mt-4 px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-red-500"
+                        >
+                            Cerrar Sesión
+                        </button>
+                    </div>
+                </div>
+                <div className="w-full md:w-2/3 p-6 md:p-8 flex flex-col bg-slate-50 overflow-y-auto">
+                    <div className="flex-grow">
+                         {appView === 'quoter' ? (
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                                <div className="flex flex-col">
+                                    <div className="flex-grow">
+                                        {renderQuoter()}
+                                    </div>
+                                    {currentStep < 6 && (
+                                        <NextPrevButtons 
+                                            onNext={handleNext} 
+                                            onPrev={handlePrev}
+                                            currentStep={currentStep}
+                                            totalSteps={STEPS.length}
+                                            isNextDisabled={isNextDisabled}
+                                        />
+                                    )}
+                                </div>
+                
+                                {currentStep > 1 && currentStep < 6 && (
+                                     <div className="hidden lg:block">
+                                        <div className="sticky top-6">
+                                            <LivePreview item={currentItemConfig} price={currentItemPrice} />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <MyQuotesPage user={currentUser} onDuplicateQuote={(quoteItems) => handleReset(quoteItems)} onViewPdf={handleOpenDiscountModal} />
+                        )}
+                    </div>
+                </div>
+            </main>
+             <SettingsModal 
+                isOpen={isSettingsOpen}
+                onClose={() => setIsSettingsOpen(false)}
+                onSave={handleUpdateUserSettings}
+                user={currentUser}
+            />
+            <DiscountModal
+                isOpen={isDiscountOpen}
+                onClose={() => setIsDiscountOpen(false)}
+                onConfirm={handleConfirmDiscount}
+            />
+            <SaveQuoteModal
+                isOpen={isSaveQuoteOpen}
+                onClose={() => setIsSaveQuoteOpen(false)}
+                onConfirm={handleConfirmSaveQuote}
+                disabled={quoteItems.length === 0}
+            />
+             <CustomQuoteModal
+                isOpen={isCustomQuoteModalOpen}
+                onClose={handleCloseCustomQuoteModal}
+            />
+        </div>
+    );
+};
+
+export default App;
