@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 
 interface LoginPageProps {
-    onLogin: (email: string, password: string, rememberMe: boolean) => Promise<void>;
+    onLogin: (email: string, password: string) => Promise<void>;
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [rememberMe, setRememberMe] = useState(true);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
@@ -23,7 +22,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
         setIsLoading(true);
         try {
-            await onLogin(email, password, rememberMe);
+            await onLogin(email, password);
         } catch (err) {
             if (err instanceof Error) {
                 setError(err.message);
@@ -59,15 +58,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                     </div>
                 </div>
 
-                <div className="flex items-center">
-                    <input id="remember-me" name="remember-me" type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded" />
-                    <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-900">
-                        Mantener sesión iniciada
-                    </label>
-                </div>
-
                 <div>
-                    <button type="submit" disabled={isLoading} className="w-full px-8 py-3 font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:bg-indigo-400 transition-colors">
+                    <button type="submit" disabled={isLoading} className="w-full mt-2 px-8 py-3 font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:bg-indigo-400 transition-colors">
                         {isLoading ? 'Accediendo...' : 'Acceder'}
                     </button>
                 </div>

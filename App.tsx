@@ -322,7 +322,7 @@ const App: React.FC = () => {
         // 2. Check for an active session
         const checkSession = () => {
             try {
-                const sessionUserJson = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+                const sessionUserJson = sessionStorage.getItem('currentUser');
                 if (sessionUserJson) {
                     setCurrentUser(JSON.parse(sessionUserJson));
                     setAppView('myQuotes');
@@ -331,7 +331,6 @@ const App: React.FC = () => {
                 }
             } catch (error) {
                 console.error("Failed to parse user from storage", error);
-                localStorage.removeItem('currentUser');
                 sessionStorage.removeItem('currentUser');
                 setCurrentUser(null);
             }
@@ -340,7 +339,7 @@ const App: React.FC = () => {
         checkSession();
     }, []);
 
-    const handleAuthentication = async (email: string, password: string, rememberMe: boolean) => {
+    const handleAuthentication = async (email: string, password: string) => {
         const storedUsers = JSON.parse(localStorage.getItem('users') || '[]') as StoredUser[];
         const userRecord = storedUsers.find(
             (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
@@ -348,8 +347,7 @@ const App: React.FC = () => {
 
         if (userRecord) {
             const { password, ...userToLogin } = userRecord;
-            const storage = rememberMe ? localStorage : sessionStorage;
-            storage.setItem('currentUser', JSON.stringify(userToLogin));
+            sessionStorage.setItem('currentUser', JSON.stringify(userToLogin));
             setCurrentUser(userToLogin);
             setAppView('myQuotes');
         } else {
@@ -358,7 +356,6 @@ const App: React.FC = () => {
     };
 
     const handleLogout = () => {
-        localStorage.removeItem('currentUser');
         sessionStorage.removeItem('currentUser');
         setCurrentUser(null);
         handleReset();
@@ -759,9 +756,7 @@ const App: React.FC = () => {
         };
         setCurrentUser(updatedUser);
 
-        if (localStorage.getItem('currentUser')) {
-            localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-        } else if (sessionStorage.getItem('currentUser')) {
+        if (sessionStorage.getItem('currentUser')) {
             sessionStorage.setItem('currentUser', JSON.stringify(updatedUser));
         }
 
