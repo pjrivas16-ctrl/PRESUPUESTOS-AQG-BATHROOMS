@@ -1,6 +1,8 @@
+
+
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import type { QuoteState, ProductOption, ColorOption, User, SavedQuote, StoredUser, QuoteItem } from './types';
-import { PRICE_LIST, STEPS, STANDARD_WIDTHS, STANDARD_LENGTHS, SOFTUM_WIDTHS, SOFTUM_LENGTHS, SHOWER_MODELS, SHOWER_EXTRAS, SOFTUM_EXTRAS } from './constants';
+import { PRICE_LIST, STEPS, STANDARD_WIDTHS, STANDARD_LENGTHS, SOFTUM_WIDTHS, SOFTUM_LENGTHS, SHOWER_MODELS, SHOWER_EXTRAS, SOFTUM_EXTRAS, CLASSIC_GRILLES } from './constants';
 import { authorizedUsers } from './authorizedUsers';
 
 import StepTracker from './components/StepTracker';
@@ -316,32 +318,40 @@ const App: React.FC = () => {
         } catch (error) {
             console.error("Failed to initialize user database:", error);
         }
-        
-        // 2. Check for an active session
-        const checkSession = () => {
+
+        // 2. Check for an active session, otherwise set a default user.
+        const checkSessionOrSetDefault = () => {
             try {
-                // Check long-term storage first
-                let sessionUserJson = localStorage.getItem('currentUser');
+                const sessionUserJson = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
                 if (sessionUserJson) {
                     setCurrentUser(JSON.parse(sessionUserJson));
-                    setAppView('myQuotes');
-                    return;
+                } else {
+                    // No user found, set a default user to bypass login
+                    const defaultUser: User = {
+                        companyName: 'AQG Bathrooms (Admin)',
+                        email: 'admin@aqg.com',
+                        preparedBy: 'Equipo AQG',
+                    };
+                    setCurrentUser(defaultUser);
                 }
-                
-                // Then check short-term storage
-                sessionUserJson = sessionStorage.getItem('currentUser');
-                if (sessionUserJson) {
-                    setCurrentUser(JSON.parse(sessionUserJson));
-                    setAppView('myQuotes');
-                    return;
-                }
+                setAppView('myQuotes');
             } catch (error) {
                 console.error("Failed to parse user from storage", error);
                 localStorage.removeItem('currentUser');
                 sessionStorage.removeItem('currentUser');
+                
+                // Fallback to default user on error
+                const defaultUser: User = {
+                    companyName: 'AQG Bathrooms (Admin)',
+                    email: 'admin@aqg.com',
+                    preparedBy: 'Equipo AQG',
+                };
+                setCurrentUser(defaultUser);
+                setAppView('myQuotes');
             }
         };
-        checkSession();
+
+        checkSessionOrSetDefault();
     }, []);
 
     const handleAuthentication = async (email: string, password: string, rememberMe: boolean) => {
@@ -466,26 +476,23 @@ const App: React.FC = () => {
         setAppView('quoter');
     }, [initialQuoteState]);
 
-    const calculateItemPrice = (item: QuoteState, includeVat: boolean = true) => {
+    const calculateItemPrice = useCallback((item: QuoteState, includeVat: boolean = true) => {
         const { productLine, width, length, model, color, extras, quantity } = item;
         if (!model || !productLine) return 0;
 
         const basePrice = PRICE_LIST[productLine]?.[width]?.[length] || 0;
-        
         const modelPrice = basePrice * (model.priceFactor || 1);
-        
         const colorPrice = color?.price || 0;
         const extrasPrice = extras.reduce((sum, extra) => sum + extra.price, 0);
         
-        const singleUnitPrice = modelPrice + colorPrice + extrasPrice;
-        const totalBasePrice = singleUnitPrice * (quantity || 1);
+        const totalBasePrice = (modelPrice + colorPrice + extrasPrice) * (quantity || 1);
 
         return includeVat ? totalBasePrice * 1.21 : totalBasePrice;
-    };
+    }, []);
     
     const currentItemPrice = useMemo(() => {
         return calculateItemPrice(currentItemConfig);
-    }, [currentItemConfig]);
+    }, [currentItemConfig, calculateItemPrice]);
 
     const totalQuotePrice = useMemo(() => {
         return quoteItems.reduce((total, item) => total + calculateItemPrice(item), 0);
@@ -797,23 +804,34 @@ const App: React.FC = () => {
             setIsCustomQuoteModalOpen(true);
             return;
         }
-        
+    
         const isSoftum = productLine === 'SOFTUM';
         const isLuxe = productLine === 'LUXE';
+        const isClassic = productLine === 'CLASSIC';
 
         const sandModel = SHOWER_MODELS.find(m => m.id === 'sand');
         const pizarraModel = SHOWER_MODELS.find(m => m.id === 'pizarra');
         const rejillaExtra = SHOWER_EXTRAS.find(e => e.id === 'rejilla');
+        const rejillaInoxClassic = CLASSIC_GRILLES.find(e => e.id === 'rejilla-inox-classic');
 
-        setCurrentItemConfig(prev => ({
-            ...initialQuoteState,
-            productLine,
-            model: isSoftum ? sandModel || null : (isLuxe ? pizarraModel || null : null),
-            width: isSoftum ? SOFTUM_WIDTHS[0] : STANDARD_WIDTHS[1],
-            length: isSoftum ? SOFTUM_LENGTHS[0] : STANDARD_LENGTHS[4],
-            quantity: prev.quantity,
-            extras: isLuxe && rejillaExtra ? [{ ...rejillaExtra, price: 0 }] : [],
-        }));
+        setCurrentItemConfig(prev => {
+            let defaultExtras: ProductOption[] = [];
+            if (isLuxe && rejillaExtra) {
+                defaultExtras = [{ ...rejillaExtra, price: 0 }];
+            } else if (isClassic && rejillaInoxClassic) {
+                defaultExtras = [rejillaInoxClassic];
+            }
+
+            return {
+                ...initialQuoteState,
+                productLine,
+                model: isSoftum ? sandModel || null : (isLuxe || isClassic ? pizarraModel || null : null),
+                width: isSoftum ? SOFTUM_WIDTHS[0] : STANDARD_WIDTHS[1],
+                length: isSoftum ? SOFTUM_LENGTHS[0] : STANDARD_LENGTHS[4],
+                quantity: prev.quantity,
+                extras: defaultExtras,
+            };
+        });
     };
     
     const handleCloseCustomQuoteModal = () => {
@@ -882,6 +900,14 @@ const App: React.FC = () => {
                         currentExtras = currentExtras.filter(e => e.id !== 'rejilla');
                     } else if (extra.id === 'rejilla') {
                         currentExtras = currentExtras.filter(e => e.id !== 'tapeta-luxe');
+                    }
+                }
+
+                if (prev.productLine === 'CLASSIC') {
+                    const classicGrilleIds = CLASSIC_GRILLES.map(g => g.id);
+                    if (classicGrilleIds.includes(extra.id)) {
+                        // Remove any other classic grille that might be selected
+                        currentExtras = currentExtras.filter(e => !classicGrilleIds.includes(e.id));
                     }
                 }
 

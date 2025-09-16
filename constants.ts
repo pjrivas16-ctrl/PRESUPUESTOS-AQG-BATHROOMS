@@ -22,13 +22,27 @@ export const PRICE_LIST: { [productLine: string]: { [width: number]: { [length: 
             100: 278.0, 110: 298.0, 120: 313.0, 130: 328.0, 140: 336.0,
             150: 346.0, 160: 353.0, 170: 410.0, 180: 429.0, 190: 468.0, 200: 499.0
         }
+    },
+    'LUXE': {
+        70: {
+            80: 211, 90: 231, 100: 249, 110: 266, 120: 279, 130: 299, 140: 303, 150: 326, 160: 334, 170: 358, 180: 377, 190: 395, 200: 412
+        },
+        80: {
+            80: 231, 90: 248, 100: 272, 110: 290, 120: 311, 130: 327, 140: 338, 150: 349, 160: 361, 170: 395, 180: 409, 190: 428, 200: 456
+        },
+        90: {
+            90: 276, 100: 296, 110: 316, 120: 332, 130: 347, 140: 354, 150: 364, 160: 371, 170: 429, 180: 447, 190: 486, 200: 517
+        },
+        100: {
+            100: 322, 110: 352, 120: 370, 130: 389, 140: 407, 150: 428, 160: 441, 170: 502, 180: 529, 190: 538, 200: 569
+        }
     }
 };
 
 
 // Standard Dimensions
 export const STANDARD_WIDTHS = [70, 80, 90, 100];
-export const STANDARD_LENGTHS = [80, 90, 100, 110, 120, 140, 160, 180, 200];
+export const STANDARD_LENGTHS = [80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
 
 // SOFTUM Dimensions
 export const SOFTUM_WIDTHS = [70, 80, 90];
@@ -50,7 +64,7 @@ export const PRODUCT_LINES = [
 // --- PRECIOS DE EJEMPLO PARA OTRAS COLECCIONES (EDITAR ESTOS VALORES) ---
 const TEMP_BASE_PRICE_PER_SQ_CM = 0.015; // Usado solo para generar precios de ejemplo
 
-const STANDARD_PRODUCT_LINES = PRODUCT_LINES.filter(p => p !== 'SOFTUM' && p !== 'CUSTOM');
+const STANDARD_PRODUCT_LINES = PRODUCT_LINES.filter(p => p !== 'SOFTUM' && p !== 'CUSTOM' && p !== 'LUXE');
 
 // Populate prices for standard models
 STANDARD_PRODUCT_LINES.forEach(line => {
@@ -152,6 +166,39 @@ export const TAPETA_LUXE_EXTRA: ProductOption = {
     description: 'Tapa de desagüe fabricada en el mismo material y color que el plato de ducha.',
     price: 50,
 };
+
+export const CLASSIC_GRILLES: ProductOption[] = [
+    {
+        id: 'rejilla-inox-classic',
+        name: 'Rejilla Inox',
+        description: 'Rejilla estándar de acero inoxidable, incluida por defecto.',
+        price: 0,
+    },
+    {
+        id: 'rejilla-oro-classic',
+        name: 'Rejilla Oro Cepillado PVD',
+        description: 'Acabado de lujo en oro cepillado con tratamiento PVD.',
+        price: 30,
+    },
+    {
+        id: 'rejilla-oro-rosa-classic',
+        name: 'Rejilla Oro Rosa Cepillado PVD',
+        description: 'Acabado elegante en oro rosa cepillado con tratamiento PVD.',
+        price: 30,
+    },
+    {
+        id: 'rejilla-gun-metal-classic',
+        name: 'Rejilla Gun Metal PVD',
+        description: 'Acabado moderno en Gun Metal con tratamiento PVD.',
+        price: 30,
+    },
+    {
+        id: 'rejilla-lacada-classic',
+        name: 'Rejilla Lacada del mismo color',
+        description: 'Rejilla lacada en el mismo color que el plato de ducha.',
+        price: 10,
+    }
+];
 
 export const STEPS = [
     { number: 1, title: 'Modelo' },

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { SHOWER_EXTRAS, SOFTUM_EXTRAS, STANDARD_COLORS, TAPETA_LUXE_EXTRA } from '../../constants';
+import { SHOWER_EXTRAS, SOFTUM_EXTRAS, STANDARD_COLORS, TAPETA_LUXE_EXTRA, CLASSIC_GRILLES } from '../../constants';
 import type { ProductOption, ColorOption } from '../../types';
 
 interface Step4ExtrasProps {
@@ -33,15 +33,21 @@ const Step4Extras: React.FC<Step4ExtrasProps> = ({
         if (productLine === 'SOFTUM') {
             return SOFTUM_EXTRAS;
         }
+
+        if (productLine === 'CLASSIC') {
+            return CLASSIC_GRILLES;
+        }
         
         let generalExtras = SHOWER_EXTRAS.filter(e => e.id !== 'ral');
 
         if (productLine === 'LUXE') {
-            // For LUXE, the stainless steel grid is free.
-            const modifiedExtras = generalExtras.map(e => 
-                e.id === 'rejilla' ? { ...e, price: 0 } : e
-            );
-            return [...modifiedExtras, TAPETA_LUXE_EXTRA];
+            // Para LUXE, se elimina la válvula y el tratamiento antical, y la rejilla es gratuita.
+            const luxeSpecificExtras = generalExtras
+                .filter(e => e.id !== 'valvula' && e.id !== 'tratamiento')
+                .map(e => 
+                    e.id === 'rejilla' ? { ...e, price: 0 } : e
+                );
+            return [...luxeSpecificExtras, TAPETA_LUXE_EXTRA];
         }
 
         return generalExtras;
