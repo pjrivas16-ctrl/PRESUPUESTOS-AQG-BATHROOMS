@@ -319,39 +319,25 @@ const App: React.FC = () => {
             console.error("Failed to initialize user database:", error);
         }
 
-        // 2. Check for an active session, otherwise set a default user.
-        const checkSessionOrSetDefault = () => {
+        // 2. Check for an active session
+        const checkSession = () => {
             try {
                 const sessionUserJson = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
                 if (sessionUserJson) {
                     setCurrentUser(JSON.parse(sessionUserJson));
+                    setAppView('myQuotes');
                 } else {
-                    // No user found, set a default user to bypass login
-                    const defaultUser: User = {
-                        companyName: 'AQG Bathrooms (Admin)',
-                        email: 'admin@aqg.com',
-                        preparedBy: 'Equipo AQG',
-                    };
-                    setCurrentUser(defaultUser);
+                    setCurrentUser(null);
                 }
-                setAppView('myQuotes');
             } catch (error) {
                 console.error("Failed to parse user from storage", error);
                 localStorage.removeItem('currentUser');
                 sessionStorage.removeItem('currentUser');
-                
-                // Fallback to default user on error
-                const defaultUser: User = {
-                    companyName: 'AQG Bathrooms (Admin)',
-                    email: 'admin@aqg.com',
-                    preparedBy: 'Equipo AQG',
-                };
-                setCurrentUser(defaultUser);
-                setAppView('myQuotes');
+                setCurrentUser(null);
             }
         };
 
-        checkSessionOrSetDefault();
+        checkSession();
     }, []);
 
     const handleAuthentication = async (email: string, password: string, rememberMe: boolean) => {
@@ -369,22 +355,6 @@ const App: React.FC = () => {
         } else {
             throw new Error('Email o contraseña incorrectos.');
         }
-    };
-
-    const handleRegister = async (newUser: Omit<StoredUser, 'logo'>) => {
-        const storedUsers = JSON.parse(localStorage.getItem('users') || '[]') as StoredUser[];
-        const emailExists = storedUsers.some(u => u.email.toLowerCase() === newUser.email.toLowerCase());
-        
-        if (emailExists) {
-            throw new Error('Ya existe una cuenta con este email.');
-        }
-
-        const userToStore: StoredUser = { ...newUser };
-        const updatedUsers = [...storedUsers, userToStore];
-        localStorage.setItem('users', JSON.stringify(updatedUsers));
-
-        // Automatically log in the user after registration
-        await handleAuthentication(newUser.email, newUser.password, true);
     };
 
     const handleLogout = () => {
@@ -996,7 +966,7 @@ const App: React.FC = () => {
     if (!currentUser) {
         return (
              <div className="bg-slate-100 min-h-screen font-sans flex items-center justify-center p-4">
-                <AuthPage onLogin={handleAuthentication} onRegister={handleRegister} />
+                <AuthPage onLogin={handleAuthentication} />
             </div>
         )
     }

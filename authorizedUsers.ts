@@ -13,14 +13,6 @@ import type { StoredUser } from './types';
 
 export const authorizedUsers: StoredUser[] = [
     {
-        companyName: 'Cliente Ejemplo 1',
-        email: 'cliente1@email.com',
-        password: 'password123',
-        // Opcional: Puedes pre-configurar su logo y el nombre del comercial
-        logo: undefined,
-        preparedBy: 'Sandra Martínez',
-    },
-    {
         companyName: 'AQG Bathrooms (Admin)',
         email: 'admin@aqg.com',
         password: 'adminpassword',
