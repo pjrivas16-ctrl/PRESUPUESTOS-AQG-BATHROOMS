@@ -15,6 +15,7 @@ import NextPrevButtons from './components/NextPrevButtons';
 import AuthPage from './components/auth/AuthPage';
 import MyQuotesPage from './components/MyQuotesPage';
 import LivePreview from './components/LivePreview';
+import PromotionsPage from './components/PromotionsPage';
 
 // Declare jsPDF on window for TypeScript
 declare global {
@@ -321,7 +322,7 @@ const CustomQuoteModal: React.FC<CustomQuoteModalProps> = ({ isOpen, onClose }) 
 
 const App: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-    const [appView, setAppView] = useState<'quoter' | 'myQuotes'>('quoter');
+    const [appView, setAppView] = useState<'quoter' | 'myQuotes' | 'promotions'>('myQuotes');
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isDiscountOpen, setIsDiscountOpen] = useState(false);
     const [isSaveQuoteOpen, setIsSaveQuoteOpen] = useState(false);
@@ -1105,6 +1106,12 @@ const App: React.FC = () => {
                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM5 11a1 1 0 100 2h4a1 1 0 100-2H5z" /></svg>
                                <span>Mis Presupuestos</span>
                             </button>
+                            <button onClick={() => setAppView('promotions')} className={`w-full text-left px-4 py-3 rounded-lg font-semibold transition-colors flex items-center gap-3 ${appView === 'promotions' ? 'bg-slate-800' : 'hover:bg-slate-700/50 text-slate-300'}`}>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5l.646.646a1 1 0 01.708 0L12 2h5a3 3 0 013 3v5a.997.997 0 01-.293.707zM11 7a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                                </svg>
+                                <span>Promociones</span>
+                            </button>
                             <button onClick={() => setIsSettingsOpen(true)} className="w-full text-left px-4 py-3 rounded-lg font-semibold transition-colors hover:bg-slate-700/50 text-slate-300 flex items-center gap-3">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.972.094 2.27-.948 2.286-1.56.38-1.56 2.6 0 2.98.972.54 2.27.094 2.286-.948.836-1.372 2.942-.734-2.106 2.106-.54.972-.094 2.27.948 2.286 1.56.38 1.56 2.6 0 2.98-.972-.54-2.27-.094-2.286.948-.836 1.372-2.942.734-2.106-2.106.54-.972.094-2.27-.948-2.286-1.56-.38-1.56-2.6 0-2.98.972-.54 2.27-.094 2.286-.948.836-1.372 2.942.734 2.106-2.106-.54-.972-.094-2.27.948-2.286zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" /></svg>
                                 <span>Ajustes</span>
@@ -1127,7 +1134,7 @@ const App: React.FC = () => {
                 </div>
                 <div className="w-full md:w-2/3 lg:w-3/4 p-8 md:p-12 flex flex-col bg-slate-50 overflow-y-auto">
                     <div className="flex-grow">
-                         {appView === 'quoter' ? (
+                         {appView === 'quoter' && (
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-16">
                                 <div className="flex flex-col">
                                     <div className="flex-grow">
@@ -1152,8 +1159,12 @@ const App: React.FC = () => {
                                     </div>
                                 )}
                             </div>
-                        ) : (
+                        )}
+                        {appView === 'myQuotes' && (
                             <MyQuotesPage user={currentUser} onDuplicateQuote={(quoteItems) => handleReset(quoteItems)} onViewPdf={handleOpenDiscountModal} />
+                        )}
+                         {appView === 'promotions' && (
+                             <PromotionsPage onNavigateToQuoter={() => handleReset()} />
                         )}
                     </div>
                 </div>
