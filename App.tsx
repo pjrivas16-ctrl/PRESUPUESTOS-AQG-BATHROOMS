@@ -994,7 +994,11 @@ const App: React.FC = () => {
             <main className="w-full max-w-7xl bg-white rounded-2xl shadow-xl shadow-slate-200/80 flex flex-col md:flex-row overflow-hidden min-h-[800px] max-h-[90vh]">
                 <div className="w-full md:w-1/3 lg:w-1/4 bg-slate-900 p-8 text-white flex flex-col">
                     <div className="flex-shrink-0">
-                      <img src={aqgLogo} alt="AQG Logo" className="h-16 w-auto mb-4" />
+                      <div
+                        aria-label="AQG Logo"
+                        className="h-16 w-20 bg-contain bg-no-repeat bg-center mb-4"
+                        style={{ backgroundImage: `url(${aqgLogo})` }}
+                      ></div>
                       <h1 className="text-xl font-bold tracking-tight mb-1">TARIFA DIGITAL AQG</h1>
                       <p className="text-slate-400 mb-8 text-sm">PLATOS DE DUCHA</p>
                       
@@ -1023,7 +1027,7 @@ const App: React.FC = () => {
                                <span>Mis Presupuestos</span>
                             </button>
                             <button onClick={() => setIsSettingsOpen(true)} className="w-full text-left px-4 py-3 rounded-lg font-semibold transition-colors hover:bg-slate-700/50 text-slate-300 flex items-center gap-3">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.972.094 2.27-.948 2.286-1.56.38-1.56 2.6 0 2.98.972.54 2.27.094 2.286-.948.836-1.372 2.942-.734 2.106 2.106-.54.972-.094 2.27.948 2.286 1.56.38 1.56 2.6 0 2.98-.972-.54-2.27-.094-2.286.948-.836 1.372-2.942.734-2.106-2.106.54-.972.094-2.27-.948-2.286-1.56-.38-1.56-2.6 0-2.98.972-.54 2.27-.094 2.286-.948.836-1.372 2.942.734 2.106-2.106-.54-.972-.094-2.27.948-2.286zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" /></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.972.094 2.27-.948 2.286-1.56.38-1.56 2.6 0 2.98.972.54 2.27.094 2.286-.948.836-1.372 2.942-.734-2.106 2.106-.54.972-.094 2.27.948 2.286 1.56.38 1.56 2.6 0 2.98-.972-.54-2.27-.094-2.286.948-.836 1.372-2.942.734-2.106-2.106.54-.972.094-2.27-.948-2.286-1.56-.38-1.56-2.6 0-2.98.972-.54 2.27-.094 2.286-.948.836-1.372 2.942.734 2.106-2.106-.54-.972-.094-2.27.948-2.286zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" /></svg>
                                 <span>Ajustes</span>
                             </button>
                         </nav>
