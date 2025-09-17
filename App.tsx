@@ -357,6 +357,8 @@ const App: React.FC = () => {
 
         checkSession();
     }, []);
+    
+    const isSpecialUser = useMemo(() => currentUser?.email === 'admin@aqg.com', [currentUser]);
 
     const handleAuthentication = async (email: string, password: string) => {
         const storedUsers = JSON.parse(localStorage.getItem('users') || '[]') as StoredUser[];
@@ -466,6 +468,34 @@ const App: React.FC = () => {
         const { productLine, width, length, model, color, extras, quantity } = item;
         if (!model || !productLine) return 0;
 
+        let discountPercentage = 0;
+        if (isSpecialUser) {
+            if (productLine === 'CLASSIC') {
+                if ((quantity || 1) >= 10) {
+                    discountPercentage = 71;
+                } else {
+                    discountPercentage = 0;
+                }
+            } else {
+                discountPercentage = 55;
+            }
+        }
+
+        const basePrice = PRICE_LIST[productLine]?.[width]?.[length] || 0;
+        const modelPrice = basePrice * (model.priceFactor || 1);
+        const colorPrice = color?.price || 0;
+        const extrasPrice = extras.reduce((sum, extra) => sum + extra.price, 0);
+        
+        const totalBasePrice = (modelPrice + colorPrice + extrasPrice) * (quantity || 1);
+        const discountedTotalBasePrice = totalBasePrice * (1 - discountPercentage / 100);
+
+        return includeVat ? discountedTotalBasePrice * 1.21 : discountedTotalBasePrice;
+    }, [isSpecialUser]);
+    
+    const calculateOriginalItemPrice = useCallback((item: QuoteState, includeVat: boolean = true) => {
+        const { productLine, width, length, model, color, extras, quantity } = item;
+        if (!model || !productLine) return 0;
+    
         const basePrice = PRICE_LIST[productLine]?.[width]?.[length] || 0;
         const modelPrice = basePrice * (model.priceFactor || 1);
         const colorPrice = color?.price || 0;
@@ -535,7 +565,7 @@ const App: React.FC = () => {
     
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        const { quoteItems, totalPrice: originalTotalPrice } = savedQuote;
+        const { quoteItems } = savedQuote;
         
         const PRIMARY_COLOR = '#0d9488'; // teal-600
         const TEXT_COLOR = '#1f2937'; // gray-800
@@ -690,13 +720,22 @@ const App: React.FC = () => {
         checkPageBreak(60);
 
         const VAT_RATE = 0.21;
-        const basePrice = originalTotalPrice / (1 + VAT_RATE);
+        let basePriceToShow: number;
         let discountAmount = 0;
-        let discountedBasePrice = basePrice;
-        if (discountPercentage > 0) {
-            discountAmount = basePrice * (discountPercentage / 100);
-            discountedBasePrice = basePrice - discountAmount;
+        let discountedBasePrice: number;
+        
+        if (isSpecialUser) {
+            basePriceToShow = savedQuote.quoteItems.reduce((sum, item) => sum + calculateOriginalItemPrice(item, false), 0);
+            discountedBasePrice = savedQuote.quoteItems.reduce((sum, item) => sum + calculateItemPrice(item, false), 0);
+            discountAmount = basePriceToShow - discountedBasePrice;
+        } else {
+            basePriceToShow = savedQuote.totalPrice / (1 + VAT_RATE);
+            if (discountPercentage > 0) {
+                discountAmount = basePriceToShow * (discountPercentage / 100);
+            }
+            discountedBasePrice = basePriceToShow - discountAmount;
         }
+
         const taxAmount = discountedBasePrice * VAT_RATE;
         const finalPrice = discountedBasePrice + taxAmount;
         
@@ -719,9 +758,10 @@ const App: React.FC = () => {
              yPos += isTotal ? 12 : 8;
         };
 
-        addPriceLine("Subtotal", basePrice);
-        if (discountPercentage > 0) {
-            addPriceLine(`Descuento (${discountPercentage}%)`, -discountAmount);
+        addPriceLine("Subtotal", basePriceToShow);
+        if (discountAmount > 0) {
+            const discountLabel = isSpecialUser ? 'Descuento (aplicado)' : `Descuento (${discountPercentage}%)`;
+            addPriceLine(discountLabel, -discountAmount);
             yPos += 2;
             doc.setDrawColor(BORDER_COLOR);
             doc.line(totalsX, yPos - 4, 210 - PAGE_MARGIN, yPos - 4);
@@ -744,9 +784,24 @@ const App: React.FC = () => {
         }
         
         doc.output('dataurlnewwindow');
-    }, [currentUser, calculateItemPrice]);
+    }, [currentUser, calculateItemPrice, isSpecialUser, calculateOriginalItemPrice]);
+    
+    const handleGeneratePdfForQuote = useCallback(async (quote: SavedQuote) => {
+        try {
+            // For special user, discount is baked in, so pass 0 to the PDF generator.
+            await generatePdfWithDiscount(quote, 0);
+        } catch (error) {
+            console.error("Failed to generate PDF:", error);
+            const errorMessage = error instanceof Error ? error.message : "Ha ocurrido un error desconocido.";
+            alert(`No se pudo generar el PDF: ${errorMessage}`);
+        }
+    }, [generatePdfWithDiscount]);
 
     const handleOpenDiscountModal = (quoteToProcess: SavedQuote) => {
+        if (isSpecialUser) {
+            handleGeneratePdfForQuote(quoteToProcess);
+            return;
+        }
         setQuoteForPdf(quoteToProcess);
         setIsDiscountOpen(true);
     };
