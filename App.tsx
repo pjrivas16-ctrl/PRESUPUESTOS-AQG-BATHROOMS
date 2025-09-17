@@ -994,10 +994,8 @@ const App: React.FC = () => {
             <main className="w-full max-w-7xl bg-white rounded-2xl shadow-xl shadow-slate-200/80 flex flex-col md:flex-row overflow-hidden min-h-[800px] max-h-[90vh]">
                 <div className="w-full md:w-1/3 lg:w-1/4 bg-slate-900 p-8 text-white flex flex-col">
                     <div className="flex-shrink-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        <img src={aqgLogo} alt="AQG Logo" className="h-8 w-8 rounded-md" />
-                        <h1 className="text-xl font-bold tracking-tight">TARIFA DIGITAL AQG</h1>
-                      </div>
+                      <img src={aqgLogo} alt="AQG Logo" className="h-16 w-auto mb-4" />
+                      <h1 className="text-xl font-bold tracking-tight mb-1">TARIFA DIGITAL AQG</h1>
                       <p className="text-slate-400 mb-8 text-sm">PLATOS DE DUCHA</p>
                       
                       {appView === 'quoter' ? (
