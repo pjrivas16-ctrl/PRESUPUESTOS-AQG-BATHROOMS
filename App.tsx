@@ -464,17 +464,19 @@ const App: React.FC = () => {
         setAppView('quoter');
     }, [initialQuoteState]);
 
-    const calculateItemPrice = useCallback((item: QuoteState, includeVat: boolean = true) => {
+    const calculateItemPrice = useCallback((item: QuoteState, allItems: (QuoteItem | QuoteState)[], includeVat: boolean = true) => {
         const { productLine, width, length, model, color, extras, quantity } = item;
         if (!model || !productLine) return 0;
 
         let discountPercentage = 0;
         if (isSpecialUser) {
             if (productLine === 'CLASSIC') {
-                if ((quantity || 1) >= 10) {
+                const totalClassicQuantity = allItems
+                    .filter(i => i.productLine === 'CLASSIC')
+                    .reduce((sum, current) => sum + (current.quantity || 1), 0);
+                
+                if (totalClassicQuantity >= 10) {
                     discountPercentage = 71;
-                } else {
-                    discountPercentage = 0;
                 }
             } else {
                 discountPercentage = 55;
@@ -507,11 +509,15 @@ const App: React.FC = () => {
     }, []);
     
     const currentItemPrice = useMemo(() => {
-        return calculateItemPrice(currentItemConfig);
-    }, [currentItemConfig, calculateItemPrice]);
+        const potentialQuoteItems = [
+            ...quoteItems.filter(i => i.id !== editingItemId), 
+            currentItemConfig
+        ];
+        return calculateItemPrice(currentItemConfig, potentialQuoteItems);
+    }, [currentItemConfig, calculateItemPrice, quoteItems, editingItemId]);
 
     const totalQuotePrice = useMemo(() => {
-        return quoteItems.reduce((total, item) => total + calculateItemPrice(item), 0);
+        return quoteItems.reduce((total, item) => total + calculateItemPrice(item, quoteItems), 0);
     }, [quoteItems, calculateItemPrice]);
 
     const handleSaveQuoteRequest = () => {
@@ -651,6 +657,11 @@ const App: React.FC = () => {
             const startY = yPos;
             const isEven = index % 2 === 0;
 
+            const originalItemBasePrice = calculateOriginalItemPrice(item, false);
+            const discountedItemBasePrice = calculateItemPrice(item, quoteItems, false);
+            const discountOnItem = originalItemBasePrice - discountedItemBasePrice;
+            const itemDiscountPercentage = discountOnItem > 0 ? (discountOnItem / originalItemBasePrice) * 100 : 0;
+
             const mainDesc = `Plato de ducha ${item.productLine} - ${item.model?.name}`;
             const subDescLines: string[] = [
                 `  · Dimensiones: ${item.width}cm x ${item.length}cm`,
@@ -665,6 +676,11 @@ const App: React.FC = () => {
                      return extraText;
                 }).join(', ');
                 subDescLines.push(`  · Extras: ${extraNames}`);
+            }
+
+            if (isSpecialUser && discountOnItem > 0) {
+                const discountText = `  · Descuento (${itemDiscountPercentage.toFixed(0)}%): -${discountOnItem.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}`;
+                subDescLines.push(discountText);
             }
             
             let rowHeight = 8;
@@ -698,20 +714,28 @@ const App: React.FC = () => {
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(SECONDARY_TEXT_COLOR);
             subDescLines.forEach(line => {
+                const isDiscountLine = isSpecialUser && line.includes('Descuento');
+                if (isDiscountLine) {
+                    doc.saveGraphicsState();
+                    doc.setFont('helvetica', 'italic');
+                    doc.setTextColor('#0f766e'); // teal-700
+                }
                 const subDescSplit = doc.splitTextToSize(line, 110);
                 doc.text(subDescSplit, PAGE_MARGIN + 5, currentY);
                 currentY += subDescSplit.length * 5;
+                 if (isDiscountLine) {
+                    doc.restoreGraphicsState();
+                }
             });
 
             const verticalCenter = startY + rowHeight / 2 + 1.5;
-            const itemBasePrice = calculateItemPrice(item, false);
-            const unitPrice = itemBasePrice / (item.quantity || 1);
+            const unitPrice = discountedItemBasePrice / (item.quantity || 1);
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(TEXT_COLOR);
             doc.text((item.quantity || 1).toString(), 140, verticalCenter, { align: 'center' });
             doc.text(unitPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }), 168, verticalCenter, { align: 'right' });
-            doc.text(itemBasePrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }), 210 - PAGE_MARGIN - 5, verticalCenter, { align: 'right' });
+            doc.text(discountedItemBasePrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }), 210 - PAGE_MARGIN - 5, verticalCenter, { align: 'right' });
 
             yPos = startY + rowHeight;
         }
@@ -726,7 +750,7 @@ const App: React.FC = () => {
         
         if (isSpecialUser) {
             basePriceToShow = savedQuote.quoteItems.reduce((sum, item) => sum + calculateOriginalItemPrice(item, false), 0);
-            discountedBasePrice = savedQuote.quoteItems.reduce((sum, item) => sum + calculateItemPrice(item, false), 0);
+            discountedBasePrice = savedQuote.quoteItems.reduce((sum, item) => sum + calculateItemPrice(item, savedQuote.quoteItems, false), 0);
             discountAmount = basePriceToShow - discountedBasePrice;
         } else {
             basePriceToShow = savedQuote.totalPrice / (1 + VAT_RATE);
@@ -1025,7 +1049,7 @@ const App: React.FC = () => {
                     onStartNew={handleStartNewItem}
                     onEdit={handleEditItem}
                     onDelete={handleDeleteItem}
-                    calculateItemPrice={calculateItemPrice}
+                    calculateItemPrice={(item) => calculateItemPrice(item, quoteItems)}
                 />;
             default:
                 return null;
