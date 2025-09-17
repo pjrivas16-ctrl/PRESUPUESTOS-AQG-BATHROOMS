@@ -1,9 +1,8 @@
-
-
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import type { QuoteState, ProductOption, ColorOption, User, SavedQuote, StoredUser, QuoteItem } from './types';
 import { PRICE_LIST, STEPS, STANDARD_WIDTHS, STANDARD_LENGTHS, SOFTUM_WIDTHS, SOFTUM_LENGTHS, SHOWER_MODELS, SHOWER_EXTRAS, SOFTUM_EXTRAS, CLASSIC_GRILLES } from './constants';
 import { authorizedUsers } from './authorizedUsers';
+import { aqgLogo } from './assets';
 
 import StepTracker from './components/StepTracker';
 import Step1ModelSelection from './components/steps/Step1ModelSelection';
@@ -54,9 +53,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
             <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-lg w-full" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-start mb-6">
-                    <div>
-                        <h3 className="text-xl font-bold text-slate-800">Ajustes de PDF</h3>
-                        <p className="text-sm text-slate-500">Personaliza la información que aparece en tus presupuestos.</p>
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-teal-100 text-teal-600 rounded-lg flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold text-slate-800">Ajustes de PDF</h3>
+                            <p className="text-sm text-slate-500">Personaliza la información en tus presupuestos.</p>
+                        </div>
                     </div>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
                 </div>
@@ -72,7 +76,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
                             value={commercialName}
                             onChange={(e) => setCommercialName(e.target.value)}
                             placeholder="Nombre de tu tienda o empresa"
-                            className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition"
+                            className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition"
                         />
                          <p className="text-xs text-slate-500 mt-1">Este es el nombre que aparecerá como remitente.</p>
                     </div>
@@ -86,7 +90,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
                             value={preparedBy}
                             onChange={(e) => setPreparedBy(e.target.value)}
                             placeholder="Ej: Sandra Martínez"
-                            className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition"
+                            className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition"
                         />
                          <p className="text-xs text-slate-500 mt-1">Este nombre aparecerá en los PDFs generados.</p>
                     </div>
@@ -96,7 +100,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
                     <button onClick={onClose} className="px-6 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors">
                         Cancelar
                     </button>
-                    <button onClick={handleSave} className="px-8 py-2 font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <button onClick={handleSave} className="px-8 py-2 font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500">
                         Guardar Cambios
                     </button>
                 </div>
@@ -137,9 +141,14 @@ const DiscountModal: React.FC<DiscountModalProps> = ({ isOpen, onClose, onConfir
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
             <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-sm w-full" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-start mb-4">
-                    <div>
-                        <h3 className="text-xl font-bold text-slate-800">Aplicar Descuento</h3>
-                        <p className="text-sm text-slate-500">Introduce un descuento para este PDF.</p>
+                     <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-teal-100 text-teal-600 rounded-lg flex items-center justify-center">
+                           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold text-slate-800">Aplicar Descuento</h3>
+                            <p className="text-sm text-slate-500">Introduce un descuento para este PDF.</p>
+                        </div>
                     </div>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
                 </div>
@@ -156,7 +165,7 @@ const DiscountModal: React.FC<DiscountModalProps> = ({ isOpen, onClose, onConfir
                             onChange={handleDiscountChange}
                             min="0"
                             max="100"
-                            className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                          <p className="text-xs text-slate-500 mt-1">El descuento se aplicará sobre la base imponible.</p>
                     </div>
@@ -166,7 +175,7 @@ const DiscountModal: React.FC<DiscountModalProps> = ({ isOpen, onClose, onConfir
                      <button onClick={onClose} className="px-6 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors">
                         Cancelar
                     </button>
-                    <button onClick={handleConfirm} className="px-8 py-2 font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors">
+                    <button onClick={handleConfirm} className="px-8 py-2 font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors">
                         Generar PDF
                     </button>
                 </div>
@@ -202,9 +211,14 @@ const SaveQuoteModal: React.FC<SaveQuoteModalProps> = ({ isOpen, onClose, onConf
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
             <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-md w-full" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-start mb-4">
-                    <div>
-                        <h3 className="text-xl font-bold text-slate-800">Guardar Presupuesto</h3>
-                        <p className="text-sm text-slate-500">Añade los detalles para identificar este presupuesto.</p>
+                     <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-teal-100 text-teal-600 rounded-lg flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold text-slate-800">Guardar Presupuesto</h3>
+                            <p className="text-sm text-slate-500">Añade los detalles para identificarlo.</p>
+                        </div>
                     </div>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
                 </div>
@@ -220,7 +234,7 @@ const SaveQuoteModal: React.FC<SaveQuoteModalProps> = ({ isOpen, onClose, onConf
                             value={customerName}
                             onChange={(e) => setCustomerName(e.target.value)}
                             placeholder="Ej: Juan Pérez"
-                            className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition"
+                            className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition"
                         />
                     </div>
                      <div>
@@ -233,7 +247,7 @@ const SaveQuoteModal: React.FC<SaveQuoteModalProps> = ({ isOpen, onClose, onConf
                             value={projectReference}
                             onChange={(e) => setProjectReference(e.target.value)}
                             placeholder="Ej: Obra Baño Principal"
-                            className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition"
+                            className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition"
                         />
                     </div>
                 </div>
@@ -246,7 +260,7 @@ const SaveQuoteModal: React.FC<SaveQuoteModalProps> = ({ isOpen, onClose, onConf
                      <button onClick={onClose} className="px-6 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors">
                         Cancelar
                     </button>
-                    <button onClick={handleConfirm} disabled={disabled || !customerName.trim()} className="px-8 py-2 font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:bg-indigo-300 transition-colors">
+                    <button onClick={handleConfirm} disabled={disabled || !customerName.trim()} className="px-8 py-2 font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 disabled:bg-teal-300 transition-colors">
                         Guardar
                     </button>
                 </div>
@@ -268,9 +282,14 @@ const CustomQuoteModal: React.FC<CustomQuoteModalProps> = ({ isOpen, onClose }) 
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
             <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-lg w-full" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-start mb-4">
-                    <div>
-                        <h3 className="text-xl font-bold text-slate-800">Colección CUSTOM</h3>
-                        <p className="text-sm text-slate-500">Información sobre presupuestos personalizados.</p>
+                     <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-teal-100 text-teal-600 rounded-lg flex items-center justify-center">
+                           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold text-slate-800">Colección CUSTOM</h3>
+                            <p className="text-sm text-slate-500">Información sobre presupuestos personalizados.</p>
+                        </div>
                     </div>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
                 </div>
@@ -283,14 +302,14 @@ const CustomQuoteModal: React.FC<CustomQuoteModalProps> = ({ isOpen, onClose }) 
                         Para solicitar un presupuesto para esta colección, por favor, envía los detalles de tu proyecto a:
                     </p>
                     <div className="text-center my-4">
-                         <a href="mailto:sandra.martinez@aqgbathrooms.com" className="font-semibold text-indigo-600 bg-indigo-100 px-4 py-2 rounded-md hover:bg-indigo-200 transition-colors">
+                         <a href="mailto:sandra.martinez@aqgbathrooms.com" className="font-semibold text-teal-600 bg-teal-100 px-4 py-2 rounded-md hover:bg-teal-200 transition-colors">
                             sandra.martinez@aqgbathrooms.com
                         </a>
                     </div>
                 </div>
 
                 <div className="mt-8 pt-6 border-t border-slate-200 flex justify-end">
-                    <button onClick={onClose} className="px-8 py-2 font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors">
+                    <button onClick={onClose} className="px-8 py-2 font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors">
                         Entendido
                     </button>
                 </div>
@@ -518,10 +537,10 @@ const App: React.FC = () => {
         const doc = new jsPDF();
         const { quoteItems, totalPrice: originalTotalPrice } = savedQuote;
         
-        const PRIMARY_COLOR = '#00A86B';
-        const TEXT_COLOR = '#1F2937';
-        const SECONDARY_TEXT_COLOR = '#6B7280';
-        const BORDER_COLOR = '#D1D5DB';
+        const PRIMARY_COLOR = '#0d9488'; // teal-600
+        const TEXT_COLOR = '#1f2937'; // gray-800
+        const SECONDARY_TEXT_COLOR = '#6b7280'; // gray-500
+        const BORDER_COLOR = '#e5e7eb'; // gray-200
         const PAGE_MARGIN = 15;
         const CONTENT_WIDTH = 210 - (PAGE_MARGIN * 2);
     
@@ -960,29 +979,36 @@ const App: React.FC = () => {
     
     if (!currentUser) {
         return (
-             <div className="bg-slate-100 min-h-screen font-sans flex items-center justify-center p-4">
-                <AuthPage onLogin={handleAuthentication} />
+             <div className="bg-slate-100 min-h-screen font-sans flex items-center justify-center p-4 relative overflow-hidden">
+                <div className="absolute top-0 left-0 -translate-x-1/4 -translate-y-1/4 w-96 h-96 bg-teal-200/30 rounded-full blur-3xl opacity-80"></div>
+                <div className="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 w-96 h-96 bg-cyan-200/30 rounded-full blur-3xl opacity-80"></div>
+                <div className="relative z-10">
+                    <AuthPage onLogin={handleAuthentication} />
+                </div>
             </div>
         )
     }
 
     return (
         <div className="bg-slate-100 min-h-screen font-sans flex items-center justify-center p-4">
-            <main className="w-full max-w-6xl bg-white rounded-2xl shadow-2xl flex flex-col md:flex-row overflow-hidden" style={{height: '90vh', maxHeight: '800px'}}>
-                <div className="w-full md:w-1/3 bg-slate-800 p-8 text-white flex flex-col">
-                    <div>
-                      <h1 className="text-2xl font-bold mb-2">PRESUPUESTOS AQG</h1>
-                      <p className="text-slate-300 mb-8 text-sm">Configure su plato de ducha a medida.</p>
+            <main className="w-full max-w-7xl bg-white rounded-2xl shadow-xl shadow-slate-200/80 flex flex-col md:flex-row overflow-hidden min-h-[800px] max-h-[90vh]">
+                <div className="w-full md:w-1/3 lg:w-1/4 bg-slate-900 p-8 text-white flex flex-col">
+                    <div className="flex-shrink-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <img src={aqgLogo} alt="AQG Logo" className="h-8 w-8 rounded-md" />
+                        <h1 className="text-xl font-bold tracking-tight">PRESUPUESTOS AQG</h1>
+                      </div>
+                      <p className="text-slate-400 mb-8 text-sm">Configure su plato de ducha a medida.</p>
                       
                       {appView === 'quoter' ? (
                         <>
                             <button 
                                 onClick={() => setAppView('myQuotes')}
-                                className="w-full text-left px-4 py-3 mb-6 rounded-md font-semibold transition-colors bg-slate-700 hover:bg-slate-600 flex items-center gap-3"
+                                className="w-full text-left px-4 py-3 mb-8 rounded-lg font-semibold transition-colors bg-slate-800 hover:bg-slate-700 flex items-center gap-3"
                                 aria-label="Volver a Mis Presupuestos"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.707-10.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L9.414 11H13a1 1 0 100-2H9.414l1.293-1.293z" clipRule="evenodd" />
+                                  <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
                                 </svg>
                                 <span>Volver al listado</span>
                             </button>
@@ -990,34 +1016,38 @@ const App: React.FC = () => {
                         </>
                       ) : (
                         <nav className="space-y-2 mt-8">
-                             <button onClick={() => handleReset()} className="w-full text-left px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 font-semibold transition-colors">
-                                Nuevo Presupuesto
+                             <button onClick={() => handleReset()} className="w-full text-left px-4 py-3 rounded-lg bg-teal-600 hover:bg-teal-700 font-semibold transition-colors flex items-center gap-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
+                                <span>Nuevo Presupuesto</span>
                             </button>
-                             <button onClick={() => setAppView('myQuotes')} className={`w-full text-left px-4 py-2 rounded-md font-semibold transition-colors ${appView === 'myQuotes' ? 'bg-slate-700' : 'hover:bg-slate-700/50'}`}>
-                                Mis Presupuestos
+                             <button onClick={() => setAppView('myQuotes')} className={`w-full text-left px-4 py-3 rounded-lg font-semibold transition-colors flex items-center gap-3 ${appView === 'myQuotes' ? 'bg-slate-800' : 'hover:bg-slate-700/50 text-slate-300'}`}>
+                               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM5 11a1 1 0 100 2h4a1 1 0 100-2H5z" /></svg>
+                               <span>Mis Presupuestos</span>
                             </button>
-                            <button onClick={() => setIsSettingsOpen(true)} className="w-full text-left px-4 py-2 rounded-md font-semibold transition-colors hover:bg-slate-700/50">
-                                Ajustes
+                            <button onClick={() => setIsSettingsOpen(true)} className="w-full text-left px-4 py-3 rounded-lg font-semibold transition-colors hover:bg-slate-700/50 text-slate-300 flex items-center gap-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.972.094 2.27-.948 2.286-1.56.38-1.56 2.6 0 2.98.972.54 2.27.094 2.286-.948.836-1.372 2.942-.734 2.106 2.106-.54.972-.094 2.27.948 2.286 1.56.38 1.56 2.6 0 2.98-.972-.54-2.27-.094-2.286.948-.836 1.372-2.942.734-2.106-2.106.54-.972.094-2.27-.948-2.286-1.56-.38-1.56-2.6 0-2.98.972-.54 2.27-.094 2.286-.948.836-1.372 2.942.734 2.106-2.106-.54-.972-.094-2.27.948-2.286zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" /></svg>
+                                <span>Ajustes</span>
                             </button>
                         </nav>
                       )}
                     </div>
-                    <div className="mt-auto pt-8">
+                    <div className="mt-auto pt-8 border-t border-slate-700/50">
                         <p className="text-sm text-slate-400 mb-1">Cliente:</p>
                         <p className="font-bold text-white truncate" title={currentUser.companyName}>{currentUser.companyName}</p>
                         <p className="text-sm text-slate-300 truncate" title={currentUser.email}>{currentUser.email}</p>
                         <button 
                             onClick={handleLogout}
-                            className="w-full mt-4 px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-red-500"
+                            className="w-full mt-4 px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-red-500 flex items-center justify-center gap-2"
                         >
-                            Cerrar Sesión
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" /></svg>
+                            <span>Cerrar Sesión</span>
                         </button>
                     </div>
                 </div>
-                <div className="w-full md:w-2/3 p-6 md:p-8 flex flex-col bg-slate-50 overflow-y-auto">
+                <div className="w-full md:w-2/3 lg:w-3/4 p-8 md:p-12 flex flex-col bg-slate-50 overflow-y-auto">
                     <div className="flex-grow">
                          {appView === 'quoter' ? (
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-16">
                                 <div className="flex flex-col">
                                     <div className="flex-grow">
                                         {renderQuoter()}
@@ -1035,7 +1065,7 @@ const App: React.FC = () => {
                 
                                 {currentStep > 1 && currentStep < 6 && (
                                      <div className="hidden lg:block">
-                                        <div className="sticky top-6">
+                                        <div className="sticky top-10">
                                             <LivePreview item={currentItemConfig} price={currentItemPrice} />
                                         </div>
                                     </div>

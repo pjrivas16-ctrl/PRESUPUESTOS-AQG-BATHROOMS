@@ -54,8 +54,8 @@ const Step4Extras: React.FC<Step4ExtrasProps> = ({
     }, [productLine]);
 
     return (
-        <div>
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">Añade los extras</h2>
+        <div className="animate-fade-in">
+            <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">Añade los extras</h2>
             <p className="text-slate-500 mb-8">Completa tu plato de ducha con nuestros accesorios y tratamientos premium.</p>
 
             <div className="space-y-4">
@@ -69,9 +69,9 @@ const Step4Extras: React.FC<Step4ExtrasProps> = ({
                                 aria-checked={isCurrentlySelected}
                                 tabIndex={0}
                                 onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onToggle(extra)}
-                                className={`flex items-center p-4 border-2 rounded-lg transition-all duration-200 cursor-pointer ${isCurrentlySelected ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 bg-white hover:border-indigo-400'}`}
+                                className={`flex items-center p-5 border-2 rounded-xl transition-all duration-200 cursor-pointer ${isCurrentlySelected ? 'border-teal-500 bg-teal-50' : 'border-slate-200 bg-white hover:border-teal-400'}`}
                             >
-                                <div className={`flex items-center justify-center w-6 h-6 rounded-md border-2 ${isCurrentlySelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-slate-100 border-slate-300'}`}>
+                                <div className={`flex items-center justify-center w-6 h-6 rounded-md border-2 transition-all duration-200 ${isCurrentlySelected ? 'bg-teal-600 border-teal-600 text-white' : 'bg-slate-100 border-slate-300'}`}>
                                    {isCurrentlySelected && <CheckIcon />}
                                 </div>
                                 <div className="ml-4 flex-grow">
@@ -85,7 +85,7 @@ const Step4Extras: React.FC<Step4ExtrasProps> = ({
                             
                             {/* Bitono Color Picker */}
                             {extra.id === 'bitono' && isCurrentlySelected && (
-                                <div className="mt-3 ml-4 md:ml-14 p-4 bg-indigo-50/70 rounded-md animate-fade-in">
+                                <div className="mt-3 ml-4 md:ml-14 p-4 bg-teal-50 rounded-lg animate-fade-in">
                                     <h4 className="text-base font-semibold text-slate-700 mb-4">Elige el color de la tapa</h4>
                                     
                                     <div className="flex flex-wrap gap-3 mb-4">
@@ -104,11 +104,11 @@ const Step4Extras: React.FC<Step4ExtrasProps> = ({
                                                     <div
                                                         style={{ backgroundColor: color.hex }}
                                                         className={`w-12 h-12 rounded-full border-2 transition-all duration-200
-                                                            ${isSelectedForBitono ? 'border-indigo-500 ring-4 ring-indigo-200' : 'border-slate-300 group-hover:border-indigo-400'}
+                                                            ${isSelectedForBitono ? 'border-teal-500 ring-2 ring-offset-2 ring-teal-500' : 'border-slate-300 group-hover:border-teal-400'}
                                                             ${color.hex === '#FFFFFF' ? 'border-slate-300' : ''}
                                                         `}
                                                     ></div>
-                                                    <span className={`text-xs font-medium ${isSelectedForBitono ? 'text-indigo-600' : 'text-slate-600'}`}>{color.name}</span>
+                                                    <span className={`text-xs font-medium ${isSelectedForBitono ? 'text-teal-600' : 'text-slate-600'}`}>{color.name}</span>
                                                 </button>
                                             )
                                         })}

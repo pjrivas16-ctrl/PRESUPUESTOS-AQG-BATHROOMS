@@ -23,8 +23,8 @@ const Step1Dimensions: React.FC<Step1DimensionsProps> = ({ quote, onUpdate }) =>
     };
 
     return (
-        <div>
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">Elige las dimensiones</h2>
+        <div className="animate-fade-in">
+            <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">Elige las dimensiones</h2>
             <p className="text-slate-500 mb-8">Define el ancho y el largo de tu plato de ducha usando nuestras medidas estándar.</p>
             
             <div className="space-y-6">
@@ -35,7 +35,7 @@ const Step1Dimensions: React.FC<Step1DimensionsProps> = ({ quote, onUpdate }) =>
                         name="width"
                         value={quote.width}
                         onChange={handleWidthChange}
-                        className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition"
+                        className="w-full p-3 bg-white border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 focus:border-teal-500 transition"
                     >
                         {availableWidths.map(w => (
                             <option key={w} value={w}>{w} cm</option>
@@ -49,7 +49,7 @@ const Step1Dimensions: React.FC<Step1DimensionsProps> = ({ quote, onUpdate }) =>
                         name="length"
                         value={quote.length}
                         onChange={handleLengthChange}
-                        className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition"
+                        className="w-full p-3 bg-white border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 focus:border-teal-500 transition"
                     >
                          {availableLengths.map(l => (
                             <option key={l} value={l}>{l} cm</option>

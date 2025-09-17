@@ -149,8 +149,8 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                     <div className="mt-6 border-t border-slate-200">
                         {quoteItems.map((item, index) => (
                              <div key={item.id} className="py-4 border-b border-slate-200">
-                                <h4 className="font-bold text-indigo-700 mb-2">Artículo {index+1}: {item.productLine}</h4>
-                                <div className="pl-4 border-l-2 border-indigo-100 space-y-1 text-sm">
+                                <h4 className="font-bold text-teal-700 mb-2">Artículo {index+1}: {item.productLine}</h4>
+                                <div className="pl-4 border-l-2 border-teal-100 space-y-1 text-sm">
                                     <p><span className="text-slate-500">Dimensiones:</span> <span className="font-medium text-slate-800">{item.width}cm x {item.length}cm</span></p>
                                     <p><span className="text-slate-500">Textura:</span> <span className="font-medium text-slate-800">{item.model?.name}</span></p>
                                     <p><span className="text-slate-500">Color:</span> <span className="font-medium text-slate-800">{item.color?.name || `RAL ${item.ralCode}`}</span></p>
@@ -163,7 +163,7 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
 
                     <div className="mt-4 text-right">
                         <span className="text-slate-500">Total Presupuesto: </span>
-                        <span className="text-xl font-bold text-indigo-600">{totalPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+                        <span className="text-xl font-bold text-teal-600">{totalPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
                     </div>
 
                     <div className="mt-6 grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -188,7 +188,7 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                         <a
                             href={mailtoLink}
                             target="_blank" rel="noopener noreferrer"
-                            className="w-full col-span-2 px-4 py-2 font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors text-center text-sm flex items-center justify-center"
+                            className="w-full col-span-2 px-4 py-2 font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors text-center text-sm flex items-center justify-center"
                         >
                             Enviar Pedido
                         </a>
@@ -202,8 +202,8 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
     return (
         <div className="animate-fade-in">
             <div className="mb-6">
-                <h2 className="text-2xl font-bold text-slate-800">Mis Presupuestos</h2>
-                <p className="text-slate-500">Busca, visualiza y gestiona tu historial de cotizaciones.</p>
+                <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight">Mis Presupuestos</h2>
+                <p className="text-slate-500 mt-2">Busca, visualiza y gestiona tu historial de cotizaciones.</p>
             </div>
             
             <div className="mb-4">
@@ -212,7 +212,7 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Buscar por cliente, referencia o ID..."
-                    className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition"
+                    className="w-full p-3 bg-white border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-offset-1 focus:ring-teal-500 focus:border-teal-500 transition"
                 />
             </div>
             
@@ -234,7 +234,7 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                         <div 
                             key={savedQuote.id}
                             onClick={() => setSelectedQuote(savedQuote)}
-                            className="w-full text-left bg-white border border-slate-200 p-4 rounded-lg shadow-sm hover:shadow-md hover:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 cursor-pointer"
+                            className="w-full text-left bg-white border border-slate-200 p-4 rounded-lg shadow-sm hover:shadow-md hover:border-teal-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200 cursor-pointer"
                             role="button"
                             tabIndex={0}
                             onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSelectedQuote(savedQuote)}
@@ -260,7 +260,7 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                                     </p>
                                 </div>
                                 <div className="text-right flex-shrink-0">
-                                    <p className="text-lg font-bold text-indigo-600">
+                                    <p className="text-lg font-bold text-teal-600">
                                         {savedQuote.totalPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
                                     </p>
                                     <p className="text-xs text-slate-400">{savedQuote.quoteItems.length} artículo(s)</p>

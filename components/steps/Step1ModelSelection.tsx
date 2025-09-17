@@ -15,8 +15,8 @@ const Step1ModelSelection: React.FC<Step1ModelSelectionProps> = ({ onUpdate, sel
     };
 
     return (
-        <div>
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">Selecciona el modelo</h2>
+        <div className="animate-fade-in">
+            <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">Selecciona el modelo</h2>
             <p className="text-slate-500 mb-8">Elige la línea de producto y la cantidad que mejor se adapte a tu diseño.</p>
             
             <div className="space-y-6">
@@ -27,7 +27,7 @@ const Step1ModelSelection: React.FC<Step1ModelSelectionProps> = ({ onUpdate, sel
                         name="product-line"
                         value={selectedProductLine || ''}
                         onChange={handleModelChange}
-                        className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition"
+                        className="w-full p-3 bg-white border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 focus:border-teal-500 transition"
                     >
                         <option value="" disabled>-- Selecciona un modelo --</option>
                         {PRODUCT_LINES.map(line => (
@@ -44,7 +44,7 @@ const Step1ModelSelection: React.FC<Step1ModelSelectionProps> = ({ onUpdate, sel
                         value={quantity}
                         onChange={(e) => onUpdateQuantity(parseInt(e.target.value, 10))}
                         min="1"
-                        className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        className="w-full p-3 bg-white border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 focus:border-teal-500 transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                 </div>
             </div>

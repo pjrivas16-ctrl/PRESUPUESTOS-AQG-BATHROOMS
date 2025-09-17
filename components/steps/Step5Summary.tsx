@@ -16,7 +16,7 @@ interface Step5SummaryProps {
 
 const QuoteItemCard: React.FC<{ item: QuoteItem; onEdit: () => void; onDelete: () => void; price: number; }> = ({ item, onEdit, onDelete, price }) => {
     return (
-        <div className="bg-white border border-slate-200 p-4 rounded-lg shadow-sm">
+        <div className="bg-white border border-slate-200 p-4 rounded-lg shadow-sm transition-shadow hover:shadow-md">
             <div className="flex justify-between items-start gap-4">
                 <div>
                     <h4 className="font-bold text-slate-800">{item.productLine} - {item.model?.name}</h4>
@@ -39,7 +39,7 @@ const QuoteItemCard: React.FC<{ item: QuoteItem; onEdit: () => void; onDelete: (
                 </div>
             </div>
             <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-                 <button onClick={onEdit} className="text-xs font-semibold text-indigo-600 hover:underline">Editar</button>
+                 <button onClick={onEdit} className="text-xs font-semibold text-teal-600 hover:underline">Editar</button>
                  <span className="text-slate-300">|</span>
                  <button onClick={onDelete} className="text-xs font-semibold text-red-600 hover:underline">Eliminar</button>
             </div>
@@ -66,8 +66,8 @@ const Step5Summary: React.FC<Step5SummaryProps> = ({
 
     return (
         <div className="animate-fade-in">
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">Resumen de tu presupuesto</h2>
-            <p className="text-slate-500 mb-6">Revisa los artículos de tu presupuesto. Puedes añadir más, editarlos o guardarlo.</p>
+            <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">Resumen de tu presupuesto</h2>
+            <p className="text-slate-500 mb-8">Revisa los artículos de tu presupuesto. Puedes añadir más, editarlos o guardarlo.</p>
 
             <div className="space-y-4 mb-6">
                 {items.map(item => (
@@ -99,7 +99,7 @@ const Step5Summary: React.FC<Step5SummaryProps> = ({
                     <div className="border-t border-slate-300 !my-3"></div>
                     <div className="flex justify-between items-center text-xl font-bold text-slate-800">
                         <span>Total Presupuesto</span>
-                        <span className="text-indigo-600">
+                        <span className="text-teal-600">
                             {totalPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
                         </span>
                     </div>
@@ -109,7 +109,7 @@ const Step5Summary: React.FC<Step5SummaryProps> = ({
              <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <button
                     onClick={onStartNew}
-                    className="w-full px-4 py-3 font-semibold text-indigo-600 bg-indigo-100 rounded-md hover:bg-indigo-200 transition-colors flex items-center justify-center gap-2"
+                    className="w-full px-4 py-3 font-semibold text-teal-600 bg-teal-100 rounded-lg hover:bg-teal-200 transition-colors flex items-center justify-center gap-2"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
@@ -118,7 +118,7 @@ const Step5Summary: React.FC<Step5SummaryProps> = ({
                 </button>
                  <button
                     onClick={onReset}
-                    className="w-full px-4 py-3 text-sm font-semibold text-slate-600 bg-slate-200 rounded-md hover:bg-slate-300 transition-colors"
+                    className="w-full px-4 py-3 text-sm font-semibold text-slate-600 bg-slate-200 rounded-lg hover:bg-slate-300 transition-colors"
                 >
                     Vaciar presupuesto
                 </button>
@@ -128,14 +128,14 @@ const Step5Summary: React.FC<Step5SummaryProps> = ({
                  <button
                     onClick={onGeneratePdfRequest}
                     disabled={items.length === 0}
-                    className="w-full px-4 py-3 font-semibold text-white bg-slate-500 rounded-md hover:bg-slate-600 transition-colors disabled:bg-slate-300"
+                    className="w-full px-4 py-3 font-semibold text-white bg-slate-500 rounded-lg hover:bg-slate-600 transition-colors disabled:bg-slate-300"
                 >
                     Descargar PDF
                 </button>
                  <button
                     onClick={onSaveRequest}
                     disabled={items.length === 0}
-                    className="w-full px-4 py-3 font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-300"
+                    className="w-full px-4 py-3 font-semibold text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:bg-teal-300"
                 >
                     Guardar Presupuesto
                 </button>
