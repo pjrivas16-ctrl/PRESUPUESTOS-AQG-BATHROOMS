@@ -996,9 +996,9 @@ const App: React.FC = () => {
                     <div className="flex-shrink-0">
                       <div className="flex items-center gap-3 mb-2">
                         <img src={aqgLogo} alt="AQG Logo" className="h-8 w-8 rounded-md" />
-                        <h1 className="text-xl font-bold tracking-tight">PRESUPUESTOS AQG</h1>
+                        <h1 className="text-xl font-bold tracking-tight">TARIFA DIGITAL AQG</h1>
                       </div>
-                      <p className="text-slate-400 mb-8 text-sm">Configure su plato de ducha a medida.</p>
+                      <p className="text-slate-400 mb-8 text-sm">PLATOS DE DUCHA</p>
                       
                       {appView === 'quoter' ? (
                         <>
