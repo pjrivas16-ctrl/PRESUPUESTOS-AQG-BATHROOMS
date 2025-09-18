@@ -7,6 +7,7 @@ interface Step5SummaryProps {
     onReset: () => void;
     onSaveRequest: () => void;
     onGeneratePdfRequest: () => void;
+    onGenerateCustomerQuoteRequest: () => void;
     onStartNew: () => void;
     onEdit: (itemId: string) => void;
     onDelete: (itemId: string) => void;
@@ -54,6 +55,7 @@ const Step5Summary: React.FC<Step5SummaryProps> = ({
     onReset, 
     onSaveRequest, 
     onGeneratePdfRequest,
+    onGenerateCustomerQuoteRequest,
     onStartNew,
     onEdit,
     onDelete,
@@ -106,7 +108,7 @@ const Step5Summary: React.FC<Step5SummaryProps> = ({
                 </div>
             )}
             
-             <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <button
                     onClick={onStartNew}
                     className="w-full px-4 py-3 font-semibold text-teal-600 bg-teal-100 rounded-lg hover:bg-teal-200 transition-colors flex items-center justify-center gap-2"
@@ -124,21 +126,42 @@ const Step5Summary: React.FC<Step5SummaryProps> = ({
                 </button>
             </div>
             
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <button
-                    onClick={onGeneratePdfRequest}
-                    disabled={items.length === 0}
-                    className="w-full px-4 py-3 font-semibold text-white bg-slate-500 rounded-lg hover:bg-slate-600 transition-colors disabled:bg-slate-300"
-                >
-                    Descargar PDF
-                </button>
-                 <button
-                    onClick={onSaveRequest}
-                    disabled={items.length === 0}
-                    className="w-full px-4 py-3 font-semibold text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:bg-teal-300"
-                >
-                    Guardar Presupuesto
-                </button>
+            <div className="mt-6 pt-6 border-t border-dashed border-slate-200">
+                <h3 className="text-xl font-bold text-slate-800 tracking-tight mb-4 text-center">Acciones del Presupuesto</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-slate-100 p-4 rounded-lg border border-slate-200 flex flex-col">
+                        <h4 className="font-bold text-slate-700">Presupuesto Interno (Fábrica)</h4>
+                        <p className="text-xs text-slate-500 mb-3 flex-grow">Guardar o generar un PDF con tus condiciones especiales.</p>
+                        <div className="space-y-2">
+                             <button
+                                onClick={onSaveRequest}
+                                disabled={items.length === 0}
+                                className="w-full px-4 py-3 font-semibold text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:bg-teal-300"
+                            >
+                                Guardar Presupuesto
+                            </button>
+                             <button
+                                onClick={onGeneratePdfRequest}
+                                disabled={items.length === 0}
+                                className="w-full px-4 py-3 font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors disabled:bg-slate-300 disabled:text-slate-500"
+                            >
+                                Descargar PDF Interno
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="bg-teal-50 p-4 rounded-lg border border-teal-200 flex flex-col">
+                        <h4 className="font-bold text-teal-800">Presupuesto para Cliente</h4>
+                        <p className="text-xs text-teal-600 mb-3 flex-grow">Generar un PDF para tu cliente final aplicando descuentos sobre el PVP.</p>
+                         <button
+                            onClick={onGenerateCustomerQuoteRequest}
+                            disabled={items.length === 0}
+                            className="w-full px-4 py-3 font-semibold text-white bg-teal-500 rounded-lg hover:bg-teal-600 transition-colors disabled:bg-teal-300"
+                        >
+                            Crear PDF para Cliente
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     );
