@@ -23,6 +23,7 @@ const QuoteItemCard: React.FC<{ item: QuoteItem; onEdit: () => void; onDelete: (
                     <h4 className="font-bold text-slate-800">{item.productLine} - {item.model?.name}</h4>
                     <p className="text-sm text-slate-500">{item.width}cm x {item.length}cm ({item.quantity} {item.quantity > 1 ? 'unidades' : 'unidad'})</p>
                     <p className="text-sm text-slate-500">Color: {item.color?.name || `RAL ${item.ralCode}`}</p>
+                    {item.productLine === 'STRUCT DETAIL' && <p className="text-sm text-slate-500">Marcos: {item.structFrames}</p>}
                     {item.extras.length > 0 && 
                         <p className="text-xs text-slate-400 mt-1">
                             ({item.extras.map(e => {

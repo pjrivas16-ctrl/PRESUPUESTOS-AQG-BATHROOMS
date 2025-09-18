@@ -16,12 +16,12 @@ const Step1ModelSelection: React.FC<Step1ModelSelectionProps> = ({ onUpdate, sel
 
     return (
         <div className="animate-fade-in">
-            <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">Selecciona el modelo</h2>
+            <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">Selecciona la colección</h2>
             <p className="text-slate-500 mb-8">Elige la línea de producto y la cantidad que mejor se adapte a tu diseño.</p>
             
             <div className="space-y-6">
                 <div>
-                    <label htmlFor="product-line" className="block text-sm font-medium text-slate-700 mb-2">Modelo de plato</label>
+                    <label htmlFor="product-line" className="block text-sm font-medium text-slate-700 mb-2">Colección de plato</label>
                     <select
                         id="product-line"
                         name="product-line"
@@ -29,7 +29,7 @@ const Step1ModelSelection: React.FC<Step1ModelSelectionProps> = ({ onUpdate, sel
                         onChange={handleModelChange}
                         className="w-full p-3 bg-white border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 focus:border-teal-500 transition"
                     >
-                        <option value="" disabled>-- Selecciona un modelo --</option>
+                        <option value="" disabled>-- Selecciona una colección --</option>
                         {PRODUCT_LINES.map(line => (
                             <option key={line} value={line}>{line}</option>
                         ))}

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { SHOWER_EXTRAS, SOFTUM_EXTRAS, STANDARD_COLORS, TAPETA_LUXE_EXTRA, CLASSIC_GRILLES } from '../../constants';
+import { SHOWER_EXTRAS, SOFTUM_EXTRAS } from '../../constants';
 import type { ProductOption, ColorOption } from '../../types';
 
 interface Step4ExtrasProps {
@@ -9,6 +9,8 @@ interface Step4ExtrasProps {
     mainColor: ColorOption | null;
     bitonoColor: ColorOption | null | undefined;
     onSelectBitonoColor: (color: ColorOption) => void;
+    structFrames?: 1 | 2 | 3 | 4;
+    onUpdateStructFrames: (frames: 1 | 2 | 3 | 4) => void;
 }
 
 const CheckIcon = () => (
@@ -25,33 +27,69 @@ const Step4Extras: React.FC<Step4ExtrasProps> = ({
     mainColor,
     bitonoColor,
     onSelectBitonoColor,
+    structFrames,
+    onUpdateStructFrames
 }) => {
     
     const isSelected = (extraId: string) => selectedExtras.some(e => e.id === extraId);
     
     const availableExtras = useMemo(() => {
-        if (productLine === 'SOFTUM') {
-            return SOFTUM_EXTRAS;
-        }
-
-        if (productLine === 'CLASSIC') {
-            return CLASSIC_GRILLES;
-        }
+        const generalExtras = SHOWER_EXTRAS.filter(e => e.id.startsWith('corte') || e.id.startsWith('kit'));
         
-        let generalExtras = SHOWER_EXTRAS.filter(e => e.id !== 'ral');
-
-        if (productLine === 'LUXE') {
-            // Para LUXE, se elimina la válvula y el tratamiento antical, y la rejilla es gratuita.
-            const luxeSpecificExtras = generalExtras
-                .filter(e => e.id !== 'valvula' && e.id !== 'tratamiento')
-                .map(e => 
-                    e.id === 'rejilla' ? { ...e, price: 0 } : e
-                );
-            return [...luxeSpecificExtras, TAPETA_LUXE_EXTRA];
+        switch (productLine) {
+            case 'SOFTUM':
+                return [...SOFTUM_EXTRAS, ...generalExtras];
+            case 'LUXE':
+                const luxeGrille = SHOWER_EXTRAS.find(e => e.id === 'rejilla-lacada-luxe');
+                return luxeGrille ? [luxeGrille, ...generalExtras] : generalExtras;
+            case 'FLAT':
+            case 'CLASSIC':
+            case 'STRUCT':
+            case 'CENTRAL':
+            case 'RATIO':
+                const standardGrille = SHOWER_EXTRAS.find(e => e.id === 'rejilla-lacada-standard');
+                return standardGrille ? [standardGrille, ...generalExtras] : generalExtras;
+            default:
+                return generalExtras;
         }
-
-        return generalExtras;
     }, [productLine]);
+
+    const renderStructFramesSelector = () => {
+        if (productLine !== 'STRUCT DETAIL') return null;
+        
+        const frameOptions: { count: (1 | 2 | 3 | 4), discount: string }[] = [
+            { count: 4, discount: 'Precio de tarifa' },
+            { count: 3, discount: '5% de descuento' },
+            { count: 2, discount: '10% de descuento' },
+            { count: 1, discount: '15% de descuento' },
+        ];
+
+        return (
+             <div className="mt-8 pt-6 border-t border-slate-200">
+                <h3 className="text-xl font-semibold text-slate-700 mb-2">Configuración de Marcos</h3>
+                <p className="text-slate-500 mb-4">Selecciona el número de marcos. Menos marcos aplican un descuento sobre el precio base.</p>
+                <div className="grid grid-cols-2 gap-4">
+                    {frameOptions.map(opt => {
+                        const isFrameSelected = structFrames === opt.count;
+                        return (
+                             <div
+                                key={opt.count}
+                                onClick={() => onUpdateStructFrames(opt.count)}
+                                role="radio"
+                                aria-checked={isFrameSelected}
+                                tabIndex={0}
+                                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onUpdateStructFrames(opt.count)}
+                                className={`p-4 border-2 rounded-xl text-center cursor-pointer transition-all duration-200 ${isFrameSelected ? 'border-teal-500 bg-teal-50 ring-2 ring-teal-200' : 'border-slate-200 bg-white hover:border-teal-400'}`}
+                            >
+                                <p className="font-bold text-slate-800">{opt.count} Marco{opt.count > 1 ? 's' : ''}</p>
+                                <p className={`text-sm ${isFrameSelected ? 'text-teal-700 font-semibold' : 'text-slate-500'}`}>{opt.discount}</p>
+                            </div>
+                        )
+                    })}
+                </div>
+            </div>
+        )
+    }
 
     return (
         <div className="animate-fade-in">
@@ -82,47 +120,11 @@ const Step4Extras: React.FC<Step4ExtrasProps> = ({
                                     + {extra.price}€
                                 </div>
                             </div>
-                            
-                            {/* Bitono Color Picker */}
-                            {extra.id === 'bitono' && isCurrentlySelected && (
-                                <div className="mt-3 ml-4 md:ml-14 p-4 bg-teal-50 rounded-lg animate-fade-in">
-                                    <h4 className="text-base font-semibold text-slate-700 mb-4">Elige el color de la tapa</h4>
-                                    
-                                    <div className="flex flex-wrap gap-3 mb-4">
-                                        {STANDARD_COLORS.map((color) => {
-                                            const isSelectedForBitono = bitonoColor?.id === color.id;
-                                            const isSameAsMain = mainColor?.id === color.id;
-                                            return (
-                                                <button
-                                                    key={`bitono-${color.id}`}
-                                                    onClick={(e) => { e.stopPropagation(); onSelectBitonoColor(color); }}
-                                                    disabled={isSameAsMain}
-                                                    className="flex flex-col items-center justify-center space-y-1 group disabled:opacity-40 disabled:cursor-not-allowed"
-                                                    aria-label={`Seleccionar color de tapa ${color.name}`}
-                                                    aria-pressed={isSelectedForBitono}
-                                                >
-                                                    <div
-                                                        style={{ backgroundColor: color.hex }}
-                                                        className={`w-12 h-12 rounded-full border-2 transition-all duration-200
-                                                            ${isSelectedForBitono ? 'border-teal-500 ring-2 ring-offset-2 ring-teal-500' : 'border-slate-300 group-hover:border-teal-400'}
-                                                            ${color.hex === '#FFFFFF' ? 'border-slate-300' : ''}
-                                                        `}
-                                                    ></div>
-                                                    <span className={`text-xs font-medium ${isSelectedForBitono ? 'text-teal-600' : 'text-slate-600'}`}>{color.name}</span>
-                                                </button>
-                                            )
-                                        })}
-                                    </div>
-                                    
-                                     <p className="text-xs text-slate-500 mt-2 p-2 bg-slate-100 rounded-md">
-                                        Para la opción bitono, la tapa solo puede ser de un color de nuestra paleta estándar. No se admiten colores RAL personalizados para la tapa.
-                                    </p>
-                                </div>
-                            )}
                         </div>
                     );
                 })}
             </div>
+            {renderStructFramesSelector()}
         </div>
     );
 };

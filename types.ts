@@ -24,6 +24,7 @@ export interface QuoteState {
     ralCode?: string;
     bitonoColor?: ColorOption | null;
     bitonoRalCode?: string;
+    structFrames?: 1 | 2 | 3 | 4;
 }
 
 export interface QuoteItem extends QuoteState {

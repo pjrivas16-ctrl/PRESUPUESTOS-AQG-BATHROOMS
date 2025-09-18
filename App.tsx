@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import type { QuoteState, ProductOption, ColorOption, User, SavedQuote, StoredUser, QuoteItem } from './types';
-import { PRICE_LIST, STEPS, STANDARD_WIDTHS, STANDARD_LENGTHS, SOFTUM_WIDTHS, SOFTUM_LENGTHS, SHOWER_MODELS, SHOWER_EXTRAS, SOFTUM_EXTRAS, CLASSIC_GRILLES } from './constants';
+import { PRICE_LIST, STEPS, STANDARD_WIDTHS, STANDARD_LENGTHS, SOFTUM_WIDTHS, SOFTUM_LENGTHS, SHOWER_MODELS, SHOWER_EXTRAS, SOFTUM_EXTRAS } from './constants';
 import { authorizedUsers } from './authorizedUsers';
 import { aqgLogo } from './assets';
 
@@ -528,6 +528,7 @@ const App: React.FC = () => {
         ralCode: '',
         bitonoColor: null,
         bitonoRalCode: '',
+        structFrames: 4,
     };
 
     const [currentStep, setCurrentStep] = useState(1);
@@ -600,7 +601,7 @@ const App: React.FC = () => {
     }, [initialQuoteState]);
 
     const calculateItemPrice = useCallback((item: QuoteState, allItems: (QuoteItem | QuoteState)[], includeVat: boolean = true) => {
-        const { productLine, width, length, model, color, extras, quantity } = item;
+        const { productLine, width, length, model, extras, quantity, structFrames } = item;
         if (!model || !productLine) return 0;
 
         let discountPercentage = 0;
@@ -618,27 +619,41 @@ const App: React.FC = () => {
             }
         }
 
-        const basePrice = PRICE_LIST[productLine]?.[width]?.[length] || 0;
+        let basePrice = PRICE_LIST[productLine]?.[width]?.[length] || 0;
+        
+        // Apply STRUCT DETAIL discount
+        if (productLine === 'STRUCT DETAIL' && structFrames) {
+            if (structFrames === 3) basePrice *= 0.95; // 5% discount
+            else if (structFrames === 2) basePrice *= 0.90; // 10% discount
+            else if (structFrames === 1) basePrice *= 0.85; // 15% discount
+        }
+
         const modelPrice = basePrice * (model.priceFactor || 1);
-        const colorPrice = color?.price || 0;
         const extrasPrice = extras.reduce((sum, extra) => sum + extra.price, 0);
         
-        const totalBasePrice = (modelPrice + colorPrice + extrasPrice) * (quantity || 1);
+        const totalBasePrice = (modelPrice + extrasPrice) * (quantity || 1);
         const discountedTotalBasePrice = totalBasePrice * (1 - discountPercentage / 100);
 
         return includeVat ? discountedTotalBasePrice * 1.21 : discountedTotalBasePrice;
     }, [isSpecialUser]);
     
     const calculateOriginalItemPrice = useCallback((item: QuoteState, includeVat: boolean = true) => {
-        const { productLine, width, length, model, color, extras, quantity } = item;
+        const { productLine, width, length, model, extras, quantity, structFrames } = item;
         if (!model || !productLine) return 0;
     
-        const basePrice = PRICE_LIST[productLine]?.[width]?.[length] || 0;
+        let basePrice = PRICE_LIST[productLine]?.[width]?.[length] || 0;
+
+        // Apply STRUCT DETAIL discount for PVP as well
+        if (productLine === 'STRUCT DETAIL' && structFrames) {
+            if (structFrames === 3) basePrice *= 0.95;
+            else if (structFrames === 2) basePrice *= 0.90;
+            else if (structFrames === 1) basePrice *= 0.85;
+        }
+
         const modelPrice = basePrice * (model.priceFactor || 1);
-        const colorPrice = color?.price || 0;
         const extrasPrice = extras.reduce((sum, extra) => sum + extra.price, 0);
         
-        const totalBasePrice = (modelPrice + colorPrice + extrasPrice) * (quantity || 1);
+        const totalBasePrice = (modelPrice + extrasPrice) * (quantity || 1);
 
         return includeVat ? totalBasePrice * 1.21 : totalBasePrice;
     }, []);
@@ -803,6 +818,9 @@ const App: React.FC = () => {
                 `  · Dimensiones: ${item.width}cm x ${item.length}cm`,
                 `  · Color: ${item.color?.name || `RAL ${item.ralCode}`}`,
             ];
+             if (item.productLine === 'STRUCT DETAIL' && item.structFrames) {
+                subDescLines.push(`  · Marcos: ${item.structFrames}`);
+            }
              if (item.extras.length > 0) {
                 const extraNames = item.extras.map(extra => {
                      let extraText = extra.name;
@@ -1089,6 +1107,9 @@ const App: React.FC = () => {
                 `  · Dimensiones: ${item.width}cm x ${item.length}cm`,
                 `  · Color: ${item.color?.name || `RAL ${item.ralCode}`}`,
             ];
+            if (item.productLine === 'STRUCT DETAIL' && item.structFrames) {
+                subDescLines.push(`  · Marcos: ${item.structFrames}`);
+            }
             if (item.extras.length > 0) {
                  subDescLines.push(`  · Extras: ${item.extras.map(e => e.name).join(', ')}`);
             }
@@ -1256,30 +1277,29 @@ const App: React.FC = () => {
         }
     
         const isSoftum = productLine === 'SOFTUM';
-        const isLuxe = productLine === 'LUXE';
-        const isClassic = productLine === 'CLASSIC';
-
+        const isStructDetail = productLine === 'STRUCT DETAIL';
+        const isFlat = productLine.startsWith('FLAT');
+        const isRatio = productLine.startsWith('RATIO');
+        
         const sandModel = SHOWER_MODELS.find(m => m.id === 'sand');
         const pizarraModel = SHOWER_MODELS.find(m => m.id === 'pizarra');
-        const rejillaExtra = SHOWER_EXTRAS.find(e => e.id === 'rejilla');
-        const rejillaInoxClassic = CLASSIC_GRILLES.find(e => e.id === 'rejilla-inox-classic');
+        const lisoModel = SHOWER_MODELS.find(m => m.id === 'lisa');
+
+        let defaultModel = pizarraModel || null;
+        if (isSoftum) defaultModel = sandModel || null;
+        if (isFlat || isRatio) defaultModel = lisoModel || null;
+
 
         setCurrentItemConfig(prev => {
-            let defaultExtras: ProductOption[] = [];
-            if (isLuxe && rejillaExtra) {
-                defaultExtras = [{ ...rejillaExtra, price: 0 }];
-            } else if (isClassic && rejillaInoxClassic) {
-                defaultExtras = [rejillaInoxClassic];
-            }
-
             return {
                 ...initialQuoteState,
                 productLine,
-                model: isSoftum ? sandModel || null : (isLuxe || isClassic ? pizarraModel || null : null),
+                model: defaultModel,
                 width: isSoftum ? SOFTUM_WIDTHS[0] : STANDARD_WIDTHS[1],
                 length: isSoftum ? SOFTUM_LENGTHS[0] : STANDARD_LENGTHS[4],
                 quantity: prev.quantity,
-                extras: defaultExtras,
+                extras: [],
+                structFrames: isStructDetail ? 4 : undefined,
             };
         });
     };
@@ -1343,26 +1363,7 @@ const App: React.FC = () => {
                     newBitonoRalCode = '';
                 }
             } else {
-                let currentExtras = [...prev.extras];
-                
-                if (prev.productLine === 'LUXE') {
-                    if (extra.id === 'tapeta-luxe') {
-                        currentExtras = currentExtras.filter(e => e.id !== 'rejilla');
-                    } else if (extra.id === 'rejilla') {
-                        currentExtras = currentExtras.filter(e => e.id !== 'tapeta-luxe');
-                    }
-                }
-
-                if (prev.productLine === 'CLASSIC') {
-                    const classicGrilleIds = CLASSIC_GRILLES.map(g => g.id);
-                    if (classicGrilleIds.includes(extra.id)) {
-                        // Remove any other classic grille that might be selected
-                        currentExtras = currentExtras.filter(e => !classicGrilleIds.includes(e.id));
-                    }
-                }
-
-                newExtras = [...currentExtras, extra];
-                
+                newExtras = [...prev.extras, extra];
                 if (extra.id === 'ral') {
                     newColor = null; 
                 }
@@ -1381,6 +1382,10 @@ const App: React.FC = () => {
             bitonoColor: color,
             bitonoRalCode: '',
         }));
+    };
+
+    const updateStructFrames = (frames: 1 | 2 | 3 | 4) => {
+        setCurrentItemConfig(prev => ({ ...prev, structFrames: frames }));
     };
 
     const renderQuoter = () => {
@@ -1414,6 +1419,8 @@ const App: React.FC = () => {
                     mainColor={currentItemConfig.color}
                     bitonoColor={currentItemConfig.bitonoColor}
                     onSelectBitonoColor={selectBitonoColor}
+                    structFrames={currentItemConfig.structFrames}
+                    onUpdateStructFrames={updateStructFrames}
                 />;
             case 6:
                 return <Step5Summary 
@@ -1501,7 +1508,7 @@ const App: React.FC = () => {
                                 <span>Promociones</span>
                             </button>
                             <button onClick={() => setIsSettingsOpen(true)} className="w-full text-left px-4 py-3 rounded-lg font-semibold transition-colors hover:bg-slate-700/50 text-slate-300 flex items-center gap-3">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.972.094 2.27-.948 2.286-1.56.38-1.56 2.6 0 2.98.972.54 2.27.094 2.286-.948.836-1.372 2.942-.734-2.106 2.106-.54.972-.094 2.27.948 2.286 1.56.38 1.56 2.6 0 2.98-.972-.54-2.27-.094-2.286.948-.836 1.372-2.942.734-2.106-2.106.54-.972.094-2.27-.948-2.286-1.56-.38-1.56-2.6 0-2.98.972-.54 2.27-.094 2.286-.948.836-1.372 2.942.734 2.106-2.106-.54-.972-.094-2.27.948-2.286zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" /></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.972.094 2.27-.948 2.286-1.56.38-1.56 2.6 0 2.98.972.54 2.27.094 2.286-.948.836-1.372 2.942-.734-2.106 2.106-.54.972-.094-2.27.948 2.286 1.56.38 1.56 2.6 0 2.98-.972-.54-2.27-.094-2.286.948-.836 1.372-2.942.734-2.106-2.106.54-.972.094-2.27-.948-2.286-1.56-.38-1.56-2.6 0-2.98.972-.54 2.27-.094 2.286-.948.836-1.372 2.942.734 2.106-2.106-.54-.972-.094-2.27.948-2.286zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" /></svg>
                                 <span>Ajustes</span>
                             </button>
                         </nav>
