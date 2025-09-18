@@ -217,7 +217,7 @@ const SaveQuoteModal: React.FC<SaveQuoteModalProps> = ({ isOpen, onClose, onConf
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-slate-800">Guardar Presupuesto</h3>
+                            <h3 className="text-xl font-bold text-slate-800">Guardar Presupuesto Interno</h3>
                             <p className="text-sm text-slate-500">Añade los detalles para identificarlo.</p>
                         </div>
                     </div>
@@ -396,7 +396,7 @@ const CustomerQuoteModal: React.FC<CustomerQuoteModalProps> = ({ isOpen, onClose
                         </div>
                         <div>
                             <h3 className="text-xl font-bold text-slate-800">Presupuesto para Cliente</h3>
-                            <p className="text-sm text-slate-500">Aplica descuentos por familia sobre el PVP.</p>
+                            <p className="text-sm text-slate-500">Guarda y genera un PDF con descuentos sobre el PVP.</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
@@ -446,7 +446,7 @@ const CustomerQuoteModal: React.FC<CustomerQuoteModalProps> = ({ isOpen, onClose
 
                 <div className="mt-8 pt-6 border-t border-slate-200 flex justify-end gap-3">
                     <button onClick={onClose} className="px-6 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors">Cancelar</button>
-                    <button onClick={handleConfirm} disabled={!customerName.trim()} className="px-8 py-2 font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 disabled:bg-teal-300 transition-colors">Generar PDF</button>
+                    <button onClick={handleConfirm} disabled={!customerName.trim()} className="px-8 py-2 font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 disabled:bg-teal-300 transition-colors">Guardar y Generar PDF</button>
                 </div>
             </div>
         </div>
@@ -683,13 +683,14 @@ const App: React.FC = () => {
         if (!currentUser || quoteItems.length === 0) return;
 
         const newQuote: SavedQuote = {
-            id: `quote_${Date.now()}`,
+            id: `quote_i_${Date.now()}`,
             timestamp: Date.now(),
             userEmail: currentUser.email,
             quoteItems: quoteItems,
             totalPrice: totalQuotePrice,
             customerName: details.customerName,
-            projectReference: details.projectReference
+            projectReference: details.projectReference,
+            type: 'internal'
         };
 
         const allQuotes = JSON.parse(localStorage.getItem('quotes') || '[]') as SavedQuote[];
@@ -766,7 +767,7 @@ const App: React.FC = () => {
              yPos += (valueLines.length * 5) + 2;
         };
 
-        addHeaderDetail('Nº Presupuesto:', savedQuote.id.replace('quote_', ''));
+        addHeaderDetail('Nº Presupuesto:', savedQuote.id.replace('quote_i_', ''));
         addHeaderDetail('Fecha:', new Date(savedQuote.timestamp).toLocaleDateString('es-ES'));
         yPos += 4;
         addHeaderDetail('Cliente:', savedQuote.customerName || 'Cliente sin especificar');
@@ -994,30 +995,30 @@ const App: React.FC = () => {
         }
 
     }, [currentUser]);
-
-    const handleGenerateCustomerPdf = useCallback(async (details: { discounts: { [key: string]: number }, customerName: string, projectReference: string }) => {
-        if (!window.jspdf || !currentUser || quoteItems.length === 0) return;
     
-        const { discounts, customerName, projectReference } = details;
+    const generateCustomerPdf = useCallback(async (quote: SavedQuote) => {
+        if (!window.jspdf || !currentUser || !quote.customerDiscounts) return;
+
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-    
+        const { quoteItems, customerDiscounts, customerName, projectReference, pvpTotalPrice, totalPrice } = quote;
+
         const PRIMARY_COLOR = '#0d9488';
         const TEXT_COLOR = '#1f2937';
         const SECONDARY_TEXT_COLOR = '#6b7280';
         const BORDER_COLOR = '#e5e7eb';
         const PAGE_MARGIN = 15;
         const CONTENT_WIDTH = 210 - (PAGE_MARGIN * 2);
-    
+
         let yPos = 30;
-    
+
         const checkPageBreak = (spaceNeeded: number) => {
             if (yPos + spaceNeeded > 297 - PAGE_MARGIN - 15) {
                 doc.addPage();
                 yPos = PAGE_MARGIN;
             }
         };
-    
+
         // --- PDF Header ---
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(TEXT_COLOR);
@@ -1031,14 +1032,14 @@ const App: React.FC = () => {
             yPos += 5;
             doc.text(`Att: ${currentUser.preparedBy}`, PAGE_MARGIN, yPos);
         }
-    
+
         const titleX = 210 - PAGE_MARGIN;
         yPos = 30;
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(24);
         doc.setTextColor(PRIMARY_COLOR);
         doc.text("PRESUPUESTO", titleX, yPos, { align: 'right' });
-    
+
         yPos += 10;
         doc.setFontSize(10);
         const addHeaderDetail = (label: string, value: string) => {
@@ -1052,15 +1053,15 @@ const App: React.FC = () => {
             doc.text(valueLines, valueX, yPos, { align: 'left', baseline: 'top' });
             yPos += (valueLines.length * 5) + 2;
         };
-    
-        addHeaderDetail('Nº Presupuesto:', `C-${Date.now().toString().slice(-6)}`);
-        addHeaderDetail('Fecha:', new Date().toLocaleDateString('es-ES'));
+
+        addHeaderDetail('Nº Presupuesto:', quote.id.replace('quote_c_', 'C-'));
+        addHeaderDetail('Fecha:', new Date(quote.timestamp).toLocaleDateString('es-ES'));
         yPos += 4;
-        addHeaderDetail('Cliente:', customerName);
+        addHeaderDetail('Cliente:', customerName || '');
         if (projectReference) {
             addHeaderDetail('Ref. Proyecto:', projectReference);
         }
-    
+
         // --- Table Header ---
         yPos = Math.max(yPos, 80) + 15;
         doc.setFontSize(10);
@@ -1074,16 +1075,15 @@ const App: React.FC = () => {
         doc.text("P. UNITARIO", 168, yPos, { align: 'right' });
         doc.text("TOTAL", 210 - PAGE_MARGIN - 5, yPos, { align: 'right' });
         yPos += 3;
-    
+
         // --- Table Rows ---
         for (const [index, item] of quoteItems.entries()) {
             const startY = yPos;
             const isEven = index % 2 === 0;
-            const discountPerc = item.productLine ? (discounts[item.productLine] || 0) : 0;
+            const discountPerc = item.productLine ? (customerDiscounts[item.productLine] || 0) : 0;
             const itemOriginalBasePrice = calculateOriginalItemPrice(item, false);
             const itemDiscountedBasePrice = itemOriginalBasePrice * (1 - discountPerc / 100);
-    
-            // ... (Row drawing logic, similar to the other PDF function but with new prices)
+            
             const mainDesc = `Plato de ducha ${item.productLine} - ${item.model?.name}`;
             const subDescLines = [
                 `  · Dimensiones: ${item.width}cm x ${item.length}cm`,
@@ -1106,6 +1106,7 @@ const App: React.FC = () => {
             checkPageBreak(rowHeight);
 
             if (isEven) doc.setFillColor(249, 250, 251);
+            else doc.setFillColor(255, 255, 255);
             doc.rect(PAGE_MARGIN, startY, CONTENT_WIDTH, rowHeight, 'F');
             doc.setDrawColor(BORDER_COLOR);
             doc.rect(PAGE_MARGIN, startY, CONTENT_WIDTH, rowHeight);
@@ -1135,21 +1136,15 @@ const App: React.FC = () => {
 
             yPos = startY + rowHeight;
         }
-    
+
         // --- Totals Section ---
         yPos += 10;
         checkPageBreak(60);
-    
-        const totalPVP = quoteItems.reduce((sum, item) => sum + calculateOriginalItemPrice(item, false), 0);
-        const totalDiscount = quoteItems.reduce((sum, item) => {
-            if (!item.productLine) return sum;
-            const discountPerc = discounts[item.productLine] || 0;
-            return sum + (calculateOriginalItemPrice(item, false) * (discountPerc / 100));
-        }, 0);
-        const finalBase = totalPVP - totalDiscount;
+
+        const finalBase = totalPrice / 1.21;
+        const totalDiscount = (pvpTotalPrice || 0) - finalBase;
         const taxAmount = finalBase * 0.21;
-        const finalPrice = finalBase + taxAmount;
-    
+
         const totalsX = 130;
         const addPriceLine = (label: string, amount: number, bold = false, isTotal = false) => {
             checkPageBreak(12);
@@ -1167,8 +1162,8 @@ const App: React.FC = () => {
             doc.text(amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }), 210 - PAGE_MARGIN, yPos, { align: 'right' });
             yPos += isTotal ? 12 : 8;
         };
-    
-        addPriceLine("Subtotal (PVP)", totalPVP);
+
+        addPriceLine("Subtotal (PVP)", pvpTotalPrice || 0);
         if (totalDiscount > 0) {
             addPriceLine("Descuento Aplicado", -totalDiscount);
             yPos += 2;
@@ -1178,8 +1173,8 @@ const App: React.FC = () => {
         }
         addPriceLine("IVA (21%)", taxAmount);
         yPos += 2;
-        addPriceLine("TOTAL", finalPrice, true, true);
-    
+        addPriceLine("TOTAL", totalPrice, true, true);
+
         // --- Footer ---
         const totalPages = doc.internal.getNumberOfPages();
         for (let i = 1; i <= totalPages; i++) {
@@ -1192,9 +1187,66 @@ const App: React.FC = () => {
             doc.text('Presupuesto generado con la aplicación de AQG Bathrooms. Precios sin IVA.', PAGE_MARGIN, footerY);
             doc.text(`Página ${i} de ${totalPages}`, 210 - PAGE_MARGIN, footerY, { align: 'right' });
         }
-    
+
         doc.output('dataurlnewwindow');
-    }, [currentUser, quoteItems, calculateOriginalItemPrice]);
+    }, [currentUser, calculateOriginalItemPrice]);
+
+    const handleConfirmCustomerQuote = useCallback(async (details: { discounts: { [key: string]: number }, customerName: string, projectReference: string }) => {
+        if (!currentUser || quoteItems.length === 0) return;
+
+        const { discounts, customerName, projectReference } = details;
+
+        const pvpTotalPrice = quoteItems.reduce((sum, item) => sum + calculateOriginalItemPrice(item, false), 0);
+        
+        const totalDiscountAmount = quoteItems.reduce((sum, item) => {
+            if (!item.productLine) return sum;
+            const discountPerc = discounts[item.productLine] || 0;
+            const itemPVP = calculateOriginalItemPrice(item, false);
+            return sum + (itemPVP * (discountPerc / 100));
+        }, 0);
+
+        const finalBase = pvpTotalPrice - totalDiscountAmount;
+        const finalPrice = finalBase * 1.21;
+
+        const newQuote: SavedQuote = {
+            id: `quote_c_${Date.now()}`,
+            timestamp: Date.now(),
+            userEmail: currentUser.email,
+            quoteItems: quoteItems,
+            totalPrice: finalPrice,
+            customerName: customerName,
+            projectReference: projectReference,
+            type: 'customer',
+            pvpTotalPrice: pvpTotalPrice,
+            customerDiscounts: discounts,
+        };
+
+        try {
+            const allQuotes = JSON.parse(localStorage.getItem('quotes') || '[]') as SavedQuote[];
+            allQuotes.push(newQuote);
+            localStorage.setItem('quotes', JSON.stringify(allQuotes));
+            await generateCustomerPdf(newQuote);
+            setAppView('myQuotes');
+        } catch (error) {
+             console.error("Failed to save or generate customer quote:", error);
+             alert("No se pudo guardar o generar el presupuesto del cliente.");
+        }
+    }, [currentUser, quoteItems, calculateOriginalItemPrice, generateCustomerPdf]);
+    
+    const handleViewPdfForQuote = useCallback(async (quote: SavedQuote) => {
+        try {
+            if (quote.type === 'customer') {
+                await generateCustomerPdf(quote);
+            } else { // 'internal' or undefined
+                handleOpenDiscountModal(quote);
+            }
+        } catch (error) {
+             console.error("Failed to generate PDF for quote:", quote.id, error);
+             const errorMessage = error instanceof Error ? error.message : "Ha ocurrido un error desconocido.";
+             alert(`No se pudo generar el PDF: ${errorMessage}`);
+        }
+    }, [generateCustomerPdf, handleOpenDiscountModal]);
+
 
     const updateProductLine = (productLine: string) => {
         if (productLine === 'CUSTOM') {
@@ -1377,7 +1429,8 @@ const App: React.FC = () => {
                             userEmail: currentUser.email,
                             quoteItems: quoteItems,
                             totalPrice: totalQuotePrice,
-                            customerName: 'Cliente (no guardado)'
+                            customerName: 'Cliente (no guardado)',
+                            type: 'internal'
                         };
                         handleOpenDiscountModal(temporaryQuote);
                     }}
@@ -1496,7 +1549,12 @@ const App: React.FC = () => {
                             </div>
                         )}
                         {appView === 'myQuotes' && (
-                            <MyQuotesPage user={currentUser} onDuplicateQuote={(quoteItems) => handleReset(quoteItems)} onViewPdf={handleOpenDiscountModal} />
+                            <MyQuotesPage 
+                                user={currentUser} 
+                                onDuplicateQuote={(quoteItems) => handleReset(quoteItems)} 
+                                onViewPdf={handleViewPdfForQuote} 
+                                calculateInternalItemPrice={(item, allItems) => calculateItemPrice(item, allItems, false)}
+                            />
                         )}
                          {appView === 'promotions' && (
                              <PromotionsPage onNavigateToQuoter={() => handleReset()} />
@@ -1528,7 +1586,7 @@ const App: React.FC = () => {
             <CustomerQuoteModal
                 isOpen={isCustomerQuoteModalOpen}
                 onClose={() => setIsCustomerQuoteModalOpen(false)}
-                onConfirm={handleGenerateCustomerPdf}
+                onConfirm={handleConfirmCustomerQuote}
                 quoteItems={quoteItems}
                 calculateOriginalItemPrice={calculateOriginalItemPrice}
             />

@@ -5,53 +5,56 @@ interface MyQuotesPageProps {
     user: User;
     onDuplicateQuote: (quoteItems: QuoteItem[]) => void;
     onViewPdf: (quote: SavedQuote) => void;
+    calculateInternalItemPrice: (item: QuoteItem, allItems: QuoteItem[]) => number;
 }
 
-const QuoteDetailItem: React.FC<{ label: string; value?: string | null | React.ReactNode }> = ({ label, value }) => {
-    if (!value) return null;
-    return (
-        <div className="flex justify-between items-start py-3">
-            <span className="text-sm text-slate-500">{label}</span>
-            <div className="font-semibold text-slate-700 text-right text-sm">{value}</div>
-        </div>
-    );
-};
 
-
-const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onViewPdf }) => {
-    const [quotes, setQuotes] = useState<SavedQuote[]>([]);
+const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onViewPdf, calculateInternalItemPrice }) => {
+    const [internalQuotes, setInternalQuotes] = useState<SavedQuote[]>([]);
+    const [customerQuotes, setCustomerQuotes] = useState<SavedQuote[]>([]);
     const [selectedQuote, setSelectedQuote] = useState<SavedQuote | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [activeTab, setActiveTab] = useState<'internal' | 'customer'>('internal');
 
     useEffect(() => {
         try {
             const allQuotes = JSON.parse(localStorage.getItem('quotes') || '[]') as SavedQuote[];
             const userQuotes = allQuotes
                 .filter(q => q.userEmail === user.email)
-                .sort((a, b) => b.timestamp - a.timestamp); // Sort by most recent
-            setQuotes(userQuotes);
+                .sort((a, b) => b.timestamp - a.timestamp);
+            
+            setInternalQuotes(userQuotes.filter(q => q.type === 'internal' || !q.type));
+            setCustomerQuotes(userQuotes.filter(q => q.type === 'customer'));
         } catch (error) {
             console.error("Failed to load quotes from localStorage", error);
         }
     }, [user.email]);
 
+    const quotesToDisplay = activeTab === 'internal' ? internalQuotes : customerQuotes;
+
     const filteredQuotes = useMemo(() => {
-        if (!searchTerm) return quotes;
+        if (!searchTerm) return quotesToDisplay;
         const lowercasedFilter = searchTerm.toLowerCase();
-        return quotes.filter(quote => 
-            quote.id.toLowerCase().includes(lowercasedFilter) ||
-            quote.customerName?.toLowerCase().includes(lowercasedFilter) ||
-            quote.projectReference?.toLowerCase().includes(lowercasedFilter)
+        return quotesToDisplay.filter(quote => 
+            (quote.id.toLowerCase().includes(lowercasedFilter)) ||
+            (quote.customerName?.toLowerCase().includes(lowercasedFilter)) ||
+            (quote.projectReference?.toLowerCase().includes(lowercasedFilter))
         );
-    }, [quotes, searchTerm]);
+    }, [quotesToDisplay, searchTerm]);
 
 
     const handleToggleOrdered = (quoteId: string) => {
         const timestamp = Date.now();
-        const updatedQuotes = quotes.map(q =>
-            q.id === quoteId ? { ...q, orderedTimestamp: q.orderedTimestamp ? undefined : timestamp } : q
-        );
-        setQuotes(updatedQuotes);
+        const updateQuotes = (quotesList: SavedQuote[]) => 
+            quotesList.map(q => 
+                q.id === quoteId ? { ...q, orderedTimestamp: q.orderedTimestamp ? undefined : timestamp } : q
+            );
+
+        if (activeTab === 'internal') {
+            setInternalQuotes(updateQuotes(internalQuotes));
+        } else {
+            setCustomerQuotes(updateQuotes(customerQuotes));
+        }
 
         if (selectedQuote?.id === quoteId) {
             setSelectedQuote(prev => prev ? { ...prev, orderedTimestamp: prev.orderedTimestamp ? undefined : timestamp } : null);
@@ -59,19 +62,10 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
 
         try {
             const allStoredQuotes = JSON.parse(localStorage.getItem('quotes') || '[]') as SavedQuote[];
-            const quotesToSave = allStoredQuotes.map(q => {
-                 if (q.id === quoteId) {
-                    const currentQuote = quotes.find(quote => quote.id === quoteId);
-                    if (currentQuote) { // It should always be found, but check to be safe
-                         return { ...q, orderedTimestamp: currentQuote.orderedTimestamp ? undefined : timestamp };
-                    }
-                }
-                return q;
-            });
-             const finalQuotes = quotesToSave.map(q => q.id === quoteId ? updatedQuotes.find(uq => uq.id === q.id) || q : q);
-
-
-            localStorage.setItem('quotes', JSON.stringify(finalQuotes));
+            const quotesToSave = allStoredQuotes.map(q => 
+                q.id === quoteId ? { ...q, orderedTimestamp: q.orderedTimestamp ? undefined : timestamp } : q
+            );
+            localStorage.setItem('quotes', JSON.stringify(quotesToSave));
         } catch (error) {
             console.error("Failed to update quote in localStorage", error);
         }
@@ -86,8 +80,9 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
     const renderModal = () => {
         if (!selectedQuote) return null;
 
-        const { quoteItems, totalPrice } = selectedQuote;
-        const quoteNumber = selectedQuote.id.replace('quote_', '');
+        const { quoteItems } = selectedQuote;
+        const quoteNumber = selectedQuote.id.replace(/quote_i_|quote_c_/g, '');
+        const isCustomerQuote = selectedQuote.type === 'customer';
 
         const subject = `Pedido para Presupuesto: ${selectedQuote.projectReference || quoteNumber}`;
         
@@ -114,6 +109,9 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                 });
             }
         });
+        
+        const internalTotalBase = quoteItems.reduce((sum, item) => sum + calculateInternalItemPrice(item, quoteItems), 0);
+        const internalTotal = internalTotalBase * 1.21;
 
         body += `\n--- FIN DETALLES ---\n\n` +
                 `Preparado por: ${user.companyName} (${user.email})\n`;
@@ -122,7 +120,7 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
             body += `Contacto: ${user.preparedBy}\n`;
         }
         
-        body += `\nTotal Presupuesto: ${totalPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}\n\n` +
+        body += `\nTotal (condiciones internas): ${internalTotal.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}\n\n` +
                 `Gracias.`;
 
         const mailtoLink = `mailto:sandra.martinez@aqgbathrooms.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -132,8 +130,8 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                 <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                     <div className="flex justify-between items-start">
                         <div>
-                             <h3 className="text-xl font-bold text-slate-800">Detalles del Presupuesto</h3>
-                             <p className="text-sm text-slate-500">Nº <span className="font-semibold">{quoteNumber}</span></p>
+                             <h3 className="text-xl font-bold text-slate-800">Detalles del Presupuesto {isCustomerQuote ? ' (Cliente)' : '(Interno)'}</h3>
+                             <p className="text-sm text-slate-500">Nº <span className="font-semibold">{isCustomerQuote ? 'C-' : ''}{quoteNumber}</span></p>
                              <p className="text-sm text-slate-500">Para: <span className="font-semibold">{selectedQuote.customerName}</span></p>
                              {selectedQuote.projectReference && <p className="text-xs text-slate-500">Ref: {selectedQuote.projectReference}</p>}
                         </div>
@@ -161,9 +159,20 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                         ))}
                     </div>
 
-                    <div className="mt-4 text-right">
-                        <span className="text-slate-500">Total Presupuesto: </span>
-                        <span className="text-xl font-bold text-teal-600">{totalPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+                    <div className="mt-4 bg-slate-50 p-4 rounded-lg space-y-2">
+                        {isCustomerQuote ? (
+                            <>
+                                <div className="flex justify-between items-center text-sm text-slate-600"><span>Subtotal (PVP)</span><span>{selectedQuote.pvpTotalPrice?.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span></div>
+                                <div className="flex justify-between items-center text-sm text-slate-600"><span>Descuento</span><span className="text-red-600">-{((selectedQuote.pvpTotalPrice || 0) - (selectedQuote.totalPrice / 1.21)).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span></div>
+                                <div className="border-t border-slate-200 !my-2"></div>
+                                <div className="flex justify-between items-center text-sm font-semibold text-slate-800"><span>Base Imponible</span><span>{(selectedQuote.totalPrice / 1.21).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span></div>
+                            </>
+                        ) : (
+                             <div className="flex justify-between items-center text-sm font-semibold text-slate-800"><span>Base Imponible</span><span>{(selectedQuote.totalPrice / 1.21).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span></div>
+                        )}
+                         <div className="flex justify-between items-center text-sm text-slate-600"><span>IVA (21%)</span><span>{(selectedQuote.totalPrice - selectedQuote.totalPrice / 1.21).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span></div>
+                         <div className="border-t-2 border-slate-200 !my-3"></div>
+                         <div className="flex justify-between items-center text-xl font-bold"><span>TOTAL</span><span className="text-teal-600">{selectedQuote.totalPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span></div>
                     </div>
 
                     <div className="mt-6 grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -206,6 +215,23 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                 <p className="text-slate-500 mt-2">Busca, visualiza y gestiona tu historial de cotizaciones.</p>
             </div>
             
+             <div className="mb-4">
+                <div className="flex border-b border-slate-200">
+                    <button
+                        onClick={() => setActiveTab('internal')}
+                        className={`px-4 py-3 font-semibold text-sm transition-colors ${activeTab === 'internal' ? 'border-b-2 border-teal-500 text-teal-600' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        Presupuestos Internos
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('customer')}
+                        className={`px-4 py-3 font-semibold text-sm transition-colors ${activeTab === 'customer' ? 'border-b-2 border-teal-500 text-teal-600' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        Presupuestos para Clientes
+                    </button>
+                </div>
+            </div>
+
             <div className="mb-4">
                 <input 
                     type="text"
@@ -222,10 +248,10 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2-2z" />
                     </svg>
                     <h3 className="mt-2 text-lg font-medium text-slate-800">
-                        {searchTerm ? 'No se encontraron resultados' : 'No tienes presupuestos guardados'}
+                        {searchTerm ? 'No se encontraron resultados' : `No tienes ${activeTab === 'internal' ? 'presupuestos internos' : 'presupuestos de cliente'} guardados`}
                     </h3>
                     <p className="mt-1 text-sm text-slate-500">
-                        {searchTerm ? 'Prueba con otros términos de búsqueda.' : 'Crea tu primer presupuesto para verlo aquí.'}
+                        {searchTerm ? 'Prueba con otros términos de búsqueda.' : 'Crea un nuevo presupuesto para verlo aquí.'}
                     </p>
                 </div>
             ) : (
@@ -253,7 +279,7 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                                         </p>
                                     </div>
                                     <p className="text-sm text-slate-500 mt-1">
-                                        {savedQuote.projectReference ? `Ref: ${savedQuote.projectReference}` : `Nº Presupuesto: ${savedQuote.id.replace('quote_', '')}`}
+                                        {savedQuote.projectReference ? `Ref: ${savedQuote.projectReference}` : `Nº Presupuesto: ${savedQuote.id.replace(/quote_i_|quote_c_/g, '')}`}
                                     </p>
                                      <p className="text-xs text-slate-400 mt-1">
                                         {new Date(savedQuote.timestamp).toLocaleString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}

@@ -47,8 +47,13 @@ export interface SavedQuote {
     timestamp: number;
     userEmail: string;
     quoteItems: QuoteItem[];
-    totalPrice: number;
+    totalPrice: number; // For internal, it's the final internal price. For customer, it's the final customer price.
     orderedTimestamp?: number;
     customerName?: string;
     projectReference?: string;
+    
+    // New fields for quote separation
+    type: 'internal' | 'customer';
+    pvpTotalPrice?: number; // Total based on PVP, before any discounts
+    customerDiscounts?: { [key: string]: number };
 }
