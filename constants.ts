@@ -116,21 +116,21 @@ export const SHOWER_MODELS: ProductOption[] = [
     {
         id: 'pizarra',
         name: 'Textura Pizarra',
-        description: 'Textura natural y antideslizante (Clase 2/3). Elegancia y seguridad en uno.',
+        description: 'Textura natural y antideslizante. Elegancia y seguridad en uno.',
         price: 0,
         priceFactor: 1.0,
     },
     {
         id: 'lisa',
         name: 'Textura Lisa',
-        description: 'Superficie completamente lisa (Clase 3) para un look minimalista. Fácil de limpiar.',
+        description: 'Superficie completamente lisa para un look minimalista. Fácil de limpiar.',
         price: 0,
-        priceFactor: 1.0, // Assuming same price factor, prices are per table
+        priceFactor: 1.0, 
     },
     {
         id: 'sand',
         name: 'Textura Sand',
-        description: 'Textura arenosa suave al tacto (Clase 3), exclusiva del modelo SOFTUM.',
+        description: 'Textura arenosa suave al tacto, exclusiva del modelo SOFTUM.',
         price: 0,
         priceFactor: 1.0,
     }
