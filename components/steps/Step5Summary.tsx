@@ -16,24 +16,36 @@ interface Step5SummaryProps {
 
 
 const QuoteItemCard: React.FC<{ item: QuoteItem; onEdit: () => void; onDelete: () => void; price: number; }> = ({ item, onEdit, onDelete, price }) => {
+    const isKitProduct = item.productLine === 'KITS Y ACCESORIOS';
+
     return (
         <div className="bg-white border border-slate-200 p-4 rounded-lg shadow-sm transition-shadow hover:shadow-md">
             <div className="flex justify-between items-start gap-4">
                 <div>
-                    <h4 className="font-bold text-slate-800">{item.productLine} - {item.model?.name}</h4>
-                    <p className="text-sm text-slate-500">{item.width}cm x {item.length}cm ({item.quantity} {item.quantity > 1 ? 'unidades' : 'unidad'})</p>
-                    <p className="text-sm text-slate-500">Color: {item.color?.name || `RAL ${item.ralCode}`}</p>
-                    {item.productLine === 'STRUCT DETAIL' && <p className="text-sm text-slate-500">Marcos: {item.structFrames}</p>}
-                    {item.extras.length > 0 && 
-                        <p className="text-xs text-slate-400 mt-1">
-                            ({item.extras.map(e => {
-                                if (e.id === 'bitono' && item.bitonoColor) {
-                                    return `Tapa bitono: ${item.bitonoColor.name}`;
-                                }
-                                return e.name;
-                            }).join(', ')})
-                        </p>
-                    }
+                    {isKitProduct ? (
+                        <>
+                            <h4 className="font-bold text-slate-800">{item.kitProduct?.name} ({item.quantity} {item.quantity > 1 ? 'unidades' : 'unidad'})</h4>
+                            {item.kitProduct?.id === 'kit-pintura' && <p className="text-sm text-slate-500">Color: {item.color?.name || `RAL ${item.ralCode}`}</p>}
+                            {item.invoiceReference && <p className="text-sm text-slate-500">Ref. Factura: {item.invoiceReference}</p>}
+                        </>
+                    ) : (
+                        <>
+                            <h4 className="font-bold text-slate-800">{item.productLine} - {item.model?.name}</h4>
+                            <p className="text-sm text-slate-500">{item.width}cm x {item.length}cm ({item.quantity} {item.quantity > 1 ? 'unidades' : 'unidad'})</p>
+                            <p className="text-sm text-slate-500">Color: {item.color?.name || `RAL ${item.ralCode}`}</p>
+                            {item.productLine === 'STRUCT DETAIL' && <p className="text-sm text-slate-500">Marcos: {item.structFrames}</p>}
+                            {item.extras.length > 0 && 
+                                <p className="text-xs text-slate-400 mt-1">
+                                    ({item.extras.map(e => {
+                                        if (e.id === 'bitono' && item.bitonoColor) {
+                                            return `Tapa bitono: ${item.bitonoColor.name}`;
+                                        }
+                                        return e.name;
+                                    }).join(', ')})
+                                </p>
+                            }
+                        </>
+                    )}
                 </div>
                  <div className="text-right flex-shrink-0">
                     <p className="font-bold text-slate-800">{price.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</p>
@@ -117,7 +129,7 @@ const Step5Summary: React.FC<Step5SummaryProps> = ({
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
                     </svg>
-                    Añadir otro modelo
+                    Añadir otro artículo
                 </button>
                  <button
                     onClick={onReset}

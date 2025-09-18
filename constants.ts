@@ -109,7 +109,23 @@ export const PRODUCT_LINES = [
     'CENTRAL TECH',
     'RATIO',
     'RATIO TECH',
+    'KITS Y ACCESORIOS',
     'CUSTOM',
+];
+
+export const KIT_PRODUCTS: ProductOption[] = [
+    {
+        id: 'kit-reparacion',
+        name: 'Kit de reparación',
+        description: 'Kit para reparar pequeños desperfectos en la superficie.',
+        price: 20,
+    },
+    {
+        id: 'kit-pintura',
+        name: 'Kit de pintura',
+        description: 'Kit de pintura para retoques o personalización.',
+        price: 45,
+    },
 ];
 
 export const SHOWER_MODELS: ProductOption[] = [
@@ -192,18 +208,6 @@ export const SHOWER_EXTRAS: ProductOption[] = [
         description: 'Corte especial (salvar columnas, etc.) sin acabado.',
         price: 40,
     },
-     {
-        id: 'kit-reparacion',
-        name: 'Kit de reparación',
-        description: 'Kit para reparar pequeños desperfectos en la superficie.',
-        price: 20,
-    },
-    {
-        id: 'kit-pintura',
-        name: 'Kit de pintura',
-        description: 'Kit de pintura para retoques o personalización.',
-        price: 45,
-    },
 ];
 
 export const SOFTUM_EXTRAS: ProductOption[] = [
@@ -221,11 +225,18 @@ export const STANDARD_LENGTHS = [80, 90, 100, 110, 120, 130, 140, 150, 160, 170,
 export const SOFTUM_WIDTHS = [70, 80, 90];
 export const SOFTUM_LENGTHS = [100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
 
-export const STEPS = [
+export const SHOWER_TRAY_STEPS = [
     { number: 1, title: 'Modelo' },
     { number: 2, title: 'Dimensiones' },
     { number: 3, title: 'Textura' },
     { number: 4, title: 'Color' },
     { number: 5, title: 'Extras' },
     { number: 6, title: 'Resumen' },
+];
+
+export const KITS_STEPS = [
+    { number: 1, title: 'Colección' },
+    { number: 2, title: 'Selección de Kit' },
+    { number: 3, title: 'Detalles' },
+    { number: 4, title: 'Resumen' },
 ];

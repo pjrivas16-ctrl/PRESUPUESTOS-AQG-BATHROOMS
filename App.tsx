@@ -1,6 +1,7 @@
+
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import type { QuoteState, ProductOption, ColorOption, User, SavedQuote, StoredUser, QuoteItem } from './types';
-import { PRICE_LIST, STEPS, STANDARD_WIDTHS, STANDARD_LENGTHS, SOFTUM_WIDTHS, SOFTUM_LENGTHS, SHOWER_MODELS, SHOWER_EXTRAS, SOFTUM_EXTRAS } from './constants';
+import { PRICE_LIST, SHOWER_TRAY_STEPS, KITS_STEPS, STANDARD_WIDTHS, STANDARD_LENGTHS, SOFTUM_WIDTHS, SOFTUM_LENGTHS, SHOWER_MODELS, SHOWER_EXTRAS, KIT_PRODUCTS } from './constants';
 import { authorizedUsers } from './authorizedUsers';
 import { aqgLogo } from './assets';
 
@@ -11,6 +12,8 @@ import Step2Model from './components/steps/Step2Model';
 import Step3Color from './components/steps/Step3Color';
 import Step4Extras from './components/steps/Step4Extras';
 import Step5Summary from './components/steps/Step5Summary';
+import Step2KitSelection from './components/steps/kits/Step2KitSelection';
+import Step3KitDetails from './components/steps/kits/Step3KitDetails';
 import NextPrevButtons from './components/NextPrevButtons';
 import AuthPage from './components/auth/AuthPage';
 import MyQuotesPage from './components/MyQuotesPage';
@@ -519,16 +522,12 @@ const App: React.FC = () => {
 
     const initialQuoteState: QuoteState = {
         productLine: null,
-        width: STANDARD_WIDTHS[1],
-        length: STANDARD_LENGTHS[4],
+        width: 0,
+        length: 0,
         quantity: 1,
         model: null,
         color: null,
         extras: [],
-        ralCode: '',
-        bitonoColor: null,
-        bitonoRalCode: '',
-        structFrames: 4,
     };
 
     const [currentStep, setCurrentStep] = useState(1);
@@ -536,26 +535,34 @@ const App: React.FC = () => {
     const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([]);
     const [editingItemId, setEditingItemId] = useState<string | null>(null);
 
+    const isKitFlow = currentItemConfig.productLine === 'KITS Y ACCESORIOS';
+    const currentSteps = isKitFlow ? KITS_STEPS : SHOWER_TRAY_STEPS;
+    
     const isNextDisabled = useMemo(() => {
-        if (currentStep === 1 && (!currentItemConfig.productLine || currentItemConfig.productLine === 'CUSTOM' || currentItemConfig.quantity < 1)) return true;
-        if (currentStep === 3 && !currentItemConfig.model) return true;
-        if (currentStep === 4) {
-             const hasRalExtra = currentItemConfig.extras.some(e => e.id === 'ral');
-             if (!currentItemConfig.color && !hasRalExtra) {
-                 return true;
+        const { productLine, quantity, model, color, ralCode, extras, kitProduct } = currentItemConfig;
+        
+        if (currentStep === 1 && (!productLine || productLine === 'CUSTOM' || quantity < 1)) return true;
+        
+        if (isKitFlow) {
+             if (currentStep === 2 && !kitProduct) return true;
+             if (currentStep === 3) {
+                if (kitProduct?.id === 'kit-pintura') {
+                    const hasRal = extras.some(e => e.id === 'ral');
+                    if (!color && !hasRal) return true;
+                    if (hasRal && (!ralCode || ralCode.trim() === '')) return true;
+                }
              }
-             if (hasRalExtra && (!currentItemConfig.ralCode || currentItemConfig.ralCode.trim() === '')) {
-                 return true;
-             }
-        }
-        if (currentStep === 5) {
-            const hasBitono = currentItemConfig.extras.some(e => e.id === 'bitono');
-            if (hasBitono && !currentItemConfig.bitonoColor) {
-                return true;
+        } else { // Shower Tray Flow
+            if (currentStep === 3 && !model) return true;
+            if (currentStep === 4) {
+                 const hasRal = extras.some(e => e.id === 'ral');
+                 if (!color && !hasRal) return true;
+                 if (hasRal && (!ralCode || ralCode.trim() === '')) return true;
             }
         }
+
         return false;
-    }, [currentStep, currentItemConfig]);
+    }, [currentStep, currentItemConfig, isKitFlow]);
     
     const handleSaveAndFinishItem = useCallback(() => {
         setQuoteItems(prevItems => {
@@ -572,19 +579,19 @@ const App: React.FC = () => {
         });
         setCurrentItemConfig(initialQuoteState);
         setEditingItemId(null);
-        setCurrentStep(6);
+        setCurrentStep(currentSteps[currentSteps.length - 1].number);
 
-    }, [currentItemConfig, editingItemId, initialQuoteState]);
+    }, [currentItemConfig, editingItemId, initialQuoteState, currentSteps]);
 
 
     const handleNext = useCallback(() => {
-        if (currentStep === STEPS.length - 1) {
+        if (currentStep === currentSteps[currentSteps.length - 2].number) {
             handleSaveAndFinishItem();
             return;
         }
         
         setCurrentStep(currentStep + 1);
-    }, [currentStep, handleSaveAndFinishItem]);
+    }, [currentStep, handleSaveAndFinishItem, currentSteps]);
 
     const handlePrev = useCallback(() => {
         if (currentStep > 1) {
@@ -593,15 +600,25 @@ const App: React.FC = () => {
     }, [currentStep]);
     
     const handleReset = useCallback((initialItems: QuoteItem[] | null = null) => {
+        const lastStep = initialItems ? SHOWER_TRAY_STEPS[SHOWER_TRAY_STEPS.length - 1].number : 1;
         setQuoteItems(initialItems || []);
         setCurrentItemConfig(initialQuoteState);
         setEditingItemId(null);
-        setCurrentStep(initialItems ? 6 : 1);
+        setCurrentStep(lastStep);
         setAppView('quoter');
     }, [initialQuoteState]);
 
     const calculateItemPrice = useCallback((item: QuoteState, allItems: (QuoteItem | QuoteState)[], includeVat: boolean = true) => {
-        const { productLine, width, length, model, extras, quantity, structFrames } = item;
+        const { productLine, width, length, model, extras, quantity, structFrames, kitProduct } = item;
+
+        if (productLine === 'KITS Y ACCESORIOS') {
+            if (!kitProduct) return 0;
+            const ralExtra = extras.find(e => e.id === 'ral');
+            const extrasPrice = ralExtra ? ralExtra.price : 0;
+            const totalBasePrice = (kitProduct.price + extrasPrice) * (quantity || 1);
+            return includeVat ? totalBasePrice * 1.21 : totalBasePrice;
+        }
+
         if (!model || !productLine) return 0;
 
         let discountPercentage = 0;
@@ -621,7 +638,6 @@ const App: React.FC = () => {
 
         let basePrice = PRICE_LIST[productLine]?.[width]?.[length] || 0;
         
-        // Apply STRUCT DETAIL discount
         if (productLine === 'STRUCT DETAIL' && structFrames) {
             if (structFrames === 3) basePrice *= 0.95; // 5% discount
             else if (structFrames === 2) basePrice *= 0.90; // 10% discount
@@ -638,12 +654,20 @@ const App: React.FC = () => {
     }, [isSpecialUser]);
     
     const calculateOriginalItemPrice = useCallback((item: QuoteState, includeVat: boolean = true) => {
-        const { productLine, width, length, model, extras, quantity, structFrames } = item;
+        const { productLine, width, length, model, extras, quantity, structFrames, kitProduct } = item;
+       
+        if (productLine === 'KITS Y ACCESORIOS') {
+            if (!kitProduct) return 0;
+            const ralExtra = extras.find(e => e.id === 'ral');
+            const extrasPrice = ralExtra ? ralExtra.price : 0;
+            const totalBasePrice = (kitProduct.price + extrasPrice) * (quantity || 1);
+            return includeVat ? totalBasePrice * 1.21 : totalBasePrice;
+        }
+
         if (!model || !productLine) return 0;
     
         let basePrice = PRICE_LIST[productLine]?.[width]?.[length] || 0;
 
-        // Apply STRUCT DETAIL discount for PVP as well
         if (productLine === 'STRUCT DETAIL' && structFrames) {
             if (structFrames === 3) basePrice *= 0.95;
             else if (structFrames === 2) basePrice *= 0.90;
@@ -685,7 +709,7 @@ const App: React.FC = () => {
         if (itemToEdit) {
             setCurrentItemConfig(itemToEdit);
             setEditingItemId(itemId);
-            setCurrentStep(1);
+            setCurrentStep(1); // Always start from step 1 on edit
         }
     };
 
@@ -724,10 +748,10 @@ const App: React.FC = () => {
         const doc = new jsPDF();
         const { quoteItems } = savedQuote;
         
-        const PRIMARY_COLOR = '#0d9488'; // teal-600
-        const TEXT_COLOR = '#1f2937'; // gray-800
-        const SECONDARY_TEXT_COLOR = '#6b7280'; // gray-500
-        const BORDER_COLOR = '#e5e7eb'; // gray-200
+        const PRIMARY_COLOR = '#0d9488';
+        const TEXT_COLOR = '#1f2937';
+        const SECONDARY_TEXT_COLOR = '#6b7280';
+        const BORDER_COLOR = '#e5e7eb';
         const PAGE_MARGIN = 15;
         const CONTENT_WIDTH = 210 - (PAGE_MARGIN * 2);
     
@@ -812,48 +836,42 @@ const App: React.FC = () => {
             const discountedItemBasePrice = calculateItemPrice(item, quoteItems, false);
             const discountOnItem = originalItemBasePrice - discountedItemBasePrice;
             const itemDiscountPercentage = discountOnItem > 0 ? (discountOnItem / originalItemBasePrice) * 100 : 0;
+            
+            const isKit = item.productLine === 'KITS Y ACCESORIOS';
+            const mainDesc = isKit ? item.kitProduct?.name : `Plato de ducha ${item.productLine} - ${item.model?.name}`;
+            let subDescLines: string[] = [];
 
-            const mainDesc = `Plato de ducha ${item.productLine} - ${item.model?.name}`;
-            const subDescLines: string[] = [
-                `  · Dimensiones: ${item.width}cm x ${item.length}cm`,
-                `  · Color: ${item.color?.name || `RAL ${item.ralCode}`}`,
-            ];
-             if (item.productLine === 'STRUCT DETAIL' && item.structFrames) {
-                subDescLines.push(`  · Marcos: ${item.structFrames}`);
+            if (isKit) {
+                if(item.kitProduct?.id === 'kit-pintura') subDescLines.push(`  · Color: ${item.color?.name || `RAL ${item.ralCode}`}`);
+                if(item.invoiceReference) subDescLines.push(`  · Ref. Factura: ${item.invoiceReference}`);
+            } else {
+                subDescLines = [
+                    `  · Dimensiones: ${item.width}cm x ${item.length}cm`,
+                    `  · Color: ${item.color?.name || `RAL ${item.ralCode}`}`,
+                ];
+                if (item.productLine === 'STRUCT DETAIL' && item.structFrames) subDescLines.push(`  · Marcos: ${item.structFrames}`);
+                if (item.extras.length > 0) {
+                    const extraNames = item.extras.map(extra => extra.id === 'bitono' && item.bitonoColor ? `${extra.name} (Tapa: ${item.bitonoColor.name})` : extra.name).join(', ');
+                    subDescLines.push(`  · Extras: ${extraNames}`);
+                }
             }
-             if (item.extras.length > 0) {
-                const extraNames = item.extras.map(extra => {
-                     let extraText = extra.name;
-                     if (extra.id === 'bitono') {
-                         if (item.bitonoColor) extraText += ` (Tapa: ${item.bitonoColor.name})`;
-                     }
-                     return extraText;
-                }).join(', ');
-                subDescLines.push(`  · Extras: ${extraNames}`);
-            }
-
-            if (isSpecialUser && discountOnItem > 0) {
-                const discountText = `  · Descuento (${itemDiscountPercentage.toFixed(0)}%): -${discountOnItem.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}`;
-                subDescLines.push(discountText);
+            if (isSpecialUser && discountOnItem > 0 && !isKit) {
+                subDescLines.push(`  · Descuento (${itemDiscountPercentage.toFixed(0)}%): -${discountOnItem.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}`);
             }
             
             let rowHeight = 8;
             doc.setFontSize(10);
-            const mainDescSplit = doc.splitTextToSize(mainDesc, 115);
+            const mainDescSplit = doc.splitTextToSize(mainDesc || 'Artículo', 115);
             rowHeight += mainDescSplit.length * 6;
             doc.setFontSize(9);
-            subDescLines.forEach(line => {
-                const subDescSplit = doc.splitTextToSize(line, 110);
-                rowHeight += subDescSplit.length * 5;
-            });
+            subDescLines.forEach(line => rowHeight += doc.splitTextToSize(line, 110).length * 5);
             rowHeight += 4;
             
             checkPageBreak(rowHeight);
 
-            if (isEven) {
-                doc.setFillColor(249, 250, 251);
-                doc.rect(PAGE_MARGIN, startY, CONTENT_WIDTH, rowHeight, 'F');
-            }
+            if (isEven) doc.setFillColor(249, 250, 251);
+            else doc.setFillColor(255, 255, 255);
+            doc.rect(PAGE_MARGIN, startY, CONTENT_WIDTH, rowHeight, 'F');
             doc.setDrawColor(BORDER_COLOR);
             doc.rect(PAGE_MARGIN, startY, CONTENT_WIDTH, rowHeight);
             
@@ -872,14 +890,12 @@ const App: React.FC = () => {
                 if (isDiscountLine) {
                     doc.saveGraphicsState();
                     doc.setFont('helvetica', 'italic');
-                    doc.setTextColor('#0f766e'); // teal-700
+                    doc.setTextColor('#0f766e');
                 }
                 const subDescSplit = doc.splitTextToSize(line, 110);
                 doc.text(subDescSplit, PAGE_MARGIN + 5, currentY);
                 currentY += subDescSplit.length * 5;
-                 if (isDiscountLine) {
-                    doc.restoreGraphicsState();
-                }
+                 if (isDiscountLine) doc.restoreGraphicsState();
             });
 
             const verticalCenter = startY + rowHeight / 2 + 1.5;
@@ -1102,32 +1118,33 @@ const App: React.FC = () => {
             const itemOriginalBasePrice = calculateOriginalItemPrice(item, false);
             const itemDiscountedBasePrice = itemOriginalBasePrice * (1 - discountPerc / 100);
             
-            const mainDesc = `Plato de ducha ${item.productLine} - ${item.model?.name}`;
-            const subDescLines = [
-                `  · Dimensiones: ${item.width}cm x ${item.length}cm`,
-                `  · Color: ${item.color?.name || `RAL ${item.ralCode}`}`,
-            ];
-            if (item.productLine === 'STRUCT DETAIL' && item.structFrames) {
-                subDescLines.push(`  · Marcos: ${item.structFrames}`);
-            }
-            if (item.extras.length > 0) {
-                 subDescLines.push(`  · Extras: ${item.extras.map(e => e.name).join(', ')}`);
+            const isKit = item.productLine === 'KITS Y ACCESORIOS';
+            const mainDesc = isKit ? item.kitProduct?.name : `Plato de ducha ${item.productLine} - ${item.model?.name}`;
+            let subDescLines: string[] = [];
+
+            if (isKit) {
+                if(item.kitProduct?.id === 'kit-pintura') subDescLines.push(`  · Color: ${item.color?.name || `RAL ${item.ralCode}`}`);
+                if(item.invoiceReference) subDescLines.push(`  · Ref. Factura: ${item.invoiceReference}`);
+            } else {
+                 subDescLines = [
+                    `  · Dimensiones: ${item.width}cm x ${item.length}cm`,
+                    `  · Color: ${item.color?.name || `RAL ${item.ralCode}`}`,
+                ];
+                if (item.productLine === 'STRUCT DETAIL' && item.structFrames) subDescLines.push(`  · Marcos: ${item.structFrames}`);
+                if (item.extras.length > 0) subDescLines.push(`  · Extras: ${item.extras.map(e => e.name).join(', ')}`);
             }
             
             let rowHeight = 8;
             doc.setFontSize(10);
-            const mainDescSplit = doc.splitTextToSize(mainDesc, 115);
+            const mainDescSplit = doc.splitTextToSize(mainDesc || 'Artículo', 115);
             rowHeight += mainDescSplit.length * 6;
             doc.setFontSize(9);
-            subDescLines.forEach(line => {
-                rowHeight += doc.splitTextToSize(line, 110).length * 5;
-            });
+            subDescLines.forEach(line => rowHeight += doc.splitTextToSize(line, 110).length * 5);
             rowHeight += 4;
             
             checkPageBreak(rowHeight);
 
-            if (isEven) doc.setFillColor(249, 250, 251);
-            else doc.setFillColor(255, 255, 255);
+            if (isEven) doc.setFillColor(249, 250, 251); else doc.setFillColor(255, 255, 255);
             doc.rect(PAGE_MARGIN, startY, CONTENT_WIDTH, rowHeight, 'F');
             doc.setDrawColor(BORDER_COLOR);
             doc.rect(PAGE_MARGIN, startY, CONTENT_WIDTH, rowHeight);
@@ -1275,6 +1292,16 @@ const App: React.FC = () => {
             setIsCustomQuoteModalOpen(true);
             return;
         }
+
+        if (productLine === 'KITS Y ACCESORIOS') {
+            setCurrentItemConfig({
+                ...initialQuoteState,
+                productLine: 'KITS Y ACCESORIOS',
+                quantity: 1,
+            });
+            setCurrentStep(2); // Go to kit selection
+            return;
+        }
     
         const isSoftum = productLine === 'SOFTUM';
         const isStructDetail = productLine === 'STRUCT DETAIL';
@@ -1289,19 +1316,16 @@ const App: React.FC = () => {
         if (isSoftum) defaultModel = sandModel || null;
         if (isFlat || isRatio) defaultModel = lisoModel || null;
 
-
-        setCurrentItemConfig(prev => {
-            return {
-                ...initialQuoteState,
-                productLine,
-                model: defaultModel,
-                width: isSoftum ? SOFTUM_WIDTHS[0] : STANDARD_WIDTHS[1],
-                length: isSoftum ? SOFTUM_LENGTHS[0] : STANDARD_LENGTHS[4],
-                quantity: prev.quantity,
-                extras: [],
-                structFrames: isStructDetail ? 4 : undefined,
-            };
+        setCurrentItemConfig({
+            ...initialQuoteState,
+            productLine,
+            model: defaultModel,
+            width: isSoftum ? SOFTUM_WIDTHS[0] : STANDARD_WIDTHS[1],
+            length: isSoftum ? SOFTUM_LENGTHS[0] : STANDARD_LENGTHS[4],
+            quantity: 1,
+            structFrames: isStructDetail ? 4 : undefined,
         });
+        setCurrentStep(2); // Go to dimensions
     };
     
     const handleCloseCustomQuoteModal = () => {
@@ -1336,7 +1360,11 @@ const App: React.FC = () => {
                 ralCode: ralWasRemoved ? '' : prev.ralCode
             };
         });
-        handleNext();
+        if (isKitFlow) {
+            handleNext();
+        } else {
+            handleNext();
+        }
     };
     
     const handleToggleRal = () => {
@@ -1375,6 +1403,15 @@ const App: React.FC = () => {
     const updateRalCode = (code: string) => {
         setCurrentItemConfig(prev => ({ ...prev, ralCode: code }));
     };
+    
+    const selectKitProduct = (kit: ProductOption) => {
+        setCurrentItemConfig(prev => ({...prev, kitProduct: kit }));
+        handleNext();
+    }
+    
+    const updateInvoiceReference = (ref: string) => {
+        setCurrentItemConfig(prev => ({ ...prev, invoiceReference: ref }));
+    };
 
     const selectBitonoColor = (color: ColorOption) => {
         setCurrentItemConfig(prev => ({
@@ -1389,6 +1426,55 @@ const App: React.FC = () => {
     };
 
     const renderQuoter = () => {
+        if (isKitFlow) {
+            switch (currentStep) {
+                case 1: // Already handled by main view, but as a fallback
+                    return <Step1ModelSelection 
+                        onUpdate={updateProductLine} 
+                        selectedProductLine={currentItemConfig.productLine} 
+                        quantity={currentItemConfig.quantity}
+                        onUpdateQuantity={updateQuantity}
+                    />;
+                case 2:
+                    return <Step2KitSelection onSelect={selectKitProduct} selectedKit={currentItemConfig.kitProduct || null} />;
+                case 3:
+                     return <Step3KitDetails 
+                        currentItemConfig={currentItemConfig}
+                        onSelectColor={selectColor}
+                        onToggleRal={handleToggleRal}
+                        onRalCodeChange={updateRalCode}
+                        onInvoiceRefChange={updateInvoiceReference}
+                     />;
+                case 4:
+                     return <Step5Summary 
+                        items={quoteItems}
+                        totalPrice={totalQuotePrice} 
+                        onReset={() => handleReset()} 
+                        onSaveRequest={handleSaveQuoteRequest}
+                        onGeneratePdfRequest={() => {
+                            if(!currentUser) return;
+                            const temporaryQuote: SavedQuote = {
+                                id: `temp_${Date.now()}`,
+                                timestamp: Date.now(),
+                                userEmail: currentUser.email,
+                                quoteItems: quoteItems,
+                                totalPrice: totalQuotePrice,
+                                customerName: 'Cliente (no guardado)',
+                                type: 'internal'
+                            };
+                            handleOpenDiscountModal(temporaryQuote);
+                        }}
+                        onGenerateCustomerQuoteRequest={() => setIsCustomerQuoteModalOpen(true)}
+                        onStartNew={handleStartNewItem}
+                        onEdit={handleEditItem}
+                        onDelete={handleDeleteItem}
+                        calculateItemPrice={(item) => calculateItemPrice(item, quoteItems)}
+                    />;
+                default:
+                    return null;
+            }
+        }
+
         switch (currentStep) {
             case 1:
                 return <Step1ModelSelection 
@@ -1489,7 +1575,7 @@ const App: React.FC = () => {
                                 </svg>
                                 <span>Volver al listado</span>
                             </button>
-                            <StepTracker currentStep={currentStep} steps={STEPS} />
+                            <StepTracker currentStep={currentStep} steps={currentSteps} />
                         </>
                       ) : (
                         <nav className="space-y-2 mt-8">
@@ -1508,7 +1594,7 @@ const App: React.FC = () => {
                                 <span>Promociones</span>
                             </button>
                             <button onClick={() => setIsSettingsOpen(true)} className="w-full text-left px-4 py-3 rounded-lg font-semibold transition-colors hover:bg-slate-700/50 text-slate-300 flex items-center gap-3">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.972.094 2.27-.948 2.286-1.56.38-1.56 2.6 0 2.98.972.54 2.27.094 2.286-.948.836-1.372 2.942-.734-2.106 2.106-.54.972-.094-2.27.948 2.286 1.56.38 1.56 2.6 0 2.98-.972-.54-2.27-.094-2.286.948-.836 1.372-2.942.734-2.106-2.106.54-.972.094-2.27-.948-2.286-1.56-.38-1.56-2.6 0-2.98.972-.54 2.27-.094 2.286-.948.836-1.372 2.942.734 2.106-2.106-.54-.972-.094-2.27.948-2.286zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" /></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.972.094 2.27-.948 2.286-1.56.38-1.56 2.6 0 2.98.972.54 2.27.094 2.286-.948.836-1.372 2.942-.734-2.106 2.106-.54.972-.094-2.27.948 2.286 1.56.38 1.56 2.6 0 2.98-.972-.54-2.27-.094-2.286.948-.836 1.372-2.942.734-2.106 2.106.54-.972.094-2.27-.948-2.286-1.56-.38-1.56-2.6 0-2.98.972-.54 2.27-.094 2.286-.948.836-1.372 2.942.734 2.106-2.106-.54-.972-.094-2.27.948-2.286zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" /></svg>
                                 <span>Ajustes</span>
                             </button>
                         </nav>
@@ -1535,18 +1621,19 @@ const App: React.FC = () => {
                                     <div className="flex-grow">
                                         {renderQuoter()}
                                     </div>
-                                    {currentStep < 6 && (
+                                    {currentStep < currentSteps[currentSteps.length-1].number && (
                                         <NextPrevButtons 
                                             onNext={handleNext} 
                                             onPrev={handlePrev}
                                             currentStep={currentStep}
-                                            totalSteps={STEPS.length}
+                                            totalSteps={currentSteps.length}
                                             isNextDisabled={isNextDisabled}
+                                            isLastStep={currentStep === currentSteps[currentSteps.length-2].number}
                                         />
                                     )}
                                 </div>
                 
-                                {currentStep > 1 && currentStep < 6 && (
+                                {currentStep > 1 && currentStep < currentSteps[currentSteps.length - 1].number && (
                                      <div className="hidden lg:block">
                                         <div className="sticky top-10">
                                             <LivePreview item={currentItemConfig} price={currentItemPrice} />

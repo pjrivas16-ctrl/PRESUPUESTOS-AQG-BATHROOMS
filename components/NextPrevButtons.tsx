@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface NextPrevButtonsProps {
@@ -6,10 +7,10 @@ interface NextPrevButtonsProps {
     currentStep: number;
     totalSteps: number;
     isNextDisabled?: boolean;
+    isLastStep: boolean;
 }
 
-const NextPrevButtons: React.FC<NextPrevButtonsProps> = ({ onNext, onPrev, currentStep, totalSteps, isNextDisabled }) => {
-    const isLastStep = currentStep === totalSteps - 1; // Step 5 is the last configuration step
+const NextPrevButtons: React.FC<NextPrevButtonsProps> = ({ onNext, onPrev, currentStep, totalSteps, isNextDisabled, isLastStep }) => {
 
     return (
         <div className="mt-12 pt-8 border-t border-slate-200 flex justify-between items-center">

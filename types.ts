@@ -25,6 +25,10 @@ export interface QuoteState {
     bitonoColor?: ColorOption | null;
     bitonoRalCode?: string;
     structFrames?: 1 | 2 | 3 | 4;
+
+    // For Kits
+    kitProduct?: ProductOption | null;
+    invoiceReference?: string;
 }
 
 export interface QuoteItem extends QuoteState {
@@ -56,5 +60,5 @@ export interface SavedQuote {
     // New fields for quote separation
     type: 'internal' | 'customer';
     pvpTotalPrice?: number; // Total based on PVP, before any discounts
-    customerDiscounts?: { [key: string]: number };
+    customerDiscounts?: { [key:string]: number };
 }

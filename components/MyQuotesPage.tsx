@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import type { User, SavedQuote, QuoteItem } from '../types';
 
@@ -92,21 +93,33 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                      `--- DETALLES DEL PEDIDO ---\n`;
 
         quoteItems.forEach((item, index) => {
-            body += `\nArtículo ${index + 1}: Plato de ducha ${item.productLine}\n` +
-                    `- Unidades: ${item.quantity || 1}\n` +
-                    `- Textura: ${item.model?.name}\n` +
-                    `- Dimensiones: ${item.width}x${item.length}cm\n` +
-                    `- Color: ${item.color?.name || `RAL ${item.ralCode}`}\n`;
+             body += `\nArtículo ${index + 1}: `;
+            if (item.productLine === 'KITS Y ACCESORIOS') {
+                body += `${item.kitProduct?.name}\n` +
+                        `- Unidades: ${item.quantity || 1}\n`;
+                if(item.kitProduct?.id === 'kit-pintura') {
+                    body += `- Color: ${item.color?.name || `RAL ${item.ralCode}`}\n`;
+                }
+                if(item.invoiceReference) {
+                    body += `- Ref. Factura: ${item.invoiceReference}\n`;
+                }
+            } else {
+                body += `Plato de ducha ${item.productLine}\n` +
+                        `- Unidades: ${item.quantity || 1}\n` +
+                        `- Textura: ${item.model?.name}\n` +
+                        `- Dimensiones: ${item.width}x${item.length}cm\n` +
+                        `- Color: ${item.color?.name || `RAL ${item.ralCode}`}\n`;
 
-            if (item.extras.length > 0) {
-                body += `  Extras:\n`;
-                item.extras.forEach(extra => {
-                    let extraLine = `  - ${extra.name}`;
-                    if (extra.id === 'bitono') {
-                        if (item.bitonoColor) extraLine += ` (Tapa: ${item.bitonoColor.name})`;
-                    }
-                    body += `${extraLine}\n`;
-                });
+                if (item.extras.length > 0) {
+                    body += `  Extras:\n`;
+                    item.extras.forEach(extra => {
+                        let extraLine = `  - ${extra.name}`;
+                        if (extra.id === 'bitono') {
+                            if (item.bitonoColor) extraLine += ` (Tapa: ${item.bitonoColor.name})`;
+                        }
+                        body += `${extraLine}\n`;
+                    });
+                }
             }
         });
         
@@ -146,60 +159,40 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
 
                     <div className="mt-6 border-t border-slate-200">
                         {quoteItems.map((item, index) => (
-                             <div key={item.id} className="py-4 border-b border-slate-200">
-                                <h4 className="font-bold text-teal-700 mb-2">Artículo {index+1}: {item.productLine}</h4>
-                                <div className="pl-4 border-l-2 border-teal-100 space-y-1 text-sm">
-                                    <p><span className="text-slate-500">Dimensiones:</span> <span className="font-medium text-slate-800">{item.width}cm x {item.length}cm</span></p>
-                                    <p><span className="text-slate-500">Textura:</span> <span className="font-medium text-slate-800">{item.model?.name}</span></p>
-                                    <p><span className="text-slate-500">Color:</span> <span className="font-medium text-slate-800">{item.color?.name || `RAL ${item.ralCode}`}</span></p>
-                                    <p><span className="text-slate-500">Unidades:</span> <span className="font-medium text-slate-800">{item.quantity}</span></p>
-                                    {item.extras.length > 0 && <p><span className="text-slate-500">Extras:</span> <span className="font-medium text-slate-800">{item.extras.map(e => e.name).join(', ')}</span></p>}
-                                </div>
-                            </div>
+                             <div key={item.id} className="py-4 border-b border-slate-200 last:border-b-0">
+                                <h4 className="font-bold text-teal-700 mb-2">Artículo {index + 1}: {item.productLine === 'KITS Y ACCESORIOS' ? item.kitProduct?.name : `${item.productLine} - ${item.model?.name}`}</h4>
+                                {item.productLine !== 'KITS Y ACCESORIOS' ? (
+                                    <>
+                                        <p className="text-sm text-slate-500">{item.width}cm x {item.length}cm &bull; ({item.quantity} {item.quantity > 1 ? 'unidades' : 'unidad'})</p>
+                                        <p className="text-sm text-slate-500">Color: {item.color?.name || `RAL ${item.ralCode}`}</p>
+                                        {item.extras.length > 0 && <p className="text-xs text-slate-400 mt-1">Extras: {item.extras.map(e => e.name).join(', ')}</p>}
+                                    </>
+                                ) : (
+                                    <>
+                                        <p className="text-sm text-slate-500">({item.quantity} {item.quantity > 1 ? 'unidades' : 'unidad'})</p>
+                                        {item.kitProduct?.id === 'kit-pintura' && <p className="text-sm text-slate-500">Color: {item.color?.name || `RAL ${item.ralCode}`}</p>}
+                                        {item.invoiceReference && <p className="text-sm text-slate-500">Ref. Factura: {item.invoiceReference}</p>}
+                                    </>
+                                )}
+                             </div>
                         ))}
                     </div>
 
-                    <div className="mt-4 bg-slate-50 p-4 rounded-lg space-y-2">
-                        {isCustomerQuote ? (
-                            <>
-                                <div className="flex justify-between items-center text-sm text-slate-600"><span>Subtotal (PVP)</span><span>{selectedQuote.pvpTotalPrice?.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span></div>
-                                <div className="flex justify-between items-center text-sm text-slate-600"><span>Descuento</span><span className="text-red-600">-{((selectedQuote.pvpTotalPrice || 0) - (selectedQuote.totalPrice / 1.21)).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span></div>
-                                <div className="border-t border-slate-200 !my-2"></div>
-                                <div className="flex justify-between items-center text-sm font-semibold text-slate-800"><span>Base Imponible</span><span>{(selectedQuote.totalPrice / 1.21).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span></div>
-                            </>
-                        ) : (
-                             <div className="flex justify-between items-center text-sm font-semibold text-slate-800"><span>Base Imponible</span><span>{(selectedQuote.totalPrice / 1.21).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span></div>
+                    <div className="mt-6 pt-4 border-t-2 border-dashed border-slate-200 text-right">
+                        {selectedQuote.type === 'customer' && selectedQuote.pvpTotalPrice && (
+                             <div className="text-sm text-slate-500">Subtotal (PVP): <span className="font-semibold">{selectedQuote.pvpTotalPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span></div>
                         )}
-                         <div className="flex justify-between items-center text-sm text-slate-600"><span>IVA (21%)</span><span>{(selectedQuote.totalPrice - selectedQuote.totalPrice / 1.21).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span></div>
-                         <div className="border-t-2 border-slate-200 !my-3"></div>
-                         <div className="flex justify-between items-center text-xl font-bold"><span>TOTAL</span><span className="text-teal-600">{selectedQuote.totalPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span></div>
+                        <div className="text-lg font-bold text-slate-800">Total (IVA Incl.): <span className="text-teal-600">{selectedQuote.totalPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span></div>
                     </div>
 
-                    <div className="mt-6 grid grid-cols-2 md:grid-cols-5 gap-3">
-                        <button
-                            onClick={() => handleToggleOrdered(selectedQuote.id)}
-                            className={`w-full col-span-2 md:col-span-1 px-4 py-2 text-sm font-semibold rounded-md transition-colors ${selectedQuote.orderedTimestamp ? 'bg-amber-100 text-amber-700 hover:bg-amber-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}
-                        >
-                            {selectedQuote.orderedTimestamp ? 'Desmarcar' : 'Pedido'}
+                    <div className="mt-8 pt-6 border-t border-slate-200 flex flex-wrap justify-end gap-3">
+                        <button onClick={handleDuplicate} className="px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors">Duplicar</button>
+                        <button onClick={() => onViewPdf(selectedQuote)} className="px-4 py-2 text-sm font-semibold text-teal-600 bg-teal-100 rounded-md hover:bg-teal-200 transition-colors">Ver PDF</button>
+                         <button onClick={() => handleToggleOrdered(selectedQuote.id)} className={`px-4 py-2 text-sm font-semibold text-white rounded-md transition-colors ${selectedQuote.orderedTimestamp ? 'bg-amber-500 hover:bg-amber-600' : 'bg-slate-700 hover:bg-slate-800'}`}>
+                            {selectedQuote.orderedTimestamp ? 'Desmarcar Pedido' : 'Marcar como Pedido'}
                         </button>
-                         <button
-                            onClick={handleDuplicate}
-                            className="w-full px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
-                         >
-                            Duplicar
-                         </button>
-                         <button
-                            onClick={() => onViewPdf(selectedQuote)}
-                            className="w-full px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
-                        >
-                            Ver PDF
-                        </button>
-                        <a
-                            href={mailtoLink}
-                            target="_blank" rel="noopener noreferrer"
-                            className="w-full col-span-2 px-4 py-2 font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors text-center text-sm flex items-center justify-center"
-                        >
-                            Enviar Pedido
+                        <a href={mailtoLink} target="_blank" rel="noopener noreferrer" className="px-6 py-2 font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors inline-block">
+                            Tramitar Pedido
                         </a>
                     </div>
                 </div>
@@ -207,95 +200,89 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
         );
     };
 
-
     return (
-        <div className="animate-fade-in">
-            <div className="mb-6">
-                <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight">Mis Presupuestos</h2>
-                <p className="text-slate-500 mt-2">Busca, visualiza y gestiona tu historial de cotizaciones.</p>
-            </div>
-            
-             <div className="mb-4">
-                <div className="flex border-b border-slate-200">
-                    <button
-                        onClick={() => setActiveTab('internal')}
-                        className={`px-4 py-3 font-semibold text-sm transition-colors ${activeTab === 'internal' ? 'border-b-2 border-teal-500 text-teal-600' : 'text-slate-500 hover:text-slate-700'}`}
-                    >
-                        Presupuestos Internos
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('customer')}
-                        className={`px-4 py-3 font-semibold text-sm transition-colors ${activeTab === 'customer' ? 'border-b-2 border-teal-500 text-teal-600' : 'text-slate-500 hover:text-slate-700'}`}
-                    >
-                        Presupuestos para Clientes
-                    </button>
+        <div className="animate-fade-in h-full flex flex-col">
+            <div className="flex-shrink-0">
+                <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">Mis Presupuestos</h2>
+                <p className="text-slate-500 mb-6">Gestiona tus presupuestos guardados. Puedes ver los detalles, duplicarlos o tramitar el pedido.</p>
+                
+                <div className="mb-4">
+                    <input
+                        type="text"
+                        placeholder="Buscar por cliente, referencia o ID..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full p-3 bg-white border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
+                    />
+                </div>
+
+                <div className="border-b border-slate-200">
+                    <nav className="-mb-px flex space-x-6" aria-label="Tabs">
+                        <button
+                            onClick={() => setActiveTab('internal')}
+                            className={`whitespace-nowrap py-3 px-1 border-b-2 font-semibold text-sm transition-colors ${
+                                activeTab === 'internal'
+                                    ? 'border-teal-500 text-teal-600'
+                                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                            }`}
+                        >
+                            Internos ({internalQuotes.length})
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('customer')}
+                            className={`whitespace-nowrap py-3 px-1 border-b-2 font-semibold text-sm transition-colors ${
+                                activeTab === 'customer'
+                                    ? 'border-teal-500 text-teal-600'
+                                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                            }`}
+                        >
+                            Para Cliente ({customerQuotes.length})
+                        </button>
+                    </nav>
                 </div>
             </div>
 
-            <div className="mb-4">
-                <input 
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Buscar por cliente, referencia o ID..."
-                    className="w-full p-3 bg-white border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-offset-1 focus:ring-teal-500 focus:border-teal-500 transition"
-                />
-            </div>
-            
-            {filteredQuotes.length === 0 ? (
-                <div className="text-center py-16 border-2 border-dashed border-slate-200 rounded-lg bg-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2-2z" />
-                    </svg>
-                    <h3 className="mt-2 text-lg font-medium text-slate-800">
-                        {searchTerm ? 'No se encontraron resultados' : `No tienes ${activeTab === 'internal' ? 'presupuestos internos' : 'presupuestos de cliente'} guardados`}
-                    </h3>
-                    <p className="mt-1 text-sm text-slate-500">
-                        {searchTerm ? 'Prueba con otros términos de búsqueda.' : 'Crea un nuevo presupuesto para verlo aquí.'}
-                    </p>
-                </div>
-            ) : (
-                <div className="space-y-3">
-                    {filteredQuotes.map(savedQuote => (
-                        <div 
-                            key={savedQuote.id}
-                            onClick={() => setSelectedQuote(savedQuote)}
-                            className="w-full text-left bg-white border border-slate-200 p-4 rounded-lg shadow-sm hover:shadow-md hover:border-teal-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200 cursor-pointer"
-                            role="button"
-                            tabIndex={0}
-                            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSelectedQuote(savedQuote)}
-                            aria-label={`Ver detalles del presupuesto para ${savedQuote.customerName}`}
-                        >
-                           <div className="flex justify-between items-start gap-4">
-                                <div>
-                                    <div className="flex items-center gap-3 flex-wrap">
-                                        {savedQuote.orderedTimestamp && (
-                                            <span className="flex-shrink-0 text-xs font-bold bg-green-100 text-green-700 px-2.5 py-1 rounded-full">
-                                                PEDIDO EL {new Date(savedQuote.orderedTimestamp).toLocaleDateString('es-ES')}
-                                            </span>
-                                        )}
-                                        <p className="font-bold text-slate-800">
-                                           {savedQuote.customerName}
+            <div className="flex-grow overflow-y-auto pt-6 -mx-4 px-4 pb-4">
+                {filteredQuotes.length > 0 ? (
+                    <div className="space-y-3">
+                        {filteredQuotes.map(quote => (
+                            <div 
+                                key={quote.id} 
+                                onClick={() => setSelectedQuote(quote)} 
+                                className="bg-white border border-slate-200 p-4 rounded-lg shadow-sm transition-shadow hover:shadow-md cursor-pointer"
+                            >
+                                <div className="flex justify-between items-start gap-4">
+                                    <div>
+                                        <p className="font-bold text-slate-800">{quote.customerName}</p>
+                                        {quote.projectReference && <p className="text-sm text-slate-500">{quote.projectReference}</p>}
+                                        <p className="text-xs text-slate-400 mt-1">
+                                            {new Date(quote.timestamp).toLocaleDateString('es-ES')} - ID: {quote.id.replace(/quote_i_|quote_c_/g, '')}
                                         </p>
                                     </div>
-                                    <p className="text-sm text-slate-500 mt-1">
-                                        {savedQuote.projectReference ? `Ref: ${savedQuote.projectReference}` : `Nº Presupuesto: ${savedQuote.id.replace(/quote_i_|quote_c_/g, '')}`}
-                                    </p>
-                                     <p className="text-xs text-slate-400 mt-1">
-                                        {new Date(savedQuote.timestamp).toLocaleString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}
-                                    </p>
+                                    <div className="text-right flex-shrink-0">
+                                        <p className="font-bold text-slate-800">
+                                            {quote.totalPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
+                                        </p>
+                                        {quote.orderedTimestamp && (
+                                            <span className="mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                Pedido
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="text-right flex-shrink-0">
-                                    <p className="text-lg font-bold text-teal-600">
-                                        {savedQuote.totalPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
-                                    </p>
-                                    <p className="text-xs text-slate-400">{savedQuote.quoteItems.length} artículo(s)</p>
-                                </div>
-                           </div>
-                        </div>
-                    ))}
-                </div>
-            )}
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-16 border-2 border-dashed border-slate-200 rounded-lg">
+                        <h3 className="text-lg font-medium text-slate-800">No hay presupuestos que mostrar</h3>
+                        <p className="mt-1 text-sm text-slate-500">
+                            {searchTerm ? 'Prueba con otro término de búsqueda.' : 'Crea un nuevo presupuesto para empezar.'}
+                        </p>
+                    </div>
+                )}
+            </div>
+            
             {renderModal()}
         </div>
     );
