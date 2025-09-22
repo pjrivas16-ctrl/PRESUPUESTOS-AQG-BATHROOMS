@@ -18,6 +18,17 @@ interface Step5SummaryProps {
 const QuoteItemCard: React.FC<{ item: QuoteItem; onEdit: () => void; onDelete: () => void; price: number; }> = ({ item, onEdit, onDelete, price }) => {
     const isKitProduct = item.productLine === 'KITS Y ACCESORIOS';
 
+    const renderExtras = () => {
+        if (item.extras.length === 0) return null;
+
+        const extrasList = item.extras.map(e => {
+            if (e.id === 'bitono' && item.bitonoColor) return `Tapa bitono: ${item.bitonoColor.name}`;
+            return e.name;
+        }).join(', ');
+
+        return <p className="text-xs text-slate-400 mt-1">({extrasList})</p>;
+    };
+
     return (
         <div className="bg-white border border-slate-200 p-4 rounded-lg shadow-sm transition-shadow hover:shadow-md">
             <div className="flex justify-between items-start gap-4">
@@ -34,16 +45,7 @@ const QuoteItemCard: React.FC<{ item: QuoteItem; onEdit: () => void; onDelete: (
                             <p className="text-sm text-slate-500">{item.width}cm x {item.length}cm ({item.quantity} {item.quantity > 1 ? 'unidades' : 'unidad'})</p>
                             <p className="text-sm text-slate-500">Color: {item.color?.name || `RAL ${item.ralCode}`}</p>
                             {item.productLine === 'STRUCT DETAIL' && <p className="text-sm text-slate-500">Marcos: {item.structFrames}</p>}
-                            {item.extras.length > 0 && 
-                                <p className="text-xs text-slate-400 mt-1">
-                                    ({item.extras.map(e => {
-                                        if (e.id === 'bitono' && item.bitonoColor) {
-                                            return `Tapa bitono: ${item.bitonoColor.name}`;
-                                        }
-                                        return e.name;
-                                    }).join(', ')})
-                                </p>
-                            }
+                            {renderExtras()}
                         </>
                     )}
                 </div>
