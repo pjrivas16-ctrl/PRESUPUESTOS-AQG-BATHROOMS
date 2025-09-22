@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import type { QuoteState, ProductOption, ColorOption, User, SavedQuote, StoredUser, QuoteItem } from './types';
 import { PRICE_LIST, SHOWER_TRAY_STEPS, KITS_STEPS, STANDARD_WIDTHS, STANDARD_LENGTHS, SOFTUM_WIDTHS, SOFTUM_LENGTHS, SHOWER_MODELS, SHOWER_EXTRAS, KIT_PRODUCTS } from './constants';
@@ -21,6 +22,7 @@ import MyQuotesPage from './components/MyQuotesPage';
 import LivePreview from './components/LivePreview';
 import PromotionsPage from './components/PromotionsPage';
 import LogoUploader from './components/LogoUploader';
+import PromotionBanner from './components/PromotionBanner';
 
 // Declare jsPDF on window for TypeScript
 declare global {
@@ -384,6 +386,22 @@ const App: React.FC = () => {
     
     const isSpecialUser = useMemo(() => currentUser?.email === 'admin@aqg.com', [currentUser]);
 
+    const welcomePromoDetails = useMemo(() => {
+        const promo = currentUser?.promotion;
+        if (!promo || promo.id !== 'new_client_promo') {
+            return { isActive: false, expirationDate: null };
+        }
+
+        const PROMO_DURATION = 60 * 24 * 60 * 60 * 1000; // 60 days
+        const expiryTime = promo.activationTimestamp + PROMO_DURATION;
+
+        if (Date.now() < expiryTime) {
+            return { isActive: true, expirationDate: new Date(expiryTime) };
+        }
+
+        return { isActive: false, expirationDate: null };
+    }, [currentUser]);
+
     const handleAuthentication = async (email: string, password: string) => {
         const storedUsers = JSON.parse(localStorage.getItem('users') || '[]') as StoredUser[];
         const userRecord = storedUsers.find(
@@ -510,9 +528,7 @@ const App: React.FC = () => {
         let discountPercentage = 0;
         
         // Promotion check
-        const promo = currentUser?.promotion;
-        const PROMO_DURATION = 2 * 30 * 24 * 60 * 60 * 1000; // 2 months
-        if (promo && promo.id === 'new_client_promo' && (Date.now() - promo.activationTimestamp < PROMO_DURATION)) {
+        if (welcomePromoDetails.isActive) {
             // 50% + 25% discount is 1 - (0.5 * 0.75) = 0.625 or 62.5%
             discountPercentage = 62.5;
         } else if (isSpecialUser) { // Special user check
@@ -544,7 +560,7 @@ const App: React.FC = () => {
         const discountedTotalBasePrice = totalBasePrice * (1 - discountPercentage / 100);
 
         return includeVat ? discountedTotalBasePrice * 1.21 : discountedTotalBasePrice;
-    }, [isSpecialUser, currentUser]);
+    }, [isSpecialUser, welcomePromoDetails.isActive]);
     
     const calculateOriginalItemPrice = useCallback((item: QuoteState, includeVat: boolean = true) => {
         const { productLine, width, length, model, extras, quantity, structFrames, kitProduct } = item;
@@ -771,11 +787,8 @@ const App: React.FC = () => {
                     subDescLines.push(`  · Extras: ${extraNames}`);
                 }
             }
-            if ((isSpecialUser || currentUser?.promotion) && discountOnItem > 0 && !isKit) {
-                 const promo = currentUser.promotion;
-                 const PROMO_DURATION = 2 * 30 * 24 * 60 * 60 * 1000;
-                 const isPromoActive = promo && promo.id === 'new_client_promo' && (Date.now() - promo.activationTimestamp < PROMO_DURATION);
-                 const discountText = isPromoActive ? 'Dto. Bienvenida (50%+25%)' : `Descuento (${itemDiscountPercentage.toFixed(0)}%)`;
+            if ((isSpecialUser || welcomePromoDetails.isActive) && discountOnItem > 0 && !isKit) {
+                 const discountText = welcomePromoDetails.isActive ? 'Dto. Bienvenida (50%+25%)' : `Descuento (${itemDiscountPercentage.toFixed(0)}%)`;
                 subDescLines.push(`  · ${discountText}: -${discountOnItem.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}`);
             }
             
@@ -838,9 +851,7 @@ const App: React.FC = () => {
         let discountAmount = 0;
         let discountedBasePrice: number;
         
-        const promo = currentUser.promotion;
-        const PROMO_DURATION = 2 * 30 * 24 * 60 * 60 * 1000;
-        const isPromoActive = promo && promo.id === 'new_client_promo' && (Date.now() - promo.activationTimestamp < PROMO_DURATION);
+        const isPromoActive = welcomePromoDetails.isActive;
 
         if (isSpecialUser || isPromoActive) {
             basePriceToShow = savedQuote.quoteItems.reduce((sum, item) => sum + calculateOriginalItemPrice(item, false), 0);
@@ -904,7 +915,7 @@ const App: React.FC = () => {
         }
         
         doc.output('dataurlnewwindow');
-    }, [currentUser, calculateItemPrice, isSpecialUser, calculateOriginalItemPrice]);
+    }, [currentUser, calculateItemPrice, isSpecialUser, calculateOriginalItemPrice, welcomePromoDetails.isActive]);
     
     const handleGeneratePdfForQuote = useCallback(async (quote: SavedQuote) => {
         try {
@@ -1326,31 +1337,36 @@ const App: React.FC = () => {
                 <div className="main-content w-full md:w-2/3 lg:w-3/4 p-8 md:p-12 flex flex-col bg-slate-50 overflow-y-auto">
                     <div className="flex-grow">
                          {appView === 'quoter' && (
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-16">
-                                <div className="flex flex-col">
-                                    <div className="flex-grow">
-                                        {renderQuoter()}
+                            <>
+                                {welcomePromoDetails.isActive && welcomePromoDetails.expirationDate && (
+                                    <PromotionBanner expirationDate={welcomePromoDetails.expirationDate} />
+                                )}
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-16">
+                                    <div className="flex flex-col">
+                                        <div className="flex-grow">
+                                            {renderQuoter()}
+                                        </div>
+                                        {currentStep < currentSteps[currentSteps.length-1].number && (
+                                            <NextPrevButtons 
+                                                onNext={handleNext} 
+                                                onPrev={handlePrev}
+                                                currentStep={currentStep}
+                                                totalSteps={currentSteps.length}
+                                                isNextDisabled={isNextDisabled}
+                                                isLastStep={currentStep === currentSteps[currentSteps.length-2].number}
+                                            />
+                                        )}
                                     </div>
-                                    {currentStep < currentSteps[currentSteps.length-1].number && (
-                                        <NextPrevButtons 
-                                            onNext={handleNext} 
-                                            onPrev={handlePrev}
-                                            currentStep={currentStep}
-                                            totalSteps={currentSteps.length}
-                                            isNextDisabled={isNextDisabled}
-                                            isLastStep={currentStep === currentSteps[currentSteps.length-2].number}
-                                        />
+                    
+                                    {currentStep > 1 && currentStep < currentSteps[currentSteps.length - 1].number && (
+                                         <div className="hidden lg:block">
+                                            <div className="sticky top-10">
+                                                <LivePreview item={currentItemConfig} price={currentItemPrice} />
+                                            </div>
+                                        </div>
                                     )}
                                 </div>
-                
-                                {currentStep > 1 && currentStep < currentSteps[currentSteps.length - 1].number && (
-                                     <div className="hidden lg:block">
-                                        <div className="sticky top-10">
-                                            <LivePreview item={currentItemConfig} price={currentItemPrice} />
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+                            </>
                         )}
                         {appView === 'myQuotes' && (
                             <MyQuotesPage 
