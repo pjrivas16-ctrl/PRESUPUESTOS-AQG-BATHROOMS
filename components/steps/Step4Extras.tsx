@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
-import { SHOWER_EXTRAS, SOFTUM_EXTRAS, STANDARD_COLORS, MILANO_EXTRAS } from '../../constants';
+import { SHOWER_EXTRAS, SOFTUM_EXTRAS, STANDARD_COLORS } from '../../constants';
 import type { ProductOption, ColorOption } from '../../types';
-import QuantitySelector from '../QuantitySelector';
 
 interface Step4ExtrasProps {
     onToggle: (extra: ProductOption) => void;
@@ -12,10 +11,6 @@ interface Step4ExtrasProps {
     onSelectBitonoColor: (color: ColorOption) => void;
     structFrames?: 1 | 2 | 3 | 4;
     onUpdateStructFrames: (frames: 1 | 2 | 3 | 4) => void;
-    towelHolderCount?: number;
-    onUpdateTowelHolderCount: (count: number) => void;
-    copeteHeight?: 5 | 7.5 | 10 | null;
-    onUpdateCopeteHeight: (height: 5 | 7.5 | 10 | null) => void;
 }
 
 const CheckIcon = () => (
@@ -34,18 +29,11 @@ const Step4Extras: React.FC<Step4ExtrasProps> = ({
     onSelectBitonoColor,
     structFrames,
     onUpdateStructFrames,
-    towelHolderCount,
-    onUpdateTowelHolderCount,
-    copeteHeight,
-    onUpdateCopeteHeight,
 }) => {
     
     const isSelected = (extraId: string) => selectedExtras.some(e => e.id === extraId);
-    const isCountertop = productLine === 'MILANO';
     
     const availableExtras = useMemo(() => {
-        if (isCountertop) return MILANO_EXTRAS.filter(e => e.id !== 'ral');
-
         const generalExtras = SHOWER_EXTRAS.filter(e => e.id.startsWith('corte'));
         
         switch (productLine) {
@@ -65,7 +53,7 @@ const Step4Extras: React.FC<Step4ExtrasProps> = ({
             default:
                 return generalExtras;
         }
-    }, [productLine, isCountertop]);
+    }, [productLine]);
 
     const availableBitonoColors = useMemo(() => {
         if (!mainColor) return STANDARD_COLORS;
@@ -109,8 +97,8 @@ const Step4Extras: React.FC<Step4ExtrasProps> = ({
         )
     }
 
-    const title = isCountertop ? 'Añade complementos' : 'Añade los extras';
-    const description = isCountertop ? 'Completa tu encimera con nuestros complementos.' : 'Completa tu plato de ducha con nuestros accesorios y tratamientos premium.';
+    const title = 'Añade los extras';
+    const description = 'Completa tu plato de ducha con nuestros accesorios y tratamientos premium.';
 
     return (
         <div className="animate-fade-in">
@@ -139,7 +127,6 @@ const Step4Extras: React.FC<Step4ExtrasProps> = ({
                                 </div>
                                 <div className="font-bold text-slate-800 text-lg text-right ml-4">
                                     {extra.price > 0 && `+ ${extra.price}€`}
-                                    {extra.id === 'toallero' && '/ud.'}
                                 </div>
                             </div>
                             
@@ -171,34 +158,6 @@ const Step4Extras: React.FC<Step4ExtrasProps> = ({
                                     {!bitonoColor && (
                                         <p className="text-xs text-amber-800 bg-amber-100 p-2 rounded-md mt-4">
                                             <strong>Atención:</strong> Debes seleccionar un color para la tapa para poder continuar.
-                                        </p>
-                                    )}
-                                </div>
-                            )}
-
-                            {isCurrentlySelected && extra.id === 'toallero' && (
-                                <div className="mt-3 ml-4 md:ml-14 p-4 bg-teal-50 rounded-lg animate-fade-in" onClick={e => e.stopPropagation()}>
-                                    <label className="block text-sm font-medium text-teal-800 mb-2">Cantidad de toalleros</label>
-                                    <QuantitySelector quantity={towelHolderCount || 0} onUpdateQuantity={onUpdateTowelHolderCount} />
-                                </div>
-                            )}
-
-                             {isCurrentlySelected && extra.id === 'copete' && (
-                                <div className="mt-3 ml-4 md:ml-14 p-4 bg-teal-50 rounded-lg animate-fade-in">
-                                    <h4 className="block text-sm font-medium text-teal-800 mb-3">
-                                        Selecciona la altura del copete
-                                    </h4>
-                                    <div className="space-y-2">
-                                        {([5, 7.5, 10] as const).map(h => (
-                                            <div key={h} onClick={() => onUpdateCopeteHeight(h)} className={`flex items-center p-2 rounded-md cursor-pointer ${copeteHeight === h ? 'bg-teal-200' : 'hover:bg-teal-100'}`}>
-                                                <input type="radio" name="copete-height" value={h} checked={copeteHeight === h} readOnly className="h-4 w-4 text-teal-600 border-gray-300 focus:ring-teal-500" />
-                                                <label className="ml-3 block text-sm font-medium text-slate-700">{h} cm</label>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    {!copeteHeight && (
-                                        <p className="text-xs text-amber-800 bg-amber-100 p-2 rounded-md mt-4">
-                                            <strong>Atención:</strong> Debes seleccionar una altura para poder continuar.
                                         </p>
                                     )}
                                 </div>

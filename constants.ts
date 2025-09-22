@@ -4,7 +4,7 @@ import type { ProductOption, ColorOption } from './types';
 // LISTA DE PRECIOS Y PRODUCTOS EXTRAÍDA DE LA TARIFA PDF
 // ==================================================================================
 
-export const PRICE_LIST: { [productLine: string]: { [width: number]: { [length: number]: number } } | { [config: string]: { [length: number]: number } } } = {
+export const PRICE_LIST: { [productLine: string]: { [width: number]: { [length: number]: number } } } = {
     'SOFTUM': {
         70: { 100: 237, 110: 253, 120: 266, 130: 286, 140: 291, 150: 313, 160: 322, 170: 346, 180: 364, 190: 382, 200: 400 },
         80: { 100: 257, 110: 275, 120: 295, 130: 311, 140: 323, 150: 334, 160: 345, 170: 379, 180: 393, 190: 413, 200: 441 },
@@ -88,12 +88,6 @@ export const PRICE_LIST: { [productLine: string]: { [width: number]: { [length: 
         90: { 90: 408 },
         100: { 100: 475 }
     },
-    'MILANO': {
-        '1-seno-sin-faldones': { 81: 294, 91: 327, 101: 365, 111: 402, 121: 438, 131: 474, 141: 511, 151: 537, 161: 556, 171: 579, 181: 599, 191: 629, 201: 664, 211: 698, 221: 733 },
-        '1-seno-con-faldones': { 81: 495, 91: 554, 101: 607, 111: 658, 121: 711, 131: 768, 141: 810, 151: 838, 161: 871, 171: 918, 181: 950, 191: 998, 201: 1038, 211: 1079 },
-        '2-senos-sin-faldones': { 141: 787, 151: 808, 161: 824, 171: 844, 181: 880, 191: 918, 201: 954, 211: 992 },
-        '2-senos-con-faldones': { 161: 998, 171: 1032, 181: 1074, 191: 1107, 201: 1155, 211: 1201, 221: 1249 }
-    }
 };
 
 export const PRODUCT_LINES = [
@@ -109,7 +103,6 @@ export const PRODUCT_LINES = [
     'CENTRAL TECH',
     'RATIO',
     'RATIO TECH',
-    'MILANO',
     'KITS Y ACCESORIOS',
     'CUSTOM',
 ];
@@ -241,72 +234,3 @@ export const KITS_STEPS = [
     { number: 3, title: 'Detalles' },
     { number: 4, title: 'Resumen' },
 ];
-
-export const COUNTERTOP_STEPS = [
-    { number: 1, title: 'Colección' },
-    { number: 2, title: 'Configuración' },
-    { number: 3, title: 'Acabado' },
-    { number: 4, title: 'Color' },
-    { number: 5, title: 'Extras' },
-    { number: 6, title: 'Resumen' },
-];
-
-
-// --- Countertop Specific Constants ---
-
-export const MILANO_CONFIGURATIONS = [
-    { id: '1-seno-sin-faldones', name: '1 Seno Sin Faldones (h=2cm)' },
-    { id: '1-seno-con-faldones', name: '1 Seno Con Faldones (h=15cm)' },
-    { id: '2-senos-sin-faldones', name: '2 Senos Sin Faldones (h=2cm)' },
-    { id: '2-senos-con-faldones', name: '2 Senos Con Faldones (h=15cm)' },
-];
-
-export const MILANO_FINISHES: ProductOption[] = [
-    {
-        id: 'standard',
-        name: 'Acabado Standard',
-        description: 'Acabado estándar de alta calidad.',
-        price: 0,
-        priceFactor: 1.0,
-    },
-    {
-        id: 'tech-deco',
-        name: 'Acabados Tech y Deco',
-        description: 'Aplica un incremento del 30% sobre el precio base.',
-        price: 0,
-        priceFactor: 1.3,
-    }
-];
-
-export const MILANO_EXTRAS: ProductOption[] = [
-     {
-        id: 'ral',
-        name: 'Color personalizado (no en catálogo)',
-        description: 'Personaliza tu encimera con cualquier color de la carta RAL o NCS.',
-        price: 65,
-    },
-    {
-        id: 'toallero',
-        name: 'Toallero Integrado',
-        description: 'Añade un toallero integrado a tu encimera.',
-        price: 30,
-    },
-    {
-        id: 'corte-especial',
-        name: 'Corte Especial a Medida',
-        description: 'Corte especial para salvar columnas u otros elementos.',
-        price: 65,
-    },
-    {
-        id: 'copete',
-        name: 'Copete',
-        description: 'Añade un copete. El precio varía según altura y largo.',
-        price: 0, // Dynamic price
-    }
-];
-
-export const COPTE_PRICES: { [height: number]: number } = {
-    5: 0.30,
-    7.5: 0.45,
-    10: 0.60
-};

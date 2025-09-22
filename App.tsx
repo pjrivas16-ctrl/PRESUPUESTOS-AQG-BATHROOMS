@@ -1,14 +1,10 @@
 
-
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import type { QuoteState, ProductOption, ColorOption, User, SavedQuote, StoredUser, QuoteItem } from './types';
 import { 
-    PRICE_LIST, SHOWER_TRAY_STEPS, KITS_STEPS, STANDARD_WIDTHS, STANDARD_LENGTHS, 
-    SOFTUM_WIDTHS, SOFTUM_LENGTHS, SHOWER_MODELS, SHOWER_EXTRAS, KIT_PRODUCTS,
-    COUNTERTOP_STEPS, MILANO_CONFIGURATIONS, MILANO_FINISHES, MILANO_EXTRAS, COPTE_PRICES
+    PRICE_LIST, SHOWER_TRAY_STEPS, KITS_STEPS, SHOWER_MODELS, SHOWER_EXTRAS, KIT_PRODUCTS, SOFTUM_EXTRAS
 } from './constants';
 import { authorizedUsers } from './authorizedUsers';
-import { aqgLogo } from './assets';
 import { processImageForPdf } from './utils/pdfUtils';
 
 import StepTracker from './components/StepTracker';
@@ -23,11 +19,9 @@ import Step3KitDetails from './components/steps/kits/Step3KitDetails';
 import NextPrevButtons from './components/NextPrevButtons';
 import AuthPage from './components/auth/AuthPage';
 import MyQuotesPage from './components/MyQuotesPage';
-import LivePreview from './components/LivePreview';
 import PromotionsPage from './components/PromotionsPage';
 import LogoUploader from './components/LogoUploader';
 import PromotionBanner from './components/PromotionBanner';
-import QuantitySelector from './components/QuantitySelector';
 
 // Declare jsPDF on window for TypeScript
 declare global {
@@ -406,7 +400,6 @@ const App: React.FC = () => {
     const [quoteForPdf, setQuoteForPdf] = useState<SavedQuote | null>(null);
     
     useEffect(() => {
-        // 1. Initialize users in localStorage if not present
         try {
             if (!localStorage.getItem('users')) {
                 localStorage.setItem('users', JSON.stringify(authorizedUsers));
@@ -415,7 +408,6 @@ const App: React.FC = () => {
             console.error("Failed to initialize user database:", error);
         }
 
-        // 2. Check for an active session
         const checkSession = () => {
             try {
                 const sessionUserJson = sessionStorage.getItem('currentUser');
@@ -483,9 +475,6 @@ const App: React.FC = () => {
         model: null,
         color: null,
         extras: [],
-        milanoConfiguration: null,
-        towelHolderCount: 0,
-        copeteHeight: null,
     };
 
     const [currentStep, setCurrentStep] = useState(1);
@@ -494,27 +483,14 @@ const App: React.FC = () => {
     const [editingItemId, setEditingItemId] = useState<string | null>(null);
 
     const isKitFlow = currentItemConfig.productLine === 'KITS Y ACCESORIOS';
-    const isCountertopFlow = currentItemConfig.productLine === 'MILANO';
-    const currentSteps = isKitFlow ? KITS_STEPS : (isCountertopFlow ? COUNTERTOP_STEPS : SHOWER_TRAY_STEPS);
+    const currentSteps = isKitFlow ? KITS_STEPS : SHOWER_TRAY_STEPS;
     
     const isNextDisabled = useMemo(() => {
-        const { productLine, quantity, model, color, ralCode, extras, kitProduct, bitonoColor, milanoConfiguration, copeteHeight } = currentItemConfig;
+        const { productLine, quantity, model, color, ralCode, extras, kitProduct, bitonoColor } = currentItemConfig;
         
         if (currentStep === 1 && (!productLine || productLine === 'CUSTOM' || quantity < 1)) return true;
         
-        if (isCountertopFlow) {
-            if (currentStep === 2 && !milanoConfiguration) return true;
-            if (currentStep === 3 && !model) return true;
-            if (currentStep === 4) {
-                 const hasRal = extras.some(e => e.id === 'ral');
-                 if (!color && !hasRal) return true;
-                 if (hasRal && (!ralCode || ralCode.trim() === '')) return true;
-            }
-            if (currentStep === 5) {
-                 const hasCopete = extras.some(e => e.id === 'copete');
-                 if (hasCopete && !copeteHeight) return true;
-            }
-        } else if (isKitFlow) {
+        if (isKitFlow) {
              if (currentStep === 2 && !kitProduct) return true;
              if (currentStep === 3) {
                 if (kitProduct?.id === 'kit-pintura') {
@@ -540,7 +516,7 @@ const App: React.FC = () => {
         }
 
         return false;
-    }, [currentStep, currentItemConfig, isKitFlow, isCountertopFlow]);
+    }, [currentStep, currentItemConfig, isKitFlow]);
     
     const handleSaveAndFinishItem = useCallback(() => {
         setQuoteItems(prevItems => {
@@ -586,142 +562,73 @@ const App: React.FC = () => {
         setAppView('quoter');
     }, [initialQuoteState]);
 
-    const calculateItemPrice = useCallback((item: QuoteState, allItems: (QuoteItem | QuoteState)[], includeVat: boolean = true) => {
-        const { productLine, width, length, model, extras, quantity, structFrames, kitProduct, milanoConfiguration, towelHolderCount, copeteHeight } = item;
+    const calculateItemPrice = useCallback((item: QuoteState, allItems: (QuoteItem | QuoteState)[], includeVat: boolean = true): number => {
+        const { productLine, width, length, model, extras, quantity, structFrames, kitProduct } = item;
 
         if (productLine === 'KITS Y ACCESORIOS') {
             if (!kitProduct) return 0;
-            const ralExtra = extras.find(e => e.id === 'ral');
-            const extrasPrice = ralExtra ? ralExtra.price : 0;
-            const totalBasePrice = (kitProduct.price + extrasPrice) * (quantity || 1);
-            return includeVat ? totalBasePrice * 1.21 : totalBasePrice;
-        }
-
-        if (productLine === 'MILANO') {
-            if (!model || !milanoConfiguration || !length) return 0;
-            const priceTable = PRICE_LIST[productLine] as { [config: string]: { [length: number]: number } };
-            const basePrice = priceTable?.[milanoConfiguration.id]?.[length] || 0;
-            const modelPrice = basePrice * (model.priceFactor || 1);
             
-            let extrasPrice = 0;
-            extras.forEach(extra => {
-                if (extra.id === 'toallero') {
-                    extrasPrice += extra.price * (towelHolderCount || 0);
-                } else if (extra.id === 'copete' && copeteHeight) {
-                    extrasPrice += (COPTE_PRICES[copeteHeight] || 0) * length;
-                } else {
-                    extrasPrice += extra.price;
-                }
-            });
-            
-            const totalBasePrice = (modelPrice + extrasPrice) * (quantity || 1);
-            return includeVat ? totalBasePrice * 1.21 : totalBasePrice;
-        }
-
-        if (!model || !productLine) return 0;
-
-        let discountPercentage = 0;
-        
-        if (welcomePromoDetails.isActive) {
-            discountPercentage = 62.5;
-        } else if (isSpecialUser) {
-            if (productLine === 'CLASSIC') {
-                const totalClassicQuantity = allItems
-                    .filter(i => i.productLine === 'CLASSIC')
-                    .reduce((sum, current) => sum + (current.quantity || 1), 0);
-                
-                if (totalClassicQuantity >= 10) {
-                    discountPercentage = 71;
-                }
-            } else {
-                discountPercentage = 55;
+            let itemPrice = kitProduct.price;
+            if (kitProduct.id === 'kit-pintura' && extras.some(e => e.id === 'ral')) {
+                itemPrice += 65;
             }
+            const finalPrice = itemPrice * (quantity || 1);
+            return includeVat ? finalPrice * 1.21 : finalPrice;
         }
 
-        const productPrices = PRICE_LIST[productLine] as { [width: number]: { [length: number]: number } };
-        let basePrice = productPrices?.[width]?.[length] || 0;
+        if (!productLine || !width || !length || !model) return 0;
+
+        const basePrice = PRICE_LIST[productLine]?.[width]?.[length] ?? 0;
+        if (basePrice === 0) {
+            console.warn(`Price not found for ${productLine} ${width}x${length}`);
+            return 0;
+        }
         
-        if (productLine === 'STRUCT DETAIL' && structFrames) {
-            if (structFrames === 3) basePrice *= 0.95; // 5% discount
-            else if (structFrames === 2) basePrice *= 0.90; // 10% discount
-            else if (structFrames === 1) basePrice *= 0.85; // 15% discount
-        }
-
-        const modelPrice = basePrice * (model.priceFactor || 1);
-        const extrasPrice = extras.reduce((sum, extra) => sum + extra.price, 0);
-        
-        const totalBasePrice = (modelPrice + extrasPrice) * (quantity || 1);
-        const discountedTotalBasePrice = totalBasePrice * (1 - discountPercentage / 100);
-
-        return includeVat ? discountedTotalBasePrice * 1.21 : discountedTotalBasePrice;
-    }, [isSpecialUser, welcomePromoDetails.isActive]);
-    
-    const calculateOriginalItemPrice = useCallback((item: QuoteState, includeVat: boolean = true) => {
-        const { productLine, width, length, model, extras, quantity, structFrames, kitProduct, milanoConfiguration, towelHolderCount, copeteHeight } = item;
-       
-        if (productLine === 'KITS Y ACCESORIOS') {
-            if (!kitProduct) return 0;
-            const ralExtra = extras.find(e => e.id === 'ral');
-            const extrasPrice = ralExtra ? ralExtra.price : 0;
-            const totalBasePrice = (kitProduct.price + extrasPrice) * (quantity || 1);
-            return includeVat ? totalBasePrice * 1.21 : totalBasePrice;
-        }
-
-        if (productLine === 'MILANO') {
-            if (!model || !milanoConfiguration || !length) return 0;
-            const priceTable = PRICE_LIST[productLine] as { [config: string]: { [length: number]: number } };
-            const basePrice = priceTable?.[milanoConfiguration.id]?.[length] || 0;
-            const modelPrice = basePrice * (model.priceFactor || 1);
-            
-            let extrasPrice = 0;
-            extras.forEach(extra => {
-                if (extra.id === 'toallero') {
-                    extrasPrice += extra.price * (towelHolderCount || 0);
-                } else if (extra.id === 'copete' && copeteHeight) {
-                    extrasPrice += (COPTE_PRICES[copeteHeight] || 0) * length;
-                } else {
-                    extrasPrice += extra.price;
-                }
-            });
-            
-            const totalBasePrice = (modelPrice + extrasPrice) * (quantity || 1);
-            return includeVat ? totalBasePrice * 1.21 : totalBasePrice;
-        }
-
-
-        if (!model || !productLine) return 0;
-    
-        const productPrices = PRICE_LIST[productLine] as { [width: number]: { [length: number]: number } };
-        let basePrice = productPrices?.[width]?.[length] || 0;
+        let modifiedBasePrice = basePrice;
 
         if (productLine === 'STRUCT DETAIL' && structFrames) {
-            if (structFrames === 3) basePrice *= 0.95;
-            else if (structFrames === 2) basePrice *= 0.90;
-            else if (structFrames === 1) basePrice *= 0.85;
+            const discountMap: { [key in 1 | 2 | 3 | 4]: number } = { 4: 1, 3: 0.95, 2: 0.90, 1: 0.85 };
+            modifiedBasePrice *= (discountMap[structFrames] || 1);
         }
 
-        const modelPrice = basePrice * (model.priceFactor || 1);
+        const modelFactor = model.priceFactor || 1.0;
         const extrasPrice = extras.reduce((sum, extra) => sum + extra.price, 0);
-        
-        const totalBasePrice = (modelPrice + extrasPrice) * (quantity || 1);
+        const colorPrice = item.color?.price || 0;
 
-        return includeVat ? totalBasePrice * 1.21 : totalBasePrice;
-    }, []);
-    
-    const currentItemPrice = useMemo(() => {
-        const potentialQuoteItems = [
-            ...quoteItems.filter(i => i.id !== editingItemId), 
-            currentItemConfig
-        ];
-        return calculateItemPrice(currentItemConfig, potentialQuoteItems);
-    }, [currentItemConfig, calculateItemPrice, quoteItems, editingItemId]);
+        let totalWithoutQuantity = (modifiedBasePrice * modelFactor) + extrasPrice + colorPrice;
 
-    const totalQuotePrice = useMemo(() => {
-        return quoteItems.reduce((total, item) => total + calculateItemPrice(item, quoteItems), 0);
+        if (welcomePromoDetails.isActive) {
+            totalWithoutQuantity *= 0.5; // 50% discount
+            totalWithoutQuantity *= 0.75; // 25% additional
+        }
+
+        const finalPrice = totalWithoutQuantity * quantity;
+
+        return includeVat ? finalPrice * 1.21 : finalPrice;
+    }, [welcomePromoDetails.isActive]);
+
+    const totalPrice = useMemo(() => {
+        return quoteItems.reduce((sum, item) => sum + calculateItemPrice(item, quoteItems), 0);
     }, [quoteItems, calculateItemPrice]);
 
-    const handleSaveQuoteRequest = () => {
-        setIsSaveQuoteOpen(true);
+    const handleUpdateItemConfig = (updates: Partial<QuoteState>) => {
+        setCurrentItemConfig(prev => ({ ...prev, ...updates }));
+    };
+
+    const handleDeleteItem = (itemId: string) => {
+        setQuoteItems(prev => prev.filter(item => item.id !== itemId));
+    };
+
+    const handleEditItem = (itemId: string) => {
+        const itemToEdit = quoteItems.find(item => item.id === itemId);
+        if (itemToEdit) {
+            setEditingItemId(itemId);
+            setCurrentItemConfig(itemToEdit);
+            const isKit = itemToEdit.productLine === 'KITS Y ACCESORIOS';
+            const steps = isKit ? KITS_STEPS : SHOWER_TRAY_STEPS;
+            setCurrentStep(steps[0].number);
+            setAppView('quoter');
+        }
     };
     
     const handleStartNewItem = () => {
@@ -730,449 +637,37 @@ const App: React.FC = () => {
         setCurrentStep(1);
     };
 
-    const handleEditItem = (itemId: string) => {
-        const itemToEdit = quoteItems.find(item => item.id === itemId);
-        if (itemToEdit) {
-            setCurrentItemConfig(itemToEdit);
-            setEditingItemId(itemId);
-            setCurrentStep(1); // Always start from step 1 on edit
-        }
-    };
-
-    const handleDeleteItem = (itemId: string) => {
-        setQuoteItems(prev => prev.filter(item => item.id !== itemId));
-    };
-
-
-    const handleConfirmSaveQuote = useCallback((details: { customerName: string; projectReference: string }) => {
-        if (!currentUser || quoteItems.length === 0) return;
-
-        const newQuote: SavedQuote = {
-            id: `quote_i_${Date.now()}`,
-            timestamp: Date.now(),
-            userEmail: currentUser.email,
-            quoteItems: quoteItems,
-            totalPrice: totalQuotePrice,
-            customerName: details.customerName,
-            projectReference: details.projectReference,
-            type: 'internal'
-        };
-
-        const allQuotes = JSON.parse(localStorage.getItem('quotes') || '[]') as SavedQuote[];
-        allQuotes.push(newQuote);
-        localStorage.setItem('quotes', JSON.stringify(allQuotes));
-        
-        setAppView('myQuotes');
-    }, [currentUser, quoteItems, totalQuotePrice]);
-    
-    const generatePdfWithDiscount = useCallback(async (savedQuote: SavedQuote, discountPercentage: number = 0) => {
-        if (!window.jspdf || !currentUser) {
-            throw new Error("PDF generation library not loaded or no user logged in.");
-        }
-    
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        const { quoteItems } = savedQuote;
-        
-        const PRIMARY_COLOR = '#0d9488';
-        const TEXT_COLOR = '#1f2937';
-        const SECONDARY_TEXT_COLOR = '#6b7280';
-        const BORDER_COLOR = '#e5e7eb';
-        const PAGE_MARGIN = 15;
-        const CONTENT_WIDTH = 210 - (PAGE_MARGIN * 2);
-    
-        let yPos = 0;
-    
-        const checkPageBreak = (spaceNeeded: number) => {
-            if (yPos + spaceNeeded > 297 - PAGE_MARGIN - 15) {
-                doc.addPage();
-                yPos = PAGE_MARGIN;
-            }
-        };
-        
-        yPos = 30;
-
-        // User Logo
-        if (currentUser.logo) {
-            try {
-                const logoData = await processImageForPdf(currentUser.logo);
-                const logoAr = logoData.width / logoData.height;
-                const logoWidth = 35; // max width
-                const logoHeight = logoWidth / logoAr;
-                const logoX = 210 - PAGE_MARGIN - logoWidth;
-                doc.addImage(logoData.imageData, logoData.format, logoX, 15, logoWidth, logoHeight);
-                yPos = Math.max(yPos, 15 + logoHeight + 10);
-            } catch(e) {
-                console.error("Failed to add logo to PDF:", e);
-            }
-        }
-
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(TEXT_COLOR);
-        doc.setFontSize(10);
-        
-        let headerY = 30;
-        doc.text((currentUser.fiscalName || currentUser.companyName).toUpperCase(), PAGE_MARGIN, headerY);
-        headerY += 5;
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(SECONDARY_TEXT_COLOR);
-        if (currentUser.sucursal) {
-            doc.text(`Sucursal: ${currentUser.sucursal}`, PAGE_MARGIN, headerY);
-            headerY += 5;
-        }
-        doc.text(currentUser.email, PAGE_MARGIN, headerY);
-        headerY += 5;
-        if (currentUser.preparedBy) {
-            doc.text(`Att: ${currentUser.preparedBy}`, PAGE_MARGIN, headerY);
-        }
-
-        const titleX = 210 - PAGE_MARGIN;
-        yPos = Math.max(yPos, 50);
-
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(24);
-        doc.setTextColor(PRIMARY_COLOR);
-        doc.text("PRESUPUESTO", titleX, yPos, { align: 'right' });
-
-        yPos += 10;
-        doc.setFontSize(10);
-        const addHeaderDetail = (label: string, value: string) => {
-             const labelX = 150;
-             const valueX = 153;
-             const valueWidth = titleX - valueX;
-
-             const valueLines = doc.splitTextToSize(value, valueWidth);
-
-             doc.setFont('helvetica', 'bold');
-             doc.setTextColor(TEXT_COLOR);
-             doc.text(label, labelX, yPos, { align: 'right', baseline: 'top' });
-             
-             doc.setFont('helvetica', 'normal');
-             doc.setTextColor(SECONDARY_TEXT_COLOR);
-             doc.text(valueLines, valueX, yPos, { align: 'left', baseline: 'top' });
-             
-             yPos += (valueLines.length * 5) + 2;
-        };
-
-        addHeaderDetail('Nº Presupuesto:', savedQuote.id.replace('quote_i_', ''));
-        addHeaderDetail('Fecha:', new Date(savedQuote.timestamp).toLocaleDateString('es-ES'));
-        yPos += 4;
-        addHeaderDetail('Cliente:', savedQuote.customerName || 'Cliente sin especificar');
-        if (savedQuote.projectReference) {
-            addHeaderDetail('Ref. Proyecto:', savedQuote.projectReference);
-        }
-
-        yPos = Math.max(yPos, 80) + 15;
-
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#FFFFFF');
-        doc.setFillColor(PRIMARY_COLOR);
-        doc.rect(PAGE_MARGIN, yPos, CONTENT_WIDTH, 10, 'F');
-        yPos += 7;
-        doc.text("DESCRIPCIÓN", PAGE_MARGIN + 5, yPos);
-        doc.text("CANT.", 140, yPos, { align: 'center' });
-        doc.text("P. UNITARIO", 168, yPos, { align: 'right' });
-        doc.text("TOTAL", 210 - PAGE_MARGIN - 5, yPos, { align: 'right' });
-        yPos += 3;
-
-        for (const [index, item] of quoteItems.entries()) {
-            const startY = yPos;
-            const isEven = index % 2 === 0;
-
-            const originalItemBasePrice = calculateOriginalItemPrice(item, false);
-            const discountedItemBasePrice = calculateItemPrice(item, quoteItems, false);
-            const discountOnItem = originalItemBasePrice - discountedItemBasePrice;
-            const itemDiscountPercentage = discountOnItem > 0 ? (discountOnItem / originalItemBasePrice) * 100 : 0;
-            
-            const isKit = item.productLine === 'KITS Y ACCESORIOS';
-            const isCountertop = item.productLine === 'MILANO';
-
-            let mainDesc;
-            if (isKit) mainDesc = item.kitProduct?.name;
-            else if (isCountertop) mainDesc = `Encimera ${item.productLine} - ${item.model?.name}`;
-            else mainDesc = `Plato de ducha ${item.productLine} - ${item.model?.name}`;
-            
-            let subDescLines: string[] = [];
-
-            if (isKit) {
-                if(item.kitProduct?.id === 'kit-pintura') subDescLines.push(`  · Color: ${item.color?.name || `RAL ${item.ralCode}`}`);
-                if(item.invoiceReference) subDescLines.push(`  · Ref. Factura: ${item.invoiceReference}`);
-            } else if (isCountertop) {
-                subDescLines = [
-                    `  · Config: ${item.milanoConfiguration?.name} (${item.quantity || 1} ud.)`,
-                    `  · Largo: ${item.length}cm`,
-                    `  · Color: ${item.color?.name || `RAL ${item.ralCode}`}`,
-                ];
-                 if (item.extras.length > 0) {
-                    const extraNames = item.extras.map(extra => {
-                        if (extra.id === 'toallero') return `${extra.name} (x${item.towelHolderCount})`;
-                        if (extra.id === 'copete') return `${extra.name} (h=${item.copeteHeight}cm)`;
-                        return extra.name;
-                    }).join(', ');
-                    subDescLines.push(`  · Extras: ${extraNames}`);
-                }
-            } else {
-                subDescLines = [
-                    `  · Dimensiones: ${item.width}cm x ${item.length}cm (${item.quantity || 1} ud.)`,
-                    `  · Color: ${item.color?.name || `RAL ${item.ralCode}`}`,
-                ];
-                if (item.productLine === 'STRUCT DETAIL' && item.structFrames) subDescLines.push(`  · Marcos: ${item.structFrames}`);
-                if (item.extras.length > 0) {
-                    const extraNames = item.extras.map(extra => extra.id === 'bitono' && item.bitonoColor ? `${extra.name} (Tapa: ${item.bitonoColor.name})` : extra.name).join(', ');
-                    subDescLines.push(`  · Extras: ${extraNames}`);
-                }
-            }
-            if ((isSpecialUser || welcomePromoDetails.isActive) && discountOnItem > 0 && !isKit && !isCountertop) {
-                 const discountText = welcomePromoDetails.isActive ? 'Dto. Bienvenida (50%+25%)' : `Descuento (${itemDiscountPercentage.toFixed(0)}%)`;
-                subDescLines.push(`  · ${discountText}: -${discountOnItem.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}`);
-            }
-            
-            let rowHeight = 8;
-            doc.setFontSize(10);
-            const mainDescSplit = doc.splitTextToSize(mainDesc || 'Artículo', 115);
-            rowHeight += mainDescSplit.length * 6;
-            doc.setFontSize(9);
-            subDescLines.forEach(line => rowHeight += doc.splitTextToSize(line, 110).length * 5);
-            rowHeight += 4;
-            
-            checkPageBreak(rowHeight);
-
-            if (isEven) doc.setFillColor(249, 250, 251);
-            else doc.setFillColor(255, 255, 255);
-            doc.rect(PAGE_MARGIN, startY, CONTENT_WIDTH, rowHeight, 'F');
-            doc.setDrawColor(BORDER_COLOR);
-            doc.rect(PAGE_MARGIN, startY, CONTENT_WIDTH, rowHeight);
-            
-            let currentY = startY + 6;
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(TEXT_COLOR);
-            doc.text(mainDescSplit, PAGE_MARGIN + 5, currentY);
-            currentY += mainDescSplit.length * 6;
-
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(SECONDARY_TEXT_COLOR);
-            subDescLines.forEach(line => {
-                const isDiscountLine = line.includes('Descuento') || line.includes('Dto. Bienvenida');
-                if (isDiscountLine) {
-                    doc.saveGraphicsState();
-                    doc.setFont('helvetica', 'italic');
-                    doc.setTextColor('#0f766e');
-                }
-                const subDescSplit = doc.splitTextToSize(line, 110);
-                doc.text(subDescSplit, PAGE_MARGIN + 5, currentY);
-                currentY += subDescSplit.length * 5;
-                 if (isDiscountLine) doc.restoreGraphicsState();
-            });
-
-            const verticalCenter = startY + rowHeight / 2 + 1.5;
-            const unitPrice = discountedItemBasePrice / (item.quantity || 1);
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(TEXT_COLOR);
-            doc.text((item.quantity || 1).toString(), 140, verticalCenter, { align: 'center' });
-            doc.text(unitPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }), 168, verticalCenter, { align: 'right' });
-            doc.text(discountedItemBasePrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }), 210 - PAGE_MARGIN - 5, verticalCenter, { align: 'right' });
-
-            yPos = startY + rowHeight;
-        }
-
-        yPos += 10;
-        checkPageBreak(60);
-
-        const VAT_RATE = 0.21;
-        let basePriceToShow: number;
-        let discountAmount = 0;
-        let discountedBasePrice: number;
-        
-        const isPromoActive = welcomePromoDetails.isActive;
-
-        if (isSpecialUser || isPromoActive) {
-            basePriceToShow = savedQuote.quoteItems.reduce((sum, item) => sum + calculateOriginalItemPrice(item, false), 0);
-            discountedBasePrice = savedQuote.quoteItems.reduce((sum, item) => sum + calculateItemPrice(item, savedQuote.quoteItems, false), 0);
-            discountAmount = basePriceToShow - discountedBasePrice;
-        } else {
-            basePriceToShow = savedQuote.totalPrice / (1 + VAT_RATE);
-            if (discountPercentage > 0) {
-                discountAmount = basePriceToShow * (discountPercentage / 100);
-            }
-            discountedBasePrice = basePriceToShow - discountAmount;
-        }
-
-        const taxAmount = discountedBasePrice * VAT_RATE;
-        const finalPrice = discountedBasePrice + taxAmount;
-        
-        const totalsX = 130;
-        
-        const addPriceLine = (label: string, amount: number, bold: boolean = false, isTotal: boolean = false) => {
-             checkPageBreak(12);
-             if (isTotal) {
-                doc.setFillColor(243, 244, 246);
-                doc.rect(totalsX - 5, yPos - 7, 210 - PAGE_MARGIN - totalsX + 10, 12, 'F');
-                doc.setFontSize(14);
-                doc.setTextColor(PRIMARY_COLOR);
-             } else {
-                 doc.setFontSize(10);
-                 doc.setTextColor(SECONDARY_TEXT_COLOR);
-             }
-             doc.setFont('helvetica', bold ? 'bold' : 'normal');
-             doc.text(label, totalsX, yPos);
-             doc.text(amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }), 210 - PAGE_MARGIN, yPos, { align: 'right' });
-             yPos += isTotal ? 12 : 8;
-        };
-
-        addPriceLine("Subtotal", basePriceToShow);
-        if (discountAmount > 0) {
-            let discountLabel = isSpecialUser ? 'Descuento (aplicado)' : `Descuento (${discountPercentage}%)`;
-            if(isPromoActive) discountLabel = 'Dto. Bienvenida (50%+25%)';
-
-            addPriceLine(discountLabel, -discountAmount);
-            yPos += 2;
-            doc.setDrawColor(BORDER_COLOR);
-            doc.line(totalsX, yPos - 4, 210 - PAGE_MARGIN, yPos - 4);
-            addPriceLine("Base con dto.", discountedBasePrice, true);
-        }
-        addPriceLine(`IVA (${(VAT_RATE * 100).toFixed(0)}%)`, taxAmount);
-        yPos += 2;
-        addPriceLine("TOTAL", finalPrice, true, true);
-
-        const totalPages = doc.internal.getNumberOfPages();
-        for (let i = 1; i <= totalPages; i++) {
-            doc.setPage(i);
-            doc.setFontSize(8);
-            doc.setTextColor(SECONDARY_TEXT_COLOR);
-            const footerY = 297 - 10;
-            doc.setDrawColor(BORDER_COLOR);
-            doc.line(PAGE_MARGIN, footerY - 5, 210 - PAGE_MARGIN, footerY - 5);
-            doc.text('Presupuesto generado con la aplicación de AQG Bathrooms. Impuestos desglosados.', PAGE_MARGIN, footerY);
-            doc.text(`Página ${i} de ${totalPages}`, 210 - PAGE_MARGIN, footerY, { align: 'right' });
-        }
-        
-        doc.output('dataurlnewwindow');
-    }, [currentUser, calculateItemPrice, isSpecialUser, calculateOriginalItemPrice, welcomePromoDetails.isActive]);
-    
-    const handleGeneratePdfForQuote = useCallback(async (quote: SavedQuote) => {
-        try {
-            // For special user, discount is baked in, so pass 0 to the PDF generator.
-            await generatePdfWithDiscount(quote, 0);
-        } catch (error) {
-            console.error("Failed to generate PDF:", error);
-            const errorMessage = error instanceof Error ? error.message : "Ha ocurrido un error desconocido.";
-            alert(`No se pudo generar el PDF: ${errorMessage}`);
-        }
-    }, [generatePdfWithDiscount]);
-
-    const handleOpenDiscountModal = (quoteToProcess: SavedQuote) => {
-        if (isSpecialUser || currentUser?.promotion) {
-            handleGeneratePdfForQuote(quoteToProcess);
-            return;
-        }
-        setQuoteForPdf(quoteToProcess);
-        setIsDiscountOpen(true);
-    };
-
-    const handleConfirmDiscount = async (discount: number) => {
-        if (quoteForPdf) {
-            try {
-                await generatePdfWithDiscount(quoteForPdf, discount);
-            } catch (error) {
-                console.error("Failed to generate PDF:", error);
-                const errorMessage = error instanceof Error ? error.message : "Ha ocurrido un error desconocido.";
-                alert(`No se pudo generar el PDF: ${errorMessage}`);
-            }
-        }
-        setIsDiscountOpen(false);
-        setQuoteForPdf(null);
-    };
-
-    const handleUpdateUserSettings = useCallback((settings: { fiscalName: string; preparedBy: string; sucursal: string; logo: string | null; }) => {
+    const handleSaveSettings = (settings: { fiscalName: string; preparedBy: string; sucursal: string; logo: string | null; }) => {
         if (!currentUser) return;
-        
-        const updatedUser = { 
-            ...currentUser,
-            fiscalName: settings.fiscalName,
-            preparedBy: settings.preparedBy || undefined,
-            sucursal: settings.sucursal || undefined,
-            logo: settings.logo
-        };
+        const updatedUser = { ...currentUser, ...settings };
         setCurrentUser(updatedUser);
-
-        if (sessionStorage.getItem('currentUser')) {
-            sessionStorage.setItem('currentUser', JSON.stringify(updatedUser));
-        }
-
-    }, [currentUser]);
-    
-    const handleViewPdfForQuote = useCallback(async (quote: SavedQuote) => {
-        try {
-            handleOpenDiscountModal(quote);
-        } catch (error) {
-             console.error("Failed to generate PDF for quote:", quote.id, error);
-             const errorMessage = error instanceof Error ? error.message : "Ha ocurrido un error desconocido.";
-             alert(`No se pudo generar el PDF: ${errorMessage}`);
-        }
-    }, [handleOpenDiscountModal]);
-    
-    const handlePrintRequest = () => {
-        window.print();
-    };
-
-    const handleActivatePromotion = useCallback((promoId: string) => {
-        if (!currentUser) return;
-
-        const promotion = {
-            id: promoId,
-            activationTimestamp: Date.now(),
-        };
-
-        const updatedUser = { ...currentUser, promotion };
-        setCurrentUser(updatedUser);
-        
-        // Persist change
         sessionStorage.setItem('currentUser', JSON.stringify(updatedUser));
-        try {
-            const allUsers = JSON.parse(localStorage.getItem('users') || '[]') as StoredUser[];
-            const userIndex = allUsers.findIndex(u => u.email === currentUser.email);
-            if (userIndex > -1) {
-                allUsers[userIndex].promotion = promotion;
-                localStorage.setItem('users', JSON.stringify(allUsers));
-            }
-        } catch (error) {
-            console.error("Failed to update user promotion in localStorage", error);
+        
+        const storedUsers = JSON.parse(localStorage.getItem('users') || '[]') as StoredUser[];
+        const userIndex = storedUsers.findIndex(u => u.email === currentUser.email);
+        if(userIndex > -1) {
+            const newStoredUsers = [...storedUsers];
+            newStoredUsers[userIndex] = { ...newStoredUsers[userIndex], ...settings };
+            localStorage.setItem('users', JSON.stringify(newStoredUsers));
         }
-
-    }, [currentUser]);
+    };
     
     const handleExportData = () => {
         try {
-            const quotes = localStorage.getItem('quotes') || '[]';
-            const users = localStorage.getItem('users') || '[]';
-
-            const backupData = {
-                dataType: 'AQG_BACKUP',
-                version: 1,
-                timestamp: new Date().toISOString(),
-                data: {
-                    quotes: JSON.parse(quotes),
-                    users: JSON.parse(users),
-                }
+            const dataToExport = {
+                users: JSON.parse(localStorage.getItem('users') || '[]'),
+                quotes: JSON.parse(localStorage.getItem('quotes') || '[]'),
             };
-
-            const jsonString = JSON.stringify(backupData, null, 2);
-            const blob = new Blob([jsonString], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
+            const dataStr = JSON.stringify(dataToExport, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
             const link = document.createElement('a');
             link.href = url;
-            const date = new Date().toISOString().slice(0, 10);
-            link.download = `aqg_backup_${date}.json`;
+            link.download = `aqg-tarifa-backup-${new Date().toISOString().split('T')[0]}.json`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
-            alert("Datos exportados con éxito.");
         } catch (error) {
             console.error("Error exporting data:", error);
             alert("Hubo un error al exportar los datos.");
@@ -1187,465 +682,165 @@ const App: React.FC = () => {
         reader.onload = (e) => {
             try {
                 const text = e.target?.result;
-                if (typeof text !== 'string') throw new Error("El archivo no es legible");
-                
-                const parsedData = JSON.parse(text);
+                if (typeof text !== 'string') throw new Error("File could not be read");
+                const data = JSON.parse(text);
 
-                if (parsedData.dataType !== 'AQG_BACKUP' || !parsedData.data?.quotes || !parsedData.data?.users) {
-                    throw new Error("El archivo no es una copia de seguridad válida.");
-                }
-
-                if (window.confirm("¿Estás seguro? Importar este archivo reemplazará todos tus presupuestos y ajustes actuales. Esta acción no se puede deshacer.")) {
-                    localStorage.setItem('quotes', JSON.stringify(parsedData.data.quotes));
-                    localStorage.setItem('users', JSON.stringify(parsedData.data.users));
-                    alert("Datos importados con éxito. La aplicación se recargará.");
+                if (window.confirm('¿Estás seguro de que quieres importar estos datos? Se sobrescribirán todos los datos actuales.')) {
+                    if (data.users) localStorage.setItem('users', JSON.stringify(data.users));
+                    if (data.quotes) localStorage.setItem('quotes', JSON.stringify(data.quotes));
+                    alert('Datos importados con éxito. La aplicación se recargará.');
                     window.location.reload();
                 }
-
             } catch (error) {
                 console.error("Error importing data:", error);
-                const errorMessage = error instanceof Error ? error.message : "Formato inválido.";
-                alert(`Error al importar el archivo: ${errorMessage}`);
-            } finally {
-                // Reset file input value to allow re-uploading the same file
-                event.target.value = '';
+                alert("Hubo un error al importar el archivo. Asegúrate de que es un archivo de backup válido.");
             }
         };
         reader.readAsText(file);
     };
 
-
-    const updateProductLine = (productLine: string) => {
-        if (productLine === 'CUSTOM') {
-            setCurrentItemConfig(prev => ({ ...prev, productLine }));
-            setIsCustomQuoteModalOpen(true);
-            return;
-        }
-
-        if (productLine === 'KITS Y ACCESORIOS') {
-            setCurrentItemConfig(prev => ({
-                ...initialQuoteState,
-                productLine: 'KITS Y ACCESORIOS',
-                quantity: prev.quantity,
-            }));
-            setCurrentStep(2); // Go to kit selection
-            return;
-        }
-
-        if (productLine === 'MILANO') {
-            const defaultConfig = MILANO_CONFIGURATIONS[0];
-            const priceTable = PRICE_LIST.MILANO as { [config: string]: { [length: number]: number } };
-            const defaultLength = Object.keys(priceTable[defaultConfig.id])[0];
-
-            setCurrentItemConfig(prev => ({
-                ...initialQuoteState,
-                productLine,
-                quantity: prev.quantity,
-                milanoConfiguration: defaultConfig,
-                length: Number(defaultLength),
-                model: MILANO_FINISHES[0], // Acabado Standard
-            }));
-            setCurrentStep(2);
-            return;
-        }
-    
-        const isSoftum = productLine === 'SOFTUM';
-        const isStructDetail = productLine === 'STRUCT DETAIL';
-        const isFlat = productLine.startsWith('FLAT');
-        const isRatio = productLine.startsWith('RATIO');
+    const handleConfirmSaveQuote = (details: { customerName: string; projectReference: string }) => {
+        if (!currentUser) return;
         
-        const sandModel = SHOWER_MODELS.find(m => m.id === 'sand');
-        const pizarraModel = SHOWER_MODELS.find(m => m.id === 'pizarra');
-        const lisoModel = SHOWER_MODELS.find(m => m.id === 'lisa');
+        const newQuote: SavedQuote = {
+            id: `quote_i_${Date.now()}`,
+            timestamp: Date.now(),
+            userEmail: currentUser.email,
+            quoteItems: quoteItems,
+            totalPrice: totalPrice,
+            customerName: details.customerName,
+            projectReference: details.projectReference,
+            type: 'internal'
+        };
 
-        let defaultModel = pizarraModel || null;
-        if (isSoftum) defaultModel = sandModel || null;
-        if (isFlat || isRatio) defaultModel = lisoModel || null;
-
-        setCurrentItemConfig(prev => ({
-            ...initialQuoteState,
-            productLine,
-            model: defaultModel,
-            width: isSoftum ? SOFTUM_WIDTHS[0] : STANDARD_WIDTHS[1],
-            length: isSoftum ? SOFTUM_LENGTHS[0] : STANDARD_LENGTHS[4],
-            quantity: prev.quantity,
-            structFrames: isStructDetail ? 4 : undefined,
-        }));
-        setCurrentStep(2); // Go to dimensions
+        const existingQuotes = JSON.parse(localStorage.getItem('quotes') || '[]') as SavedQuote[];
+        localStorage.setItem('quotes', JSON.stringify([newQuote, ...existingQuotes]));
+        
+        handleReset(null);
+        setAppView('myQuotes');
     };
     
-    const handleCloseCustomQuoteModal = () => {
-        setIsCustomQuoteModalOpen(false);
-        setCurrentItemConfig(prev => ({ ...prev, productLine: null }));
+    const handleGeneratePdf = () => {
+        setIsDiscountOpen(true);
     };
     
-    const updateQuantity = (quantity: number) => {
-        const q = Math.max(1, quantity);
-        setCurrentItemConfig(prev => ({ ...prev, quantity: isNaN(q) ? 1 : q }));
-    };
-
-
-    const updateDimensions = (width: number, length: number) => {
-        setCurrentItemConfig(prev => ({ ...prev, width, length }));
-    };
-
-    const updateMilanoConfiguration = (config: { id: string; name: string; }) => {
-        const priceTable = PRICE_LIST.MILANO as { [config: string]: { [length: number]: number } };
-        const firstLength = Object.keys(priceTable[config.id])[0];
-        setCurrentItemConfig(prev => ({
-            ...prev,
-            milanoConfiguration: config,
-            length: Number(firstLength),
-        }));
-    };
-    
-    const updateMilanoLength = (length: number) => {
-        setCurrentItemConfig(prev => ({ ...prev, length }));
-    };
-
-    const updateTowelHolderCount = (count: number) => {
-        setCurrentItemConfig(prev => ({...prev, towelHolderCount: count}));
-    }
-
-    const updateCopeteHeight = (height: 5 | 7.5 | 10 | null) => {
-        setCurrentItemConfig(prev => ({...prev, copeteHeight: height}));
-    }
-
-    const selectModel = (model: ProductOption) => {
-        setCurrentItemConfig(prev => ({ ...prev, model }));
-        handleNext();
-    };
-
-    const selectColor = (color: ColorOption) => {
-        setCurrentItemConfig(prev => {
-            const newExtras = prev.extras.filter(e => e.id !== 'ral');
-            const ralWasRemoved = newExtras.length < prev.extras.length;
-
-            return { 
-                ...prev, 
-                color,
-                extras: newExtras,
-                ralCode: ralWasRemoved ? '' : prev.ralCode
-            };
-        });
-        handleNext();
-    };
-    
-    const handleToggleRal = () => {
-        const ralExtra = SHOWER_EXTRAS.find(e => e.id === 'ral') || MILANO_EXTRAS.find(e => e.id === 'ral');
-        if (ralExtra) {
-            toggleExtra(ralExtra);
-        }
-    };
-    
-    const toggleExtra = (extra: ProductOption) => {
-        setCurrentItemConfig(prev => {
-            const isSelected = prev.extras.some(e => e.id === extra.id);
-            let newExtras;
-            let newRalCode = prev.ralCode;
-            let newColor = prev.color;
-            let newBitonoColor = prev.bitonoColor;
-            let newBitonoRalCode = prev.bitonoRalCode;
-            let newCopeteHeight = prev.copeteHeight;
-
-            if (isSelected) {
-                newExtras = prev.extras.filter(e => e.id !== extra.id);
-                if (extra.id === 'ral') newRalCode = '';
-                if (extra.id === 'bitono') {
-                    newBitonoColor = null;
-                    newBitonoRalCode = '';
-                }
-                if (extra.id === 'copete') newCopeteHeight = null;
-            } else {
-                newExtras = [...prev.extras, extra];
-                if (extra.id === 'ral') {
-                    newColor = null; 
-                }
-            }
-            return { ...prev, extras: newExtras, ralCode: newRalCode, color: newColor, bitonoColor: newBitonoColor, bitonoRalCode: newBitonoRalCode, copeteHeight: newCopeteHeight };
-        });
-    };
-
-    const updateRalCode = (code: string) => {
-        setCurrentItemConfig(prev => ({ ...prev, ralCode: code }));
-    };
-    
-    const selectKitProduct = (kit: ProductOption) => {
-        setCurrentItemConfig(prev => ({...prev, kitProduct: kit }));
-        handleNext();
-    }
-    
-    const updateInvoiceReference = (ref: string) => {
-        setCurrentItemConfig(prev => ({ ...prev, invoiceReference: ref }));
-    };
-
-    const selectBitonoColor = (color: ColorOption) => {
-        setCurrentItemConfig(prev => ({
-            ...prev,
-            bitonoColor: color,
-            bitonoRalCode: '',
-        }));
-    };
-
-    const updateStructFrames = (frames: 1 | 2 | 3 | 4) => {
-        setCurrentItemConfig(prev => ({ ...prev, structFrames: frames }));
+    const handlePrint = () => {
+        window.print();
     };
 
     const renderQuoter = () => {
-        const commonStep1 = <Step1ModelSelection 
-            onUpdate={updateProductLine} 
-            selectedProductLine={currentItemConfig.productLine} 
-            quantity={currentItemConfig.quantity}
-            onUpdateQuantity={updateQuantity}
-        />;
-
-        const commonSummary = <Step5Summary 
-            items={quoteItems}
-            totalPrice={totalQuotePrice} 
-            onReset={() => handleReset()} 
-            onSaveRequest={handleSaveQuoteRequest}
-            onGeneratePdfRequest={() => {
-                if(!currentUser) return;
-                const temporaryQuote: SavedQuote = {
-                    id: `vista-previa_${Date.now()}`,
-                    timestamp: Date.now(),
-                    userEmail: currentUser.email,
-                    quoteItems: quoteItems,
-                    totalPrice: totalQuotePrice,
-                    customerName: 'Presupuesto (sin guardar)',
-                    type: 'internal'
-                };
-                handleOpenDiscountModal(temporaryQuote);
-            }}
-            onPrintRequest={handlePrintRequest}
-            onStartNew={handleStartNewItem}
-            onEdit={handleEditItem}
-            onDelete={handleDeleteItem}
-            calculateItemPrice={(item) => calculateItemPrice(item, quoteItems)}
-        />;
-
-        const commonColorStep = <Step3Color 
-            onSelectColor={selectColor} 
-            selectedColor={currentItemConfig.color} 
-            productLine={currentItemConfig.productLine}
-            onToggleRal={handleToggleRal}
-            isRalSelected={currentItemConfig.extras.some(e => e.id === 'ral')}
-            ralCode={currentItemConfig.ralCode || ''}
-            onRalCodeChange={updateRalCode}
-         />;
-        
-        if (isCountertopFlow) {
-            switch(currentStep) {
-                case 1: return commonStep1;
-                case 2: return <Step1Dimensions quote={currentItemConfig} onUpdate={updateDimensions} onUpdateMilanoConfiguration={updateMilanoConfiguration} onUpdateMilanoLength={updateMilanoLength} />;
-                case 3: return <Step2Model onSelect={selectModel} selectedModel={currentItemConfig.model} productLine={currentItemConfig.productLine} />;
-                case 4: return commonColorStep;
-                case 5: return <Step4Extras 
-                        onToggle={toggleExtra} 
-                        selectedExtras={currentItemConfig.extras} 
-                        productLine={currentItemConfig.productLine}
-                        mainColor={currentItemConfig.color}
-                        bitonoColor={currentItemConfig.bitonoColor}
-                        onSelectBitonoColor={selectBitonoColor}
-                        structFrames={currentItemConfig.structFrames}
-                        onUpdateStructFrames={updateStructFrames}
-                        onUpdateTowelHolderCount={updateTowelHolderCount}
-                        towelHolderCount={currentItemConfig.towelHolderCount}
-                        onUpdateCopeteHeight={updateCopeteHeight}
-                        copeteHeight={currentItemConfig.copeteHeight}
-                    />;
-                case 6: return commonSummary;
-                default: return null;
-            }
-        }
-        
-        if (isKitFlow) {
-            switch (currentStep) {
-                case 1: return commonStep1;
-                case 2: return <Step2KitSelection onSelect={selectKitProduct} selectedKit={currentItemConfig.kitProduct || null} />;
-                case 3: return <Step3KitDetails 
-                        currentItemConfig={currentItemConfig}
-                        onSelectColor={selectColor}
-                        onToggleRal={handleToggleRal}
-                        onRalCodeChange={updateRalCode}
-                        onInvoiceRefChange={updateInvoiceReference}
-                     />;
-                case 4: return commonSummary;
-                default: return null;
-            }
-        }
-
-        switch (currentStep) {
-            case 1: return commonStep1;
-            case 2: return <Step1Dimensions quote={currentItemConfig} onUpdate={updateDimensions} onUpdateMilanoConfiguration={updateMilanoConfiguration} onUpdateMilanoLength={updateMilanoLength} />;
-            case 3: return <Step2Model onSelect={selectModel} selectedModel={currentItemConfig.model} productLine={currentItemConfig.productLine} />;
-            case 4: return commonColorStep;
-            case 5: return <Step4Extras 
-                    onToggle={toggleExtra} 
-                    selectedExtras={currentItemConfig.extras} 
-                    productLine={currentItemConfig.productLine}
-                    mainColor={currentItemConfig.color}
-                    bitonoColor={currentItemConfig.bitonoColor}
-                    onSelectBitonoColor={selectBitonoColor}
-                    structFrames={currentItemConfig.structFrames}
-                    onUpdateStructFrames={updateStructFrames}
-                    onUpdateTowelHolderCount={updateTowelHolderCount}
-                    towelHolderCount={currentItemConfig.towelHolderCount}
-                    onUpdateCopeteHeight={updateCopeteHeight}
-                    copeteHeight={currentItemConfig.copeteHeight}
-                />;
-            case 6: return commonSummary;
-            default: return null;
-        }
-    };
+        const productLine = currentItemConfig.productLine;
     
-    if (!currentUser) {
+        const isSummaryStep = currentStep === currentSteps[currentSteps.length - 1].number;
+    
+        const quoterContent = () => {
+            if (isKitFlow) {
+                switch (currentStep) {
+                    case 1: return <Step1ModelSelection onUpdate={(line) => handleUpdateItemConfig({ productLine: line, kitProduct: null, extras: [], color: null, ralCode: '' })} selectedProductLine={productLine} quantity={currentItemConfig.quantity} onUpdateQuantity={(q) => handleUpdateItemConfig({ quantity: q })} />;
+                    case 2: return <Step2KitSelection onSelect={(kit) => handleUpdateItemConfig({ kitProduct: kit })} selectedKit={currentItemConfig.kitProduct ?? null} />;
+                    case 3: return <Step3KitDetails currentItemConfig={currentItemConfig} onSelectColor={(c) => handleUpdateItemConfig({ color: c })} onToggleRal={() => { const isRal = currentItemConfig.extras.some(e => e.id === 'ral'); handleUpdateItemConfig({ color: null, extras: isRal ? [] : [{id: 'ral', name: 'RAL', description: '', price: 65}] }); }} onRalCodeChange={(code) => handleUpdateItemConfig({ ralCode: code })} onInvoiceRefChange={(ref) => handleUpdateItemConfig({ invoiceReference: ref })} />;
+                    case 4: return <Step5Summary items={quoteItems} totalPrice={totalPrice} onReset={() => handleReset()} onStartNew={handleStartNewItem} onEdit={handleEditItem} onDelete={handleDeleteItem} calculateItemPrice={(item) => calculateItemPrice(item, quoteItems)} onSaveRequest={() => setIsSaveQuoteOpen(true)} onGeneratePdfRequest={handleGeneratePdf} onPrintRequest={handlePrint} />;
+                    default: return <div>Paso desconocido</div>;
+                }
+            } else {
+                switch (currentStep) {
+                    case 1: return <Step1ModelSelection onUpdate={(line) => { handleUpdateItemConfig({ productLine: line, model: null, color: null, extras: [], ralCode: '', width: 0, length: 0 }); if (line === 'CUSTOM') setIsCustomQuoteModalOpen(true); }} selectedProductLine={productLine} quantity={currentItemConfig.quantity} onUpdateQuantity={(q) => handleUpdateItemConfig({ quantity: q })} />;
+                    case 2: return <Step1Dimensions quote={currentItemConfig} onUpdate={(w, l) => handleUpdateItemConfig({ width: w, length: l })} />;
+                    case 3: return <Step2Model onSelect={(model) => handleUpdateItemConfig({ model })} selectedModel={currentItemConfig.model} productLine={productLine} />;
+                    case 4: return <Step3Color onSelectColor={(c) => handleUpdateItemConfig({ color: c })} selectedColor={currentItemConfig.color} productLine={productLine} onToggleRal={() => { const isRal = currentItemConfig.extras.some(e => e.id === 'ral'); handleUpdateItemConfig({ color: null, extras: isRal ? currentItemConfig.extras.filter(e => e.id !== 'ral') : [...currentItemConfig.extras, {id: 'ral', name: 'RAL', description: '', price: 65}] }); }} isRalSelected={currentItemConfig.extras.some(e => e.id === 'ral')} ralCode={currentItemConfig.ralCode ?? ''} onRalCodeChange={(code) => handleUpdateItemConfig({ ralCode: code })} />;
+                    case 5: return <Step4Extras selectedExtras={currentItemConfig.extras} onToggle={(extra) => { const isSelected = currentItemConfig.extras.some(e => e.id === extra.id); handleUpdateItemConfig({ extras: isSelected ? currentItemConfig.extras.filter(e => e.id !== extra.id) : [...currentItemConfig.extras, extra], bitonoColor: extra.id === 'bitono' && !isSelected ? currentItemConfig.bitonoColor : null }); }} productLine={productLine} mainColor={currentItemConfig.color} bitonoColor={currentItemConfig.bitonoColor} onSelectBitonoColor={(c) => handleUpdateItemConfig({ bitonoColor: c })} structFrames={currentItemConfig.structFrames} onUpdateStructFrames={(f) => handleUpdateItemConfig({ structFrames: f })} />;
+                    case 6: return <Step5Summary items={quoteItems} totalPrice={totalPrice} onReset={() => handleReset()} onStartNew={handleStartNewItem} onEdit={handleEditItem} onDelete={handleDeleteItem} calculateItemPrice={(item) => calculateItemPrice(item, quoteItems)} onSaveRequest={() => setIsSaveQuoteOpen(true)} onGeneratePdfRequest={handleGeneratePdf} onPrintRequest={handlePrint} />;
+                    default: return <div>Paso desconocido</div>;
+                }
+            }
+        };
+    
         return (
-             <div className="bg-slate-100 min-h-screen font-sans flex items-center justify-center p-4 relative overflow-hidden">
-                <div className="absolute top-0 left-0 -translate-x-1/4 -translate-y-1/4 w-96 h-96 bg-teal-200/30 rounded-full blur-3xl opacity-80"></div>
-                <div className="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 w-96 h-96 bg-cyan-200/30 rounded-full blur-3xl opacity-80"></div>
-                <div className="relative z-10">
-                    <AuthPage onLogin={handleAuthentication} />
+             <div className="flex flex-col lg:flex-row gap-8 h-full">
+                <div className="w-full lg:w-1/3 xl:w-1/4">
+                    <div className="bg-slate-800 text-white rounded-2xl p-6 h-full flex flex-col justify-between shadow-lg">
+                        <div>
+                             <StepTracker currentStep={currentStep} steps={currentSteps} />
+                        </div>
+                        <div className="mt-8">
+                             <p className="text-sm text-slate-400">Paso {currentStep} de {currentSteps.length}</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="w-full lg:w-2/3 xl:w-3/4 flex-grow flex flex-col">
+                    <div className="flex-grow">
+                        {quoterContent()}
+                    </div>
+                     {!isSummaryStep && (
+                         <NextPrevButtons 
+                             onNext={handleNext} 
+                             onPrev={handlePrev} 
+                             currentStep={currentStep}
+                             isNextDisabled={isNextDisabled}
+                             totalSteps={currentSteps.length} 
+                             isLastStep={currentStep === currentSteps[currentSteps.length - 2].number} 
+                         />
+                     )}
                 </div>
             </div>
-        )
+        );
+    };
+
+    if (!currentUser) {
+        return (
+            <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
+                 <AuthPage onLogin={handleAuthentication} />
+            </div>
+        );
     }
 
+    const NavButton: React.FC<{view: string, label: string, icon: React.ReactNode}> = ({ view, label, icon }) => (
+         <button onClick={() => setAppView(view as any)} className={`w-full flex items-center text-left gap-3 px-4 py-3 rounded-lg transition-colors ${appView === view ? 'bg-teal-500/20 text-teal-300' : 'text-slate-400 hover:bg-slate-700 hover:text-white'}`}>
+            {icon}
+            <span className="font-semibold">{label}</span>
+        </button>
+    );
+
     return (
-        <div className="bg-slate-100 min-h-screen font-sans flex items-center justify-center p-4">
-            <main className="w-full max-w-7xl bg-white rounded-2xl shadow-xl shadow-slate-200/80 flex flex-col md:flex-row overflow-hidden min-h-[800px] max-h-[90vh]">
-                <div className="sidebar w-full md:w-1/3 lg:w-1/4 bg-slate-900 p-8 text-white flex flex-col">
-                    <div className="flex-shrink-0">
-                      <div
-                        aria-label="AQG Logo"
-                        className="h-16 w-20 bg-contain bg-no-repeat bg-center mb-4"
-                        style={{ backgroundImage: `url(${aqgLogo})` }}
-                      ></div>
-                      <h1 className="text-xl font-bold tracking-tight mb-1">TARIFA DIGITAL AQG</h1>
-                      <p className="text-slate-400 mb-8 text-sm">PLATOS Y ENCIMERAS</p>
-                      
-                      {appView === 'quoter' ? (
-                        <>
-                            <button 
-                                onClick={() => setAppView('myQuotes')}
-                                className="w-full text-left px-4 py-3 mb-8 rounded-lg font-semibold transition-colors bg-slate-800 hover:bg-slate-700 flex items-center gap-3 no-print"
-                                aria-label="Volver a Mis Presupuestos"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
-                                <span>Volver al listado</span>
-                            </button>
-                            <StepTracker currentStep={currentStep} steps={currentSteps} />
-                        </>
-                      ) : (
-                        <nav className="space-y-2 mt-8">
-                             <button onClick={() => handleReset()} className="w-full text-left px-4 py-3 rounded-lg bg-teal-600 hover:bg-teal-700 font-semibold transition-colors flex items-center gap-3">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
-                                <span>Nuevo Presupuesto</span>
-                            </button>
-                             <button onClick={() => setAppView('myQuotes')} className={`w-full text-left px-4 py-3 rounded-lg font-semibold transition-colors flex items-center gap-3 ${appView === 'myQuotes' ? 'bg-slate-800' : 'hover:bg-slate-700/50 text-slate-300'}`}>
-                               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                               <span>Mis Presupuestos</span>
-                            </button>
-                            <button onClick={() => setAppView('promotions')} className={`w-full text-left px-4 py-3 rounded-lg font-semibold transition-colors flex items-center gap-3 ${appView === 'promotions' ? 'bg-slate-800' : 'hover:bg-slate-700/50 text-slate-300'}`}>
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                                <span>Promociones</span>
-                            </button>
-                            <button onClick={() => setIsSettingsOpen(true)} className="w-full text-left px-4 py-3 rounded-lg font-semibold transition-colors hover:bg-slate-700/50 text-slate-300 flex items-center gap-3">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.49 3.17a1 1 0 00-1.02-1.74l-2.25.9A1 1 0 007.2 3.82V11a1 1 0 001 1h2a1 1 0 001-1V6.63l1.08-.43a1 1 0 00.49-1.87l-2.25-.9zM15 4a1 1 0 10-2 0v5a1 1 0 102 0V4zM3 8a1 1 0 011-1h2a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" /></svg>
-                                <span>Ajustes</span>
-                            </button>
-                        </nav>
-                      )}
+        <div className="flex h-screen bg-slate-900 font-sans text-slate-800">
+            <aside className="w-72 bg-slate-800 text-white p-6 flex-col justify-between hidden md:flex sidebar">
+                <div>
+                     <div className="flex items-center gap-2 mb-10">
+                        <div className="w-10 h-10 bg-white/10 rounded-lg"></div>
+                        <h1 className="text-xl font-bold tracking-tight">TARIFA DIGITAL</h1>
                     </div>
-                    <div className="mt-auto pt-8 border-t border-slate-700/50">
-                        <p className="text-sm text-slate-400 mb-1">Cliente:</p>
-                        <p className="font-bold text-white truncate" title={currentUser.companyName}>{currentUser.companyName}</p>
-                        <p className="text-sm text-slate-300 truncate" title={currentUser.email}>{currentUser.email}</p>
-                        <button 
-                            onClick={handleLogout}
-                            className="w-full mt-4 px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-red-500 flex items-center justify-center gap-2"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" /></svg>
-                            <span>Cerrar Sesión</span>
-                        </button>
-                    </div>
+                    <nav className="space-y-2">
+                         <NavButton view="myQuotes" label="Mis Presupuestos" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" /><path fillRule="evenodd" d="M4 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h4a1 1 0 100-2H7zm0 4a1 1 0 100 2h4a1 1 0 100-2H7z" clipRule="evenodd" /></svg>} />
+                         <NavButton view="quoter" label="Nuevo Presupuesto" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>} />
+                         <NavButton view="promotions" label="Promociones" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5 2a1 1 0 00-1 1v1.586l-1.707 1.707A1 1 0 003 8v6a1 1 0 001 1h12a1 1 0 001-1V8a1 1 0 00-.293-.707L15 5.586V3a1 1 0 00-1-1H5zm4 5a3 3 0 100 6 3 3 0 000-6z" clipRule="evenodd" /></svg>} />
+                    </nav>
                 </div>
-                <div className="main-content w-full md:w-2/3 lg:w-3/4 p-8 md:p-12 flex flex-col bg-slate-50 overflow-y-auto">
-                    <div className="flex-grow">
-                         {appView === 'quoter' && (
-                            <>
-                                {welcomePromoDetails.isActive && welcomePromoDetails.expirationDate && (
-                                    <PromotionBanner expirationDate={welcomePromoDetails.expirationDate} />
-                                )}
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-16">
-                                    <div className="flex flex-col">
-                                        <div className="flex-grow">
-                                            {renderQuoter()}
-                                        </div>
-                                        {currentStep < currentSteps[currentSteps.length-1].number && (
-                                            <NextPrevButtons 
-                                                onNext={handleNext} 
-                                                onPrev={handlePrev}
-                                                currentStep={currentStep}
-                                                totalSteps={currentSteps.length}
-                                                isNextDisabled={isNextDisabled}
-                                                isLastStep={currentStep === currentSteps[currentSteps.length-2].number}
-                                            />
-                                        )}
-                                    </div>
+                 <div className="space-y-3">
+                     <button onClick={() => setIsSettingsOpen(true)} className="w-full flex items-center text-left gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-700 hover:text-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" /></svg>
+                        <span className="font-semibold">Ajustes</span>
+                    </button>
+                    <button onClick={handleLogout} className="w-full flex items-center text-left gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-700 hover:text-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" /></svg>
+                        <span className="font-semibold">Cerrar Sesión</span>
+                    </button>
+                </div>
+            </aside>
+            <main className="flex-1 bg-slate-100 rounded-tl-3xl shadow-2xl overflow-hidden main-content">
+                <div className="p-4 sm:p-6 md:p-8 h-full overflow-y-auto relative">
+                    {welcomePromoDetails.isActive && appView === 'quoter' && <PromotionBanner expirationDate={welcomePromoDetails.expirationDate!} />}
                     
-                                    {currentStep > 1 && currentStep < currentSteps[currentSteps.length - 1].number && (
-                                         <div className="hidden lg:block">
-                                            <div className="sticky top-10">
-                                                <LivePreview item={currentItemConfig} price={currentItemPrice} />
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </>
-                        )}
-                        {appView === 'myQuotes' && (
-                            <MyQuotesPage 
-                                user={currentUser} 
-                                onDuplicateQuote={(quoteItems) => handleReset(quoteItems)} 
-                                onViewPdf={handleViewPdfForQuote} 
-                                calculateInternalItemPrice={(item, allItems) => calculateItemPrice(item, allItems, false)}
-                            />
-                        )}
-                         {appView === 'promotions' && (
-                             <PromotionsPage 
-                                user={currentUser}
-                                onActivatePromotion={handleActivatePromotion}
-                             />
-                        )}
-                    </div>
+                    {appView === 'quoter' && renderQuoter()}
+                    {appView === 'myQuotes' && <MyQuotesPage user={currentUser} onDuplicateQuote={(items) => handleReset(items)} onViewPdf={(quote) => { setQuoteForPdf(quote); setIsDiscountOpen(true); }} calculateInternalItemPrice={(item, allItems) => calculateItemPrice(item, allItems, false)} />}
+                    {appView === 'promotions' && <PromotionsPage user={currentUser} onActivatePromotion={() => {}} />}
                 </div>
             </main>
-             <SettingsModal 
-                isOpen={isSettingsOpen}
-                onClose={() => setIsSettingsOpen(false)}
-                onSave={handleUpdateUserSettings}
-                user={currentUser}
-                onExport={handleExportData}
-                onImport={handleImportData}
-            />
-            <DiscountModal
-                isOpen={isDiscountOpen}
-                onClose={() => setIsDiscountOpen(false)}
-                onConfirm={handleConfirmDiscount}
-            />
-            <SaveQuoteModal
-                isOpen={isSaveQuoteOpen}
-                onClose={() => setIsSaveQuoteOpen(false)}
-                onConfirm={handleConfirmSaveQuote}
-                disabled={quoteItems.length === 0}
-            />
-             <CustomQuoteModal
-                isOpen={isCustomQuoteModalOpen}
-                onClose={handleCloseCustomQuoteModal}
-            />
+
+            {/* Modals */}
+             <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} onSave={handleSaveSettings} user={currentUser} onExport={handleExportData} onImport={handleImportData} />
+             <DiscountModal isOpen={isDiscountOpen} onClose={() => setIsDiscountOpen(false)} onConfirm={(discount) => { /* handleConfirmPdfGeneration(discount) */ }} />
+             <SaveQuoteModal isOpen={isSaveQuoteOpen} onClose={() => setIsSaveQuoteOpen(false)} onConfirm={handleConfirmSaveQuote} disabled={quoteItems.length === 0} />
+             <CustomQuoteModal isOpen={isCustomQuoteModalOpen} onClose={() => setIsCustomQuoteModalOpen(false)} />
         </div>
     );
 };

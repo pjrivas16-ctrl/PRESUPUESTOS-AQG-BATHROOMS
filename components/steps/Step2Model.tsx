@@ -1,5 +1,5 @@
 import React from 'react';
-import { SHOWER_MODELS, MILANO_FINISHES } from '../../constants';
+import { SHOWER_MODELS } from '../../constants';
 import type { ProductOption } from '../../types';
 
 interface Step2ModelProps {
@@ -18,8 +18,6 @@ const CheckBadge = () => (
 
 const Step2Model: React.FC<Step2ModelProps> = ({ onSelect, selectedModel, productLine }) => {
     
-    const isCountertop = productLine === 'MILANO';
-
     const getShowerModels = () => {
         if (productLine === 'SOFTUM') {
             return SHOWER_MODELS.filter(m => m.id === 'sand');
@@ -33,9 +31,9 @@ const Step2Model: React.FC<Step2ModelProps> = ({ onSelect, selectedModel, produc
         return SHOWER_MODELS.filter(m => m.id !== 'sand');
     }
 
-    const modelsToShow = isCountertop ? MILANO_FINISHES : getShowerModels();
-    const title = isCountertop ? 'Selecciona el acabado' : 'Selecciona la textura';
-    const description = isCountertop ? 'Elige el acabado para tu encimera.' : 'Cada textura ofrece una sensación y estética únicas.';
+    const modelsToShow = getShowerModels();
+    const title = 'Selecciona la textura';
+    const description = 'Cada textura ofrece una sensación y estética únicas.';
 
     return (
         <div className="animate-fade-in">

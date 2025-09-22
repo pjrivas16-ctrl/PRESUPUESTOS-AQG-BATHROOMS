@@ -29,11 +29,6 @@ export interface QuoteState {
     // For Kits
     kitProduct?: ProductOption | null;
     invoiceReference?: string;
-
-    // For Countertops
-    milanoConfiguration?: { id: string; name: string; } | null;
-    towelHolderCount?: number;
-    copeteHeight?: 5 | 7.5 | 10 | null;
 }
 
 export interface QuoteItem extends QuoteState {
