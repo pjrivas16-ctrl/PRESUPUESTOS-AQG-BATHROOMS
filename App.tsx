@@ -22,6 +22,7 @@ import MyQuotesPage from './components/MyQuotesPage';
 import PromotionsPage from './components/PromotionsPage';
 import LogoUploader from './components/LogoUploader';
 import PromotionBanner from './components/PromotionBanner';
+import { aqgLogo } from './assets';
 
 // Declare jsPDF on window for TypeScript
 declare global {
@@ -34,17 +35,19 @@ declare global {
 interface SettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (settings: { fiscalName: string; preparedBy: string; sucursal: string; logo: string | null; }) => void;
+    onSave: (settings: { fiscalName: string; preparedBy: string; sucursal: string; logo: string | null; discount: number; }) => void;
     user: User;
+    isSpecialUser: boolean;
     onExport: () => void;
     onImport: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, user, onExport, onImport }) => {
+const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, user, isSpecialUser, onExport, onImport }) => {
     const [preparedBy, setPreparedBy] = useState(user.preparedBy || '');
     const [fiscalName, setFiscalName] = useState(user.fiscalName || user.companyName || '');
     const [sucursal, setSucursal] = useState(user.sucursal || '');
     const [logo, setLogo] = useState<string | null>(user.logo || null);
+    const [discount, setDiscount] = useState(user.discount || 0);
     const importInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -53,14 +56,24 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
             setFiscalName(user.fiscalName || user.companyName || '');
             setSucursal(user.sucursal || '');
             setLogo(user.logo || null);
+            setDiscount(user.discount || 0);
         }
     }, [isOpen, user]);
 
     if (!isOpen) return null;
 
     const handleSave = () => {
-        onSave({ preparedBy, fiscalName, sucursal, logo });
+        onSave({ preparedBy, fiscalName, sucursal, logo, discount });
         onClose();
+    };
+
+    const handleDiscountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = parseInt(e.target.value, 10);
+        if (!isNaN(value) && value >= 0 && value <= 100) {
+            setDiscount(value);
+        } else if (e.target.value === '') {
+            setDiscount(0);
+        }
     };
 
     return (
@@ -123,6 +136,23 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
                         />
                          <p className="text-xs text-slate-500 mt-1">Este nombre aparecerá en los PDFs generados.</p>
                     </div>
+                     {isSpecialUser && (
+                         <div>
+                            <label htmlFor="discount" className="block text-sm font-medium text-slate-700 mb-2">
+                                Descuento Comercial (%)
+                            </label>
+                            <input
+                                id="discount"
+                                type="number"
+                                value={discount}
+                                onChange={handleDiscountChange}
+                                min="0"
+                                max="100"
+                                className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                             <p className="text-xs text-slate-500 mt-1">Este descuento se aplicará a todos los PDFs.</p>
+                        </div>
+                    )}
                 </div>
 
                 <div className="mt-8 pt-6 border-t border-slate-200">
@@ -182,79 +212,254 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
 };
 
 
-// --- DiscountModal Component Definition ---
-interface DiscountModalProps {
+// --- PDF Preview Modal ---
+interface PdfPreviewModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: (discount: number) => void;
+    quote: SavedQuote | null;
+    user: User;
+    calculateItemPrice: (item: QuoteItem, allItems: QuoteItem[], includeVat: boolean) => number;
 }
 
-const DiscountModal: React.FC<DiscountModalProps> = ({ isOpen, onClose, onConfirm }) => {
-    const [discount, setDiscount] = useState(0);
+const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quote, user, calculateItemPrice }) => {
+    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const pdfDoc = useRef<any>(null); // To store the jsPDF instance
 
-    if (!isOpen) return null;
+    const generatePdf = useCallback(async () => {
+        if (!quote) return;
+        setIsGenerating(true);
 
-    const handleConfirm = () => {
-        onConfirm(discount);
-        onClose();
-        setDiscount(0);
-    };
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            pdfDoc.current = doc;
 
-    const handleDiscountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = parseInt(e.target.value, 10);
-        if (!isNaN(value) && value >= 0 && value <= 100) {
-            setDiscount(value);
-        } else if (e.target.value === '') {
-            setDiscount(0);
+            // --- Define Colors & Fonts ---
+            const primaryColor = '#0d9488'; // teal-600
+            const textColor = '#334155'; // slate-700
+            const lightTextColor = '#64748b'; // slate-500
+
+            // --- Header ---
+            const userLogoData = user.logo ? await processImageForPdf(user.logo).catch(e => { console.error(e); return null; }) : null;
+            const defaultLogoData = await processImageForPdf(aqgLogo);
+            
+            const logoToUse = userLogoData || defaultLogoData;
+            if (logoToUse) {
+                const aspectRatio = logoToUse.width / logoToUse.height;
+                const logoHeight = 20;
+                const logoWidth = logoHeight * aspectRatio;
+                doc.addImage(logoToUse.imageData, logoToUse.format, 15, 15, logoWidth, logoHeight);
+            }
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            doc.setTextColor(textColor);
+            doc.text(user.fiscalName || user.companyName, 195, 20, { align: 'right' });
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.setTextColor(lightTextColor);
+            if (user.sucursal) doc.text(user.sucursal, 195, 25, { align: 'right' });
+            if (user.preparedBy) doc.text(`Att: ${user.preparedBy}`, 195, 30, { align: 'right' });
+            
+            // --- Quote Info ---
+            doc.setFontSize(18);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(primaryColor);
+            doc.text('PRESUPUESTO', 15, 50);
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.setTextColor(textColor);
+            doc.text(`Número:`, 140, 50);
+            doc.text(`Fecha:`, 140, 55);
+            doc.setFont('helvetica', 'bold');
+            doc.text(quote.id.replace('quote_i_', '').replace('quote_c_', ''), 160, 50);
+            doc.text(new Date(quote.timestamp).toLocaleDateString('es-ES'), 160, 55);
+
+            // --- Client Info Box ---
+            doc.setDrawColor(226, 232, 240); // slate-200
+            doc.roundedRect(14, 62, 90, 22, 2, 2, 'S');
+            doc.setFontSize(9);
+            doc.setTextColor(lightTextColor);
+            doc.text('PRESUPUESTO PARA:', 20, 68);
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(textColor);
+            doc.text(quote.customerName || 'Cliente sin especificar', 20, 74);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.setTextColor(lightTextColor);
+            if (quote.projectReference) doc.text(`Referencia: ${quote.projectReference}`, 20, 79);
+
+
+            // --- Table ---
+            const tableRows = quote.quoteItems.map(item => {
+                let description = '';
+                if (item.productLine === 'KITS Y ACCESORIOS') {
+                    description = `${item.kitProduct?.name || ''}\n`;
+                    if (item.kitProduct?.id === 'kit-pintura') {
+                        description += `Color: ${item.color?.name || `RAL ${item.ralCode}`}\n`;
+                    }
+                    if (item.invoiceReference) {
+                        description += `Ref. Factura: ${item.invoiceReference}`;
+                    }
+                } else {
+                    description = `Plato de ducha ${item.productLine} - ${item.model?.name}\n`;
+                    description += `Dimensiones: ${item.width}x${item.length}cm\n`;
+                    description += `Color: ${item.color?.name || `RAL ${item.ralCode}`}\n`;
+                    if (item.extras.length > 0) {
+                        description += `Extras: ${item.extras.map(e => e.id === 'bitono' && item.bitonoColor ? `Tapa bitono: ${item.bitonoColor.name}` : e.name).join(', ')}`;
+                    }
+                     if (item.productLine === 'STRUCT DETAIL' && item.structFrames) {
+                        description += `\nMarcos: ${item.structFrames}`;
+                    }
+                }
+                
+                const itemPriceWithoutVAT = calculateItemPrice(item, quote.quoteItems, false);
+                const unitPrice = itemPriceWithoutVAT / item.quantity;
+            
+                return [
+                    item.quantity,
+                    description.trim(),
+                    unitPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }),
+                    itemPriceWithoutVAT.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })
+                ];
+            });
+
+            // @ts-ignore
+            doc.autoTable({
+                startY: 90,
+                head: [['Cant.', 'Descripción', 'P. Unitario', 'Total']],
+                body: tableRows,
+                theme: 'grid',
+                headStyles: {
+                    fillColor: [241, 245, 249], // slate-100
+                    textColor: [51, 65, 85], // slate-700
+                    fontStyle: 'bold',
+                },
+                styles: {
+                    cellPadding: 3,
+                    fontSize: 9,
+                    textColor: textColor,
+                    valign: 'middle'
+                },
+                columnStyles: {
+                    0: { cellWidth: 15, halign: 'center' },
+                    1: { cellWidth: 'auto' },
+                    2: { cellWidth: 30, halign: 'right' },
+                    3: { cellWidth: 30, halign: 'right' },
+                }
+            });
+
+            // --- Totals ---
+            const finalY = (doc as any).lastAutoTable.finalY || 150;
+            const subtotal = quote.quoteItems.reduce((sum, item) => sum + calculateItemPrice(item, quote.quoteItems, false), 0);
+            const discountPercent = user.discount || 0;
+            const discountAmount = subtotal * (discountPercent / 100);
+            const baseImponible = subtotal - discountAmount;
+            const ivaAmount = baseImponible * 0.21;
+            const total = baseImponible + ivaAmount;
+            
+            let currentY = finalY + 10;
+            doc.setFontSize(10);
+
+            const drawTotalLine = (label: string, value: string, isBold = false) => {
+                doc.setFont('helvetica', isBold ? 'bold' : 'normal');
+                doc.text(label, 140, currentY);
+                doc.text(value, 195, currentY, { align: 'right' });
+                currentY += 6;
+            };
+
+            drawTotalLine('Subtotal', subtotal.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }));
+            if (discountPercent > 0) {
+                drawTotalLine(`Descuento (${discountPercent}%)`, `- ${discountAmount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}`);
+                doc.setDrawColor(226, 232, 240);
+                doc.line(140, currentY - 8, 195, currentY - 8);
+                drawTotalLine('Base Imponible', baseImponible.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }));
+            }
+            drawTotalLine('IVA (21%)', ivaAmount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }));
+            doc.setDrawColor(textColor);
+            doc.setLineWidth(0.5);
+            doc.line(140, currentY - 2, 195, currentY - 2);
+            doc.setFontSize(12);
+            drawTotalLine('TOTAL', total.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }), true);
+
+
+            // --- Footer ---
+            doc.setFontSize(8);
+            doc.setTextColor(lightTextColor);
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.text(`Página ${i} de ${pageCount}`, 195, 285, { align: 'right' });
+                doc.text('Presupuesto válido durante 30 días.', 15, 285);
+            }
+
+            setPdfUrl(doc.output('bloburl'));
+        } catch (error) {
+            console.error("Error generating PDF:", error);
+            // Handle error state if needed
+        } finally {
+            setIsGenerating(false);
+        }
+    }, [quote, user, calculateItemPrice]);
+
+    useEffect(() => {
+        if (isOpen) {
+            generatePdf();
+        } else {
+            // Clean up blob URL when modal closes
+            if (pdfUrl) {
+                URL.revokeObjectURL(pdfUrl);
+                setPdfUrl(null);
+            }
+            pdfDoc.current = null;
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen]); // generatePdf is stable due to useCallback
+
+    const handleDownload = () => {
+        if (pdfDoc.current && quote) {
+            pdfDoc.current.save(`Presupuesto_${quote.customerName || 'presupuesto'}_${quote.id.split('_').pop()}.pdf`);
         }
     };
+    
+    if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
-            <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-sm w-full" onClick={e => e.stopPropagation()}>
-                <div className="flex justify-between items-start mb-4">
-                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-teal-100 text-teal-600 rounded-lg flex items-center justify-center">
-                           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        </div>
-                        <div>
-                            <h3 className="text-xl font-bold text-slate-800">Aplicar Descuento</h3>
-                            <p className="text-sm text-slate-500">Introduce un descuento para este PDF.</p>
-                        </div>
-                    </div>
+            <div className="bg-white rounded-2xl shadow-2xl p-4 md:p-6 w-full max-w-4xl h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                <div className="flex justify-between items-center mb-4 flex-shrink-0">
+                    <h3 className="text-xl font-bold text-slate-800">Previsualización del Presupuesto</h3>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
                 </div>
-
-                <div className="space-y-4">
-                    <div>
-                        <label htmlFor="discount" className="block text-sm font-medium text-slate-700 mb-2">
-                            Descuento (%)
-                        </label>
-                        <input
-                            id="discount"
-                            type="number"
-                            value={discount}
-                            onChange={handleDiscountChange}
-                            min="0"
-                            max="100"
-                            className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        />
-                         <p className="text-xs text-slate-500 mt-1">El descuento se aplicará sobre la base imponible.</p>
-                    </div>
+                <div className="flex-grow bg-slate-100 rounded-lg overflow-hidden">
+                    {isGenerating ? (
+                        <div className="flex items-center justify-center h-full">
+                            <p className="text-slate-500">Generando PDF...</p>
+                        </div>
+                    ) : pdfUrl ? (
+                        <iframe src={pdfUrl} className="w-full h-full border-0" title="PDF Preview"></iframe>
+                    ) : (
+                        <div className="flex items-center justify-center h-full">
+                            <p className="text-red-500">Error al generar el PDF.</p>
+                        </div>
+                    )}
                 </div>
-
-                <div className="mt-8 pt-6 border-t border-slate-200 flex justify-end gap-3">
-                     <button onClick={onClose} className="px-6 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors">
-                        Cancelar
+                <div className="mt-6 pt-4 border-t border-slate-200 flex justify-end gap-3 flex-shrink-0">
+                    <button onClick={onClose} className="px-6 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors">
+                        Cerrar
                     </button>
-                    <button onClick={handleConfirm} className="px-8 py-2 font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors">
-                        Generar PDF
+                    <button onClick={handleDownload} disabled={isGenerating || !pdfUrl} className="px-8 py-2 font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors disabled:bg-teal-300">
+                        Descargar PDF
                     </button>
                 </div>
             </div>
         </div>
     );
 };
+
 
 // --- SaveQuoteModal Component Definition ---
 interface SaveQuoteModalProps {
@@ -394,7 +599,7 @@ const App: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [appView, setAppView] = useState<'quoter' | 'myQuotes' | 'promotions'>('myQuotes');
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-    const [isDiscountOpen, setIsDiscountOpen] = useState(false);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [isSaveQuoteOpen, setIsSaveQuoteOpen] = useState(false);
     const [isCustomQuoteModalOpen, setIsCustomQuoteModalOpen] = useState(false);
     const [quoteForPdf, setQuoteForPdf] = useState<SavedQuote | null>(null);
@@ -637,7 +842,7 @@ const App: React.FC = () => {
         setCurrentStep(1);
     };
 
-    const handleSaveSettings = (settings: { fiscalName: string; preparedBy: string; sucursal: string; logo: string | null; }) => {
+    const handleSaveSettings = (settings: { fiscalName: string; preparedBy: string; sucursal: string; logo: string | null; discount: number; }) => {
         if (!currentUser) return;
         const updatedUser = { ...currentUser, ...settings };
         setCurrentUser(updatedUser);
@@ -721,7 +926,19 @@ const App: React.FC = () => {
     };
     
     const handleGeneratePdf = () => {
-        setIsDiscountOpen(true);
+        if (!currentUser) return;
+        const tempQuote: SavedQuote = {
+            id: `quote_temp_${Date.now()}`,
+            timestamp: Date.now(),
+            userEmail: currentUser.email,
+            quoteItems: quoteItems,
+            totalPrice: totalPrice,
+            customerName: 'Cliente Final',
+            projectReference: 'Presupuesto en curso',
+            type: 'customer',
+        };
+        setQuoteForPdf(tempQuote);
+        setIsPreviewOpen(true);
     };
     
     const handlePrint = () => {
@@ -831,14 +1048,14 @@ const App: React.FC = () => {
                     {welcomePromoDetails.isActive && appView === 'quoter' && <PromotionBanner expirationDate={welcomePromoDetails.expirationDate!} />}
                     
                     {appView === 'quoter' && renderQuoter()}
-                    {appView === 'myQuotes' && <MyQuotesPage user={currentUser} onDuplicateQuote={(items) => handleReset(items)} onViewPdf={(quote) => { setQuoteForPdf(quote); setIsDiscountOpen(true); }} calculateInternalItemPrice={(item, allItems) => calculateItemPrice(item, allItems, false)} />}
+                    {appView === 'myQuotes' && <MyQuotesPage user={currentUser} onDuplicateQuote={(items) => handleReset(items)} onViewPdf={(quote) => { setQuoteForPdf(quote); setIsPreviewOpen(true); }} calculateInternalItemPrice={(item, allItems) => calculateItemPrice(item, allItems, false)} />}
                     {appView === 'promotions' && <PromotionsPage user={currentUser} onActivatePromotion={() => {}} />}
                 </div>
             </main>
 
             {/* Modals */}
-             <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} onSave={handleSaveSettings} user={currentUser} onExport={handleExportData} onImport={handleImportData} />
-             <DiscountModal isOpen={isDiscountOpen} onClose={() => setIsDiscountOpen(false)} onConfirm={(discount) => { /* handleConfirmPdfGeneration(discount) */ }} />
+             <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} onSave={handleSaveSettings} user={currentUser} isSpecialUser={isSpecialUser} onExport={handleExportData} onImport={handleImportData} />
+             <PdfPreviewModal isOpen={isPreviewOpen} onClose={() => setIsPreviewOpen(false)} quote={quoteForPdf} user={currentUser} calculateItemPrice={calculateItemPrice} />
              <SaveQuoteModal isOpen={isSaveQuoteOpen} onClose={() => setIsSaveQuoteOpen(false)} onConfirm={handleConfirmSaveQuote} disabled={quoteItems.length === 0} />
              <CustomQuoteModal isOpen={isCustomQuoteModalOpen} onClose={() => setIsCustomQuoteModalOpen(false)} />
         </div>

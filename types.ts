@@ -42,6 +42,7 @@ export interface User {
     preparedBy?: string;
     fiscalName?: string;
     sucursal?: string;
+    discount?: number;
     promotion?: {
         id: string;
         activationTimestamp: number;

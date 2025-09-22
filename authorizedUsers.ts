@@ -18,5 +18,6 @@ export const authorizedUsers: StoredUser[] = [
         password: 'adminpassword',
         logo: undefined,
         preparedBy: 'Equipo AQG',
+        discount: 0,
     },
 ];
