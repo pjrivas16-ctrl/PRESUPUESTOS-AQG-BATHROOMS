@@ -1,6 +1,6 @@
 
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import type { QuoteState, ProductOption, ColorOption, User, SavedQuote, StoredUser, QuoteItem } from './types';
 import { PRICE_LIST, SHOWER_TRAY_STEPS, KITS_STEPS, STANDARD_WIDTHS, STANDARD_LENGTHS, SOFTUM_WIDTHS, SOFTUM_LENGTHS, SHOWER_MODELS, SHOWER_EXTRAS, KIT_PRODUCTS } from './constants';
 import { authorizedUsers } from './authorizedUsers';
@@ -37,13 +37,16 @@ interface SettingsModalProps {
     onClose: () => void;
     onSave: (settings: { fiscalName: string; preparedBy: string; sucursal: string; logo: string | null; }) => void;
     user: User;
+    onExport: () => void;
+    onImport: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, user }) => {
+const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, user, onExport, onImport }) => {
     const [preparedBy, setPreparedBy] = useState(user.preparedBy || '');
     const [fiscalName, setFiscalName] = useState(user.fiscalName || user.companyName || '');
     const [sucursal, setSucursal] = useState(user.sucursal || '');
     const [logo, setLogo] = useState<string | null>(user.logo || null);
+    const importInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (isOpen) {
@@ -63,7 +66,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
-            <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-lg w-full" onClick={e => e.stopPropagation()}>
+            <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-start mb-6">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-teal-100 text-teal-600 rounded-lg flex items-center justify-center">
@@ -120,6 +123,49 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
                             className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition"
                         />
                          <p className="text-xs text-slate-500 mt-1">Este nombre aparecerá en los PDFs generados.</p>
+                    </div>
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-slate-200">
+                    <div className="flex items-center gap-3 mb-4">
+                         <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4M4 7v1.111c0 .488.132.953.375 1.36M20 7v1.111c0 .488-.132.953-.375 1.36M12 11c-4.418 0-8-1.79-8-4" /></svg>
+                        </div>
+                        <div>
+                            <h4 className="text-lg font-bold text-slate-800">Gestión de Datos</h4>
+                             <p className="text-sm text-slate-500">Guarda o restaura tus datos de la aplicación.</p>
+                        </div>
+                    </div>
+                    <div className="space-y-4">
+                        <p className="text-sm text-slate-600">
+                            Guarda una copia de seguridad de todos tus presupuestos y ajustes, o restaura desde un archivo guardado.
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <button 
+                                onClick={onExport} 
+                                className="w-full px-4 py-2.5 font-semibold text-indigo-600 bg-indigo-100 rounded-lg hover:bg-indigo-200 transition-colors flex items-center justify-center gap-2"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>
+                                Exportar Datos
+                            </button>
+                            <button 
+                                onClick={() => importInputRef.current?.click()} 
+                                className="w-full px-4 py-2.5 font-semibold text-indigo-600 bg-indigo-100 rounded-lg hover:bg-indigo-200 transition-colors flex items-center justify-center gap-2"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                                Importar Datos
+                            </button>
+                            <input
+                                type="file"
+                                ref={importInputRef}
+                                hidden
+                                accept=".json"
+                                onChange={onImport}
+                            />
+                        </div>
+                        <p className="text-xs text-amber-800 bg-amber-100 p-3 rounded-md mt-2">
+                            <strong>Atención:</strong> Importar un archivo reemplazará todos los datos actuales de forma permanente.
+                        </p>
                     </div>
                 </div>
 
@@ -1008,6 +1054,75 @@ const App: React.FC = () => {
         }
 
     }, [currentUser]);
+    
+    const handleExportData = () => {
+        try {
+            const quotes = localStorage.getItem('quotes') || '[]';
+            const users = localStorage.getItem('users') || '[]';
+
+            const backupData = {
+                dataType: 'AQG_BACKUP',
+                version: 1,
+                timestamp: new Date().toISOString(),
+                data: {
+                    quotes: JSON.parse(quotes),
+                    users: JSON.parse(users),
+                }
+            };
+
+            const jsonString = JSON.stringify(backupData, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            const date = new Date().toISOString().slice(0, 10);
+            link.download = `aqg_backup_${date}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            alert("Datos exportados con éxito.");
+        } catch (error) {
+            console.error("Error exporting data:", error);
+            alert("Hubo un error al exportar los datos.");
+        }
+    };
+
+    const handleImportData = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const text = e.target?.result;
+                if (typeof text !== 'string') throw new Error("El archivo no es legible");
+                
+                const parsedData = JSON.parse(text);
+
+                if (parsedData.dataType !== 'AQG_BACKUP' || !parsedData.data?.quotes || !parsedData.data?.users) {
+                    throw new Error("El archivo no es una copia de seguridad válida.");
+                }
+
+                if (window.confirm("¿Estás seguro? Importar este archivo reemplazará todos tus presupuestos y ajustes actuales. Esta acción no se puede deshacer.")) {
+                    localStorage.setItem('quotes', JSON.stringify(parsedData.data.quotes));
+                    localStorage.setItem('users', JSON.stringify(parsedData.data.users));
+                    alert("Datos importados con éxito. La aplicación se recargará.");
+                    window.location.reload();
+                }
+
+            } catch (error) {
+                console.error("Error importing data:", error);
+                const errorMessage = error instanceof Error ? error.message : "Formato inválido.";
+                alert(`Error al importar el archivo: ${errorMessage}`);
+            } finally {
+                // Reset file input value to allow re-uploading the same file
+                event.target.value = '';
+            }
+        };
+        reader.readAsText(file);
+    };
+
 
     const updateProductLine = (productLine: string) => {
         if (productLine === 'CUSTOM') {
@@ -1390,6 +1505,8 @@ const App: React.FC = () => {
                 onClose={() => setIsSettingsOpen(false)}
                 onSave={handleUpdateUserSettings}
                 user={currentUser}
+                onExport={handleExportData}
+                onImport={handleImportData}
             />
             <DiscountModal
                 isOpen={isDiscountOpen}
