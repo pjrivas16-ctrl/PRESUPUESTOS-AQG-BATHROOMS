@@ -40,7 +40,8 @@ export interface User {
     companyName: string;
     logo?: string;
     preparedBy?: string;
-    commercialName?: string;
+    fiscalName?: string;
+    sucursal?: string;
 }
 
 export interface StoredUser extends User {

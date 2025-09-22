@@ -94,12 +94,16 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
 
         const { quoteItems } = selectedQuote;
         const quoteNumber = selectedQuote.id.replace(/quote_i_|quote_c_/g, '');
-
-        // Updated subject and body for clarity
-        const subject = `Nuevo Pedido de ${user.companyName} - Presupuesto Nº ${quoteNumber}`;
+        const clientIdentifier = user.fiscalName || user.companyName;
+        
+        const subject = `Nuevo Pedido de ${clientIdentifier} - Presupuesto Nº ${quoteNumber}`;
         
         let body = `Hola,\n\n` +
-                   `El cliente ${user.companyName} ha solicitado tramitar el pedido correspondiente al presupuesto Nº ${quoteNumber}.\n\n`;
+                   `El cliente ${clientIdentifier} ha solicitado tramitar el pedido correspondiente al presupuesto Nº ${quoteNumber}.\n\n`;
+        
+        if (user.sucursal) {
+            body += `Sucursal: ${user.sucursal}\n\n`;
+        }
 
         if (user.preparedBy) {
             body += `Persona de contacto: ${user.preparedBy} (${user.email})\n\n`;

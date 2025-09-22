@@ -1,5 +1,6 @@
 import React from 'react';
 import { PRODUCT_LINES } from '../../constants';
+import QuantitySelector from '../QuantitySelector';
 
 interface Step1ModelSelectionProps {
     onUpdate: (model: string) => void;
@@ -19,8 +20,8 @@ const Step1ModelSelection: React.FC<Step1ModelSelectionProps> = ({ onUpdate, sel
             <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">Selecciona la colección</h2>
             <p className="text-slate-500 mb-8">Elige la línea de producto y la cantidad que mejor se adapte a tu diseño.</p>
             
-            <div className="space-y-6">
-                <div>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6 items-end">
+                <div className="md:col-span-3">
                     <label htmlFor="product-line" className="block text-sm font-medium text-slate-700 mb-2">Colección de plato</label>
                     <select
                         id="product-line"
@@ -35,17 +36,9 @@ const Step1ModelSelection: React.FC<Step1ModelSelectionProps> = ({ onUpdate, sel
                         ))}
                     </select>
                 </div>
-                <div>
-                    <label htmlFor="quantity" className="block text-sm font-medium text-slate-700 mb-2">Cantidad</label>
-                    <input
-                        id="quantity"
-                        name="quantity"
-                        type="number"
-                        value={quantity}
-                        onChange={(e) => onUpdateQuantity(parseInt(e.target.value, 10))}
-                        min="1"
-                        className="w-full p-3 bg-white border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 focus:border-teal-500 transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    />
+                <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Unidades</label>
+                    <QuantitySelector quantity={quantity} onUpdateQuantity={onUpdateQuantity} />
                 </div>
             </div>
         </div>

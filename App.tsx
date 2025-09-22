@@ -33,19 +33,21 @@ declare global {
 interface SettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (settings: { commercialName: string; preparedBy: string; logo: string | null; }) => void;
+    onSave: (settings: { fiscalName: string; preparedBy: string; sucursal: string; logo: string | null; }) => void;
     user: User;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, user }) => {
     const [preparedBy, setPreparedBy] = useState(user.preparedBy || '');
-    const [commercialName, setCommercialName] = useState(user.commercialName || user.companyName || '');
+    const [fiscalName, setFiscalName] = useState(user.fiscalName || user.companyName || '');
+    const [sucursal, setSucursal] = useState(user.sucursal || '');
     const [logo, setLogo] = useState<string | null>(user.logo || null);
 
     useEffect(() => {
         if (isOpen) {
             setPreparedBy(user.preparedBy || '');
-            setCommercialName(user.commercialName || user.companyName || '');
+            setFiscalName(user.fiscalName || user.companyName || '');
+            setSucursal(user.sucursal || '');
             setLogo(user.logo || null);
         }
     }, [isOpen, user]);
@@ -53,7 +55,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
     if (!isOpen) return null;
 
     const handleSave = () => {
-        onSave({ preparedBy, commercialName, logo });
+        onSave({ preparedBy, fiscalName, sucursal, logo });
         onClose();
     };
 
@@ -76,18 +78,32 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
                 <div className="space-y-6">
                      <LogoUploader logo={logo} onLogoChange={setLogo} />
                      <div>
-                        <label htmlFor="commercial-name" className="block text-sm font-medium text-slate-700 mb-2">
-                            Nombre Comercial (en PDF)
+                        <label htmlFor="fiscal-name" className="block text-sm font-medium text-slate-700 mb-2">
+                            Nombre Fiscal (en PDF)
                         </label>
                         <input
-                            id="commercial-name"
+                            id="fiscal-name"
                             type="text"
-                            value={commercialName}
-                            onChange={(e) => setCommercialName(e.target.value)}
-                            placeholder="Nombre de tu tienda o empresa"
+                            value={fiscalName}
+                            onChange={(e) => setFiscalName(e.target.value)}
+                            placeholder="Nombre fiscal de tu empresa"
                             className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition"
                         />
                          <p className="text-xs text-slate-500 mt-1">Este es el nombre que aparecerá como remitente.</p>
+                    </div>
+                     <div>
+                        <label htmlFor="sucursal" className="block text-sm font-medium text-slate-700 mb-2">
+                            Sucursal (Opcional)
+                        </label>
+                        <input
+                            id="sucursal"
+                            type="text"
+                            value={sucursal}
+                            onChange={(e) => setSucursal(e.target.value)}
+                            placeholder="Ej: Tienda Centro"
+                            className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition"
+                        />
+                         <p className="text-xs text-slate-500 mt-1">Identifica la sucursal que emite el presupuesto.</p>
                     </div>
                     <div>
                         <label htmlFor="prepared-by" className="block text-sm font-medium text-slate-700 mb-2">
@@ -654,12 +670,21 @@ const App: React.FC = () => {
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(TEXT_COLOR);
         doc.setFontSize(10);
-        doc.text((currentUser.commercialName || currentUser.companyName).toUpperCase(), PAGE_MARGIN, 30);
+        
+        let headerY = 30;
+        doc.text((currentUser.fiscalName || currentUser.companyName).toUpperCase(), PAGE_MARGIN, headerY);
+        headerY += 5;
+        
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(SECONDARY_TEXT_COLOR);
-        doc.text(currentUser.email, PAGE_MARGIN, 35);
+        if (currentUser.sucursal) {
+            doc.text(`Sucursal: ${currentUser.sucursal}`, PAGE_MARGIN, headerY);
+            headerY += 5;
+        }
+        doc.text(currentUser.email, PAGE_MARGIN, headerY);
+        headerY += 5;
         if (currentUser.preparedBy) {
-            doc.text(`Att: ${currentUser.preparedBy}`, PAGE_MARGIN, 40);
+            doc.text(`Att: ${currentUser.preparedBy}`, PAGE_MARGIN, headerY);
         }
 
         const titleX = 210 - PAGE_MARGIN;
@@ -898,13 +923,14 @@ const App: React.FC = () => {
         setQuoteForPdf(null);
     };
 
-    const handleUpdateUserSettings = useCallback((settings: { commercialName: string; preparedBy: string; logo: string | null; }) => {
+    const handleUpdateUserSettings = useCallback((settings: { fiscalName: string; preparedBy: string; sucursal: string; logo: string | null; }) => {
         if (!currentUser) return;
         
         const updatedUser = { 
             ...currentUser,
-            commercialName: settings.commercialName,
+            fiscalName: settings.fiscalName,
             preparedBy: settings.preparedBy || undefined,
+            sucursal: settings.sucursal || undefined,
             logo: settings.logo
         };
         setCurrentUser(updatedUser);
