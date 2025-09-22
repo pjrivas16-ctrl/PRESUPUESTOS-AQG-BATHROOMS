@@ -4,6 +4,7 @@ import type { QuoteState, ProductOption, ColorOption, User, SavedQuote, StoredUs
 import { PRICE_LIST, SHOWER_TRAY_STEPS, KITS_STEPS, STANDARD_WIDTHS, STANDARD_LENGTHS, SOFTUM_WIDTHS, SOFTUM_LENGTHS, SHOWER_MODELS, SHOWER_EXTRAS, KIT_PRODUCTS } from './constants';
 import { authorizedUsers } from './authorizedUsers';
 import { aqgLogo } from './assets';
+import { processImageForPdf } from './utils/pdfUtils';
 
 import StepTracker from './components/StepTracker';
 import Step1ModelSelection from './components/steps/Step1ModelSelection';
@@ -19,6 +20,7 @@ import AuthPage from './components/auth/AuthPage';
 import MyQuotesPage from './components/MyQuotesPage';
 import LivePreview from './components/LivePreview';
 import PromotionsPage from './components/PromotionsPage';
+import LogoUploader from './components/LogoUploader';
 
 // Declare jsPDF on window for TypeScript
 declare global {
@@ -31,25 +33,27 @@ declare global {
 interface SettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (settings: { commercialName: string; preparedBy: string }) => void;
+    onSave: (settings: { commercialName: string; preparedBy: string; logo: string | null; }) => void;
     user: User;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, user }) => {
     const [preparedBy, setPreparedBy] = useState(user.preparedBy || '');
     const [commercialName, setCommercialName] = useState(user.commercialName || user.companyName || '');
+    const [logo, setLogo] = useState<string | null>(user.logo || null);
 
     useEffect(() => {
         if (isOpen) {
             setPreparedBy(user.preparedBy || '');
             setCommercialName(user.commercialName || user.companyName || '');
+            setLogo(user.logo || null);
         }
     }, [isOpen, user]);
 
     if (!isOpen) return null;
 
     const handleSave = () => {
-        onSave({ preparedBy, commercialName });
+        onSave({ preparedBy, commercialName, logo });
         onClose();
     };
 
@@ -70,6 +74,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
                 </div>
 
                 <div className="space-y-6">
+                     <LogoUploader logo={logo} onLogoChange={setLogo} />
                      <div>
                         <label htmlFor="commercial-name" className="block text-sm font-medium text-slate-700 mb-2">
                             Nombre Comercial (en PDF)
@@ -628,24 +633,38 @@ const App: React.FC = () => {
                 yPos = PAGE_MARGIN;
             }
         };
-    
+        
         yPos = 30;
+
+        // User Logo
+        if (currentUser.logo) {
+            try {
+                const logoData = await processImageForPdf(currentUser.logo);
+                const logoAr = logoData.width / logoData.height;
+                const logoWidth = 35; // max width
+                const logoHeight = logoWidth / logoAr;
+                const logoX = 210 - PAGE_MARGIN - logoWidth;
+                doc.addImage(logoData.imageData, logoData.format, logoX, 15, logoWidth, logoHeight);
+                yPos = Math.max(yPos, 15 + logoHeight + 10);
+            } catch(e) {
+                console.error("Failed to add logo to PDF:", e);
+            }
+        }
 
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(TEXT_COLOR);
         doc.setFontSize(10);
-        doc.text((currentUser.commercialName || currentUser.companyName).toUpperCase(), PAGE_MARGIN, yPos);
+        doc.text((currentUser.commercialName || currentUser.companyName).toUpperCase(), PAGE_MARGIN, 30);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(SECONDARY_TEXT_COLOR);
-        yPos += 5;
-        doc.text(currentUser.email, PAGE_MARGIN, yPos);
+        doc.text(currentUser.email, PAGE_MARGIN, 35);
         if (currentUser.preparedBy) {
-            yPos += 5;
-            doc.text(`Att: ${currentUser.preparedBy}`, PAGE_MARGIN, yPos);
+            doc.text(`Att: ${currentUser.preparedBy}`, PAGE_MARGIN, 40);
         }
 
         const titleX = 210 - PAGE_MARGIN;
-        yPos = 30;
+        yPos = Math.max(yPos, 50);
+
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(24);
         doc.setTextColor(PRIMARY_COLOR);
@@ -879,13 +898,14 @@ const App: React.FC = () => {
         setQuoteForPdf(null);
     };
 
-    const handleUpdateUserSettings = useCallback((settings: { commercialName: string; preparedBy: string; }) => {
+    const handleUpdateUserSettings = useCallback((settings: { commercialName: string; preparedBy: string; logo: string | null; }) => {
         if (!currentUser) return;
         
         const updatedUser = { 
             ...currentUser,
             commercialName: settings.commercialName,
-            preparedBy: settings.preparedBy || undefined
+            preparedBy: settings.preparedBy || undefined,
+            logo: settings.logo
         };
         setCurrentUser(updatedUser);
 
@@ -1208,19 +1228,15 @@ const App: React.FC = () => {
                                 <span>Nuevo Presupuesto</span>
                             </button>
                              <button onClick={() => setAppView('myQuotes')} className={`w-full text-left px-4 py-3 rounded-lg font-semibold transition-colors flex items-center gap-3 ${appView === 'myQuotes' ? 'bg-slate-800' : 'hover:bg-slate-700/50 text-slate-300'}`}>
-                               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" /><path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3z" clipRule="evenodd" /></svg>
+                               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                                <span>Mis Presupuestos</span>
                             </button>
                             <button onClick={() => setAppView('promotions')} className={`w-full text-left px-4 py-3 rounded-lg font-semibold transition-colors flex items-center gap-3 ${appView === 'promotions' ? 'bg-slate-800' : 'hover:bg-slate-700/50 text-slate-300'}`}>
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M10 2a.75.75 0 01.75.75v.25h3.5a.75.75 0 010 1.5h-3.5v11.5a.75.75 0 01-1.5 0V4.5H5.25a.75.75 0 010-1.5h3.5V2.75A.75.75 0 0110 2zM5.013 3.427a.75.75 0 01.974 0l3.25 2.5a.75.75 0 010 1.146l-3.25 2.5a.75.75 0 01-.974-1.146L7.293 6 5.013 4.573a.75.75 0 010-1.146zM14.987 3.427a.75.75 0 01.974 1.146L12.707 6l2.28 1.427a.75.75 0 01-.974 1.146l-3.25-2.5a.75.75 0 010-1.146l3.25-2.5a.75.75 0 010 0z" clipRule="evenodd" />
-                                </svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
                                 <span>Promociones</span>
                             </button>
                             <button onClick={() => setIsSettingsOpen(true)} className="w-full text-left px-4 py-3 rounded-lg font-semibold transition-colors hover:bg-slate-700/50 text-slate-300 flex items-center gap-3">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M11.49 3.17a1 1 0 00-1.02-1.74l-2.25.9A1 1 0 007.2 3.82V11a1 1 0 001 1h2a1 1 0 001-1V6.63l1.08-.43a1 1 0 00.49-1.87l-2.25-.9zM15 4a1 1 0 10-2 0v5a1 1 0 102 0V4zM3 8a1 1 0 011-1h2a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-                                </svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.49 3.17a1 1 0 00-1.02-1.74l-2.25.9A1 1 0 007.2 3.82V11a1 1 0 001 1h2a1 1 0 001-1V6.63l1.08-.43a1 1 0 00.49-1.87l-2.25-.9zM15 4a1 1 0 10-2 0v5a1 1 0 102 0V4zM3 8a1 1 0 011-1h2a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" /></svg>
                                 <span>Ajustes</span>
                             </button>
                         </nav>

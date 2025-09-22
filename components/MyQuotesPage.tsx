@@ -14,6 +14,7 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
     const [allQuotes, setAllQuotes] = useState<SavedQuote[]>([]);
     const [selectedQuote, setSelectedQuote] = useState<SavedQuote | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [filter, setFilter] = useState<'all' | 'ordered' | 'pending'>('all');
 
     useEffect(() => {
         try {
@@ -28,15 +29,34 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
         }
     }, [user.email]);
 
+    const stats = useMemo(() => {
+        const ordered = allQuotes.filter(q => q.orderedTimestamp).length;
+        const total = allQuotes.length;
+        return {
+            total,
+            ordered,
+            pending: total - ordered,
+        };
+    }, [allQuotes]);
+
     const filteredQuotes = useMemo(() => {
-        if (!searchTerm) return allQuotes;
+        let quotes = allQuotes;
+
+        if (filter === 'ordered') {
+            quotes = quotes.filter(q => q.orderedTimestamp);
+        } else if (filter === 'pending') {
+            quotes = quotes.filter(q => !q.orderedTimestamp);
+        }
+
+        if (!searchTerm) return quotes;
+        
         const lowercasedFilter = searchTerm.toLowerCase();
-        return allQuotes.filter(quote => 
+        return quotes.filter(quote => 
             (quote.id.toLowerCase().includes(lowercasedFilter)) ||
             (quote.customerName?.toLowerCase().includes(lowercasedFilter)) ||
             (quote.projectReference?.toLowerCase().includes(lowercasedFilter))
         );
-    }, [allQuotes, searchTerm]);
+    }, [allQuotes, searchTerm, filter]);
 
 
     const handleToggleOrdered = (quoteId: string) => {
@@ -189,11 +209,24 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
         );
     };
 
+    const StatCard: React.FC<{label: string; value: number; color: string}> = ({label, value, color}) => (
+        <div className={`bg-white border-l-4 ${color} p-4 rounded-r-lg shadow-sm`}>
+            <p className="text-sm text-slate-500">{label}</p>
+            <p className="text-2xl font-bold text-slate-800">{value}</p>
+        </div>
+    );
+
     return (
         <div className="animate-fade-in h-full flex flex-col">
             <div className="flex-shrink-0">
                 <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">Mis Presupuestos</h2>
                 <p className="text-slate-500 mb-6">Gestiona tus presupuestos guardados. Puedes ver los detalles, duplicarlos o tramitar el pedido.</p>
+                
+                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                    <StatCard label="Total" value={stats.total} color="border-teal-500" />
+                    <StatCard label="Pedidos" value={stats.ordered} color="border-green-500" />
+                    <StatCard label="Pendientes" value={stats.pending} color="border-amber-500" />
+                </div>
                 
                 <div className="mb-4">
                     <input
@@ -203,6 +236,18 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full p-3 bg-white border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
                     />
+                </div>
+
+                <div className="flex space-x-2">
+                    {(['all', 'ordered', 'pending'] as const).map(f => (
+                        <button 
+                            key={f}
+                            onClick={() => setFilter(f)}
+                            className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${filter === f ? 'bg-teal-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-100'}`}
+                        >
+                           { {all: 'Todos', ordered: 'Pedidos', pending: 'Pendientes'}[f] }
+                        </button>
+                    ))}
                 </div>
             </div>
 

@@ -15,7 +15,6 @@ const LogoUploader: React.FC<LogoUploaderProps> = ({ logo, onLogoChange }) => {
 
         setError(null);
         
-        // Basic validation
         if (!file.type.startsWith('image/')) {
             setError('Por favor, selecciona un archivo de imagen.');
             return;
@@ -34,22 +33,21 @@ const LogoUploader: React.FC<LogoUploaderProps> = ({ logo, onLogoChange }) => {
         };
         reader.readAsDataURL(file);
 
-        // Reset input value to allow re-uploading the same file
         event.target.value = '';
     };
 
     const handleRemoveLogo = (e: React.MouseEvent<HTMLButtonElement>) => {
-        e.stopPropagation(); // Prevent triggering the file input
+        e.stopPropagation(); 
         onLogoChange(null);
     };
 
     return (
-        <div className="mb-6">
-            <label className="text-sm text-slate-300 mb-2 block font-medium">
-                Tu Logotipo (para PDFs)
+        <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+                Logotipo de la Empresa
             </label>
             <div 
-                className="relative group w-full h-20 bg-slate-700/50 rounded-lg border-2 border-dashed border-slate-600 flex items-center justify-center cursor-pointer hover:border-slate-400 transition-colors"
+                className="relative group w-full h-24 bg-slate-50 border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-teal-400 transition-colors"
                 onClick={() => inputRef.current?.click()}
                 onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && inputRef.current?.click()}
                 role="button"
@@ -79,13 +77,14 @@ const LogoUploader: React.FC<LogoUploaderProps> = ({ logo, onLogoChange }) => {
                         </button>
                     </>
                 ) : (
-                    <div className="text-center">
-                        <span className="text-slate-400 text-sm">Sube tu logotipo</span>
-                         <span className="text-slate-500 text-xs block">Max 2MB</span>
+                    <div className="text-center text-slate-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        <span className="text-sm mt-1 block">Sube tu logotipo</span>
+                         <span className="text-xs block">PNG o JPG (Máx 2MB)</span>
                     </div>
                 )}
             </div>
-            {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
+            {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
         </div>
     );
 };
