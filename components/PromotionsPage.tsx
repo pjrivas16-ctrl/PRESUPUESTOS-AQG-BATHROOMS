@@ -81,7 +81,7 @@ const PromotionsPage: React.FC<PromotionsPageProps> = ({ user, onActivatePromoti
             <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">Promociones Disponibles</h2>
             <p className="text-slate-500 mb-8">Aprovecha nuestras ofertas especiales para mejorar tus proyectos.</p>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 
                 {/* Card 1: Welcome Offer */}
                 <div className="bg-white p-8 rounded-2xl shadow-lg border border-slate-200/80 flex flex-col text-center">
@@ -96,7 +96,25 @@ const PromotionsPage: React.FC<PromotionsPageProps> = ({ user, onActivatePromoti
                     </div>
                 </div>
 
-                {/* Card 2: Shower System Offer */}
+                {/* Card 2: Display Stand Offer */}
+                <div className="bg-white p-8 rounded-2xl shadow-lg border border-slate-200/80 flex flex-col text-center">
+                    <div className="w-16 h-16 bg-indigo-100 text-indigo-500 rounded-full flex items-center justify-center mx-auto mb-5">
+                       <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                         <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                       </svg>
+                    </div>
+                    <h3 className="text-2xl font-bold text-slate-800 tracking-tight mb-3">Pack Expositor + 2 Platos</h3>
+                    <div className="flex-grow flex flex-col justify-center">
+                        <p className="text-slate-500 mb-6 text-sm">
+                            Llévate nuestro expositor de ruedas junto con 2 platos de ducha a un precio increíble de 250€ (+IVA).
+                        </p>
+                        <div className="bg-slate-100 border border-slate-200 text-slate-700 p-4 rounded-lg text-center mt-auto">
+                            <p className="font-semibold text-sm">Consulta con tu delegado de ventas para más información.</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Card 3: Shower System Offer */}
                 <div className="bg-white p-8 rounded-2xl shadow-lg border border-slate-200/80 flex flex-col text-center">
                     <div className="w-16 h-16 bg-cyan-100 text-cyan-500 rounded-full flex items-center justify-center mx-auto mb-5">
                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
