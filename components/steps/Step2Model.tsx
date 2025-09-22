@@ -1,5 +1,5 @@
 import React from 'react';
-import { SHOWER_MODELS } from '../../constants';
+import { SHOWER_MODELS, MILANO_FINISHES } from '../../constants';
 import type { ProductOption } from '../../types';
 
 interface Step2ModelProps {
@@ -18,25 +18,32 @@ const CheckBadge = () => (
 
 const Step2Model: React.FC<Step2ModelProps> = ({ onSelect, selectedModel, productLine }) => {
     
-    let modelsToShow;
-    if (productLine === 'SOFTUM') {
-        modelsToShow = SHOWER_MODELS.filter(m => m.id === 'sand');
-    } else if (productLine === 'LUXE' || productLine === 'CLASSIC') {
-        modelsToShow = SHOWER_MODELS.filter(m => m.id === 'pizarra');
-    } else {
-        modelsToShow = SHOWER_MODELS.filter(m => m.id !== 'sand');
+    const isCountertop = productLine === 'MILANO';
+
+    const getShowerModels = () => {
+        if (productLine === 'SOFTUM') {
+            return SHOWER_MODELS.filter(m => m.id === 'sand');
+        }
+        if (productLine === 'LUXE' || productLine === 'CLASSIC' || productLine === 'LUXE CON TAPETA') {
+            return SHOWER_MODELS.filter(m => m.id === 'pizarra');
+        }
+        if (productLine?.startsWith('FLAT') || productLine?.startsWith('RATIO')) {
+             return SHOWER_MODELS.filter(m => m.id === 'lisa');
+        }
+        return SHOWER_MODELS.filter(m => m.id !== 'sand');
     }
+
+    const modelsToShow = isCountertop ? MILANO_FINISHES : getShowerModels();
+    const title = isCountertop ? 'Selecciona el acabado' : 'Selecciona la textura';
+    const description = isCountertop ? 'Elige el acabado para tu encimera.' : 'Cada textura ofrece una sensación y estética únicas.';
 
     return (
         <div className="animate-fade-in">
-            <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">Selecciona la textura</h2>
-            <p className="text-slate-500 mb-8">Cada textura ofrece una sensación y estética únicas.</p>
+            <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">{title}</h2>
+            <p className="text-slate-500 mb-8">{description}</p>
             
             <div className="grid grid-cols-1 gap-4">
                 {modelsToShow.map((model) => {
-                    const description = model.id === 'pizarra' && (productLine === 'LUXE' || productLine === 'CLASSIC')
-                        ? "Textura exclusiva para esta colección"
-                        : model.description;
                     const isSelected = selectedModel?.id === model.id;
                     
                     return (
@@ -51,7 +58,7 @@ const Step2Model: React.FC<Step2ModelProps> = ({ onSelect, selectedModel, produc
                             <CheckBadge />
                             <div>
                                 <h3 className="font-bold text-slate-800 text-lg">{model.name}</h3>
-                                <p className="text-sm text-slate-500 mt-1">{description}</p>
+                                <p className="text-sm text-slate-500 mt-1">{model.description}</p>
                             </div>
                         </button>
                     );

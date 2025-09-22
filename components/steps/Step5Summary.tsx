@@ -17,6 +17,20 @@ interface Step5SummaryProps {
 
 const QuoteItemCard: React.FC<{ item: QuoteItem; onEdit: () => void; onDelete: () => void; price: number; }> = ({ item, onEdit, onDelete, price }) => {
     const isKitProduct = item.productLine === 'KITS Y ACCESORIOS';
+    const isCountertop = item.productLine === 'MILANO';
+
+    const renderExtras = () => {
+        if (item.extras.length === 0) return null;
+
+        const extrasList = item.extras.map(e => {
+            if (e.id === 'bitono' && item.bitonoColor) return `Tapa bitono: ${item.bitonoColor.name}`;
+            if (e.id === 'toallero' && item.towelHolderCount) return `${e.name} (x${item.towelHolderCount})`;
+            if (e.id === 'copete' && item.copeteHeight) return `${e.name} (h=${item.copeteHeight}cm)`;
+            return e.name;
+        }).join(', ');
+
+        return <p className="text-xs text-slate-400 mt-1">({extrasList})</p>;
+    };
 
     return (
         <div className="bg-white border border-slate-200 p-4 rounded-lg shadow-sm transition-shadow hover:shadow-md">
@@ -28,22 +42,21 @@ const QuoteItemCard: React.FC<{ item: QuoteItem; onEdit: () => void; onDelete: (
                             {item.kitProduct?.id === 'kit-pintura' && <p className="text-sm text-slate-500">Color: {item.color?.name || `RAL ${item.ralCode}`}</p>}
                             {item.invoiceReference && <p className="text-sm text-slate-500">Ref. Factura: {item.invoiceReference}</p>}
                         </>
+                    ) : isCountertop ? (
+                         <>
+                            <h4 className="font-bold text-slate-800">Encimera {item.productLine} - {item.model?.name}</h4>
+                            <p className="text-sm text-slate-500">{item.milanoConfiguration?.name} ({item.quantity} {item.quantity > 1 ? 'unidades' : 'unidad'})</p>
+                            <p className="text-sm text-slate-500">Largo: {item.length}cm</p>
+                            <p className="text-sm text-slate-500">Color: {item.color?.name || `RAL ${item.ralCode}`}</p>
+                            {renderExtras()}
+                        </>
                     ) : (
                         <>
                             <h4 className="font-bold text-slate-800">{item.productLine} - {item.model?.name}</h4>
                             <p className="text-sm text-slate-500">{item.width}cm x {item.length}cm ({item.quantity} {item.quantity > 1 ? 'unidades' : 'unidad'})</p>
                             <p className="text-sm text-slate-500">Color: {item.color?.name || `RAL ${item.ralCode}`}</p>
                             {item.productLine === 'STRUCT DETAIL' && <p className="text-sm text-slate-500">Marcos: {item.structFrames}</p>}
-                            {item.extras.length > 0 && 
-                                <p className="text-xs text-slate-400 mt-1">
-                                    ({item.extras.map(e => {
-                                        if (e.id === 'bitono' && item.bitonoColor) {
-                                            return `Tapa bitono: ${item.bitonoColor.name}`;
-                                        }
-                                        return e.name;
-                                    }).join(', ')})
-                                </p>
-                            }
+                            {renderExtras()}
                         </>
                     )}
                 </div>
