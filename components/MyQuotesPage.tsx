@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useMemo } from 'react';
 import type { User, SavedQuote, QuoteItem } from '../types';
 
@@ -94,12 +95,27 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
         const { quoteItems } = selectedQuote;
         const quoteNumber = selectedQuote.id.replace(/quote_i_|quote_c_/g, '');
 
-        const subject = `Pedido para Presupuesto: ${selectedQuote.projectReference || quoteNumber}`;
+        // Updated subject and body for clarity
+        const subject = `Nuevo Pedido de ${user.companyName} - Presupuesto Nº ${quoteNumber}`;
         
-        let body = `Hola,\n\nPor favor, tramiten el siguiente pedido para el cliente ${selectedQuote.customerName}:\n\n` +
-                     `Referencia: ${selectedQuote.projectReference || 'N/A'}\n` +
-                     `Nº Presupuesto: ${quoteNumber}\n\n` +
-                     `--- DETALLES DEL PEDIDO ---\n`;
+        let body = `Hola,\n\n` +
+                   `El cliente ${user.companyName} ha solicitado tramitar el pedido correspondiente al presupuesto Nº ${quoteNumber}.\n\n`;
+
+        if (user.preparedBy) {
+            body += `Persona de contacto: ${user.preparedBy} (${user.email})\n\n`;
+        } else {
+            body += `Email de contacto: ${user.email}\n\n`;
+        }
+        
+        body += `--- Datos del cliente final ---\n` +
+                `Cliente: ${selectedQuote.customerName || 'No especificado'}\n`;
+        
+        if (selectedQuote.projectReference) {
+            body += `Referencia del Proyecto: ${selectedQuote.projectReference}\n`;
+        }
+
+        body += `\n--- DETALLES DEL PEDIDO ---\n`;
+
 
         quoteItems.forEach((item, index) => {
              body += `\nArtículo ${index + 1}: `;
@@ -136,13 +152,7 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
         const internalTotal = internalTotalBase * 1.21;
 
         body += `\n--- FIN DETALLES ---\n\n` +
-                `Preparado por: ${user.companyName} (${user.email})\n`;
-
-        if (user.preparedBy) {
-            body += `Contacto: ${user.preparedBy}\n`;
-        }
-        
-        body += `\nTotal (condiciones internas): ${internalTotal.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}\n\n` +
+                `Total (condiciones internas): ${internalTotal.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}\n\n` +
                 `Gracias.`;
 
         const mailtoLink = `mailto:sandra.martinez@aqgbathrooms.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
