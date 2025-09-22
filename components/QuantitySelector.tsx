@@ -82,4 +82,4 @@ const QuantitySelector: React.FC<QuantitySelectorProps> = ({ quantity, onUpdateQ
     );
 };
 
-export
+export default QuantitySelector;
