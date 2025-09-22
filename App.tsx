@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import type { QuoteState, ProductOption, ColorOption, User, SavedQuote, StoredUser, QuoteItem } from './types';
 import { 
-    PRICE_LIST, SHOWER_TRAY_STEPS, KITS_STEPS, SHOWER_MODELS, SHOWER_EXTRAS, KIT_PRODUCTS, SOFTUM_EXTRAS
+    PRICE_LIST, SHOWER_TRAY_STEPS, KITS_STEPS, SHOWER_MODELS
 } from './constants';
 import { authorizedUsers } from './authorizedUsers';
 import { processImageForPdf } from './utils/pdfUtils';
@@ -35,19 +35,17 @@ declare global {
 interface SettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (settings: { fiscalName: string; preparedBy: string; sucursal: string; logo: string | null; discount: number; }) => void;
+    onSave: (settings: { fiscalName: string; preparedBy: string; sucursal: string; logo: string | null; }) => void;
     user: User;
-    isSpecialUser: boolean;
     onExport: () => void;
     onImport: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, user, isSpecialUser, onExport, onImport }) => {
+const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, user, onExport, onImport }) => {
     const [preparedBy, setPreparedBy] = useState(user.preparedBy || '');
     const [fiscalName, setFiscalName] = useState(user.fiscalName || user.companyName || '');
     const [sucursal, setSucursal] = useState(user.sucursal || '');
     const [logo, setLogo] = useState<string | null>(user.logo || null);
-    const [discount, setDiscount] = useState(user.discount || 0);
     const importInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -56,24 +54,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
             setFiscalName(user.fiscalName || user.companyName || '');
             setSucursal(user.sucursal || '');
             setLogo(user.logo || null);
-            setDiscount(user.discount || 0);
         }
     }, [isOpen, user]);
 
     if (!isOpen) return null;
 
     const handleSave = () => {
-        onSave({ preparedBy, fiscalName, sucursal, logo, discount });
+        onSave({ preparedBy, fiscalName, sucursal, logo });
         onClose();
-    };
-
-    const handleDiscountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = parseInt(e.target.value, 10);
-        if (!isNaN(value) && value >= 0 && value <= 100) {
-            setDiscount(value);
-        } else if (e.target.value === '') {
-            setDiscount(0);
-        }
     };
 
     return (
@@ -136,23 +124,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
                         />
                          <p className="text-xs text-slate-500 mt-1">Este nombre aparecerá en los PDFs generados.</p>
                     </div>
-                     {isSpecialUser && (
-                         <div>
-                            <label htmlFor="discount" className="block text-sm font-medium text-slate-700 mb-2">
-                                Descuento Comercial (%)
-                            </label>
-                            <input
-                                id="discount"
-                                type="number"
-                                value={discount}
-                                onChange={handleDiscountChange}
-                                min="0"
-                                max="100"
-                                className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            />
-                             <p className="text-xs text-slate-500 mt-1">Este descuento se aplicará a todos los PDFs.</p>
-                        </div>
-                    )}
                 </div>
 
                 <div className="mt-8 pt-6 border-t border-slate-200">
@@ -219,9 +190,10 @@ interface PdfPreviewModalProps {
     quote: SavedQuote | null;
     user: User;
     calculateItemPrice: (item: QuoteItem, allItems: QuoteItem[], includeVat: boolean) => number;
+    welcomePromoIsActive: boolean;
 }
 
-const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quote, user, calculateItemPrice }) => {
+const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quote, user, calculateItemPrice, welcomePromoIsActive }) => {
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const pdfDoc = useRef<any>(null); // To store the jsPDF instance
@@ -355,11 +327,6 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quot
             // --- Totals ---
             const finalY = (doc as any).lastAutoTable.finalY || 150;
             const subtotal = quote.quoteItems.reduce((sum, item) => sum + calculateItemPrice(item, quote.quoteItems, false), 0);
-            const discountPercent = user.discount || 0;
-            const discountAmount = subtotal * (discountPercent / 100);
-            const baseImponible = subtotal - discountAmount;
-            const ivaAmount = baseImponible * 0.21;
-            const total = baseImponible + ivaAmount;
             
             let currentY = finalY + 10;
             doc.setFontSize(10);
@@ -372,12 +339,34 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quot
             };
 
             drawTotalLine('Subtotal', subtotal.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }));
-            if (discountPercent > 0) {
+            
+            let baseImponible = subtotal;
+
+            if (welcomePromoIsActive) {
+                const promoDiscount1 = subtotal * 0.5;
+                const subtotalAfterPromo1 = subtotal - promoDiscount1;
+                const promoDiscount2 = subtotalAfterPromo1 * 0.25;
+                baseImponible = subtotalAfterPromo1 - promoDiscount2;
+                
+                drawTotalLine('Dto. Bienvenida (50%)', `- ${promoDiscount1.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}`);
+                drawTotalLine('Dto. Adicional (25%)', `- ${promoDiscount2.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}`);
+                doc.setDrawColor(226, 232, 240);
+                doc.line(140, currentY - 8, 195, currentY - 8);
+                drawTotalLine('Base Imponible', baseImponible.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }));
+            } else if (user.discount && user.discount > 0) {
+                const discountPercent = user.discount;
+                const discountAmount = subtotal * (discountPercent / 100);
+                baseImponible = subtotal - discountAmount;
+                
                 drawTotalLine(`Descuento (${discountPercent}%)`, `- ${discountAmount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}`);
                 doc.setDrawColor(226, 232, 240);
                 doc.line(140, currentY - 8, 195, currentY - 8);
                 drawTotalLine('Base Imponible', baseImponible.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }));
             }
+
+            const ivaAmount = baseImponible * 0.21;
+            const total = baseImponible + ivaAmount;
+
             drawTotalLine('IVA (21%)', ivaAmount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }));
             doc.setDrawColor(textColor);
             doc.setLineWidth(0.5);
@@ -403,7 +392,7 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quot
         } finally {
             setIsGenerating(false);
         }
-    }, [quote, user, calculateItemPrice]);
+    }, [quote, user, calculateItemPrice, welcomePromoIsActive]);
 
     useEffect(() => {
         if (isOpen) {
@@ -632,8 +621,6 @@ const App: React.FC = () => {
         checkSession();
     }, []);
     
-    const isSpecialUser = useMemo(() => currentUser?.email === 'admin@aqg.com', [currentUser]);
-
     const welcomePromoDetails = useMemo(() => {
         const promo = currentUser?.promotion;
         if (!promo || promo.id !== 'new_client_promo') {
@@ -801,23 +788,70 @@ const App: React.FC = () => {
         const colorPrice = item.color?.price || 0;
 
         let totalWithoutQuantity = (modifiedBasePrice * modelFactor) + extrasPrice + colorPrice;
-
-        if (welcomePromoDetails.isActive) {
-            totalWithoutQuantity *= 0.5; // 50% discount
-            totalWithoutQuantity *= 0.75; // 25% additional
-        }
-
         const finalPrice = totalWithoutQuantity * quantity;
 
         return includeVat ? finalPrice * 1.21 : finalPrice;
-    }, [welcomePromoDetails.isActive]);
+    }, []);
+
+    const subtotalPrice = useMemo(() => {
+        return quoteItems.reduce((sum, item) => sum + calculateItemPrice(item, quoteItems, false), 0);
+    }, [quoteItems, calculateItemPrice]);
 
     const totalPrice = useMemo(() => {
-        return quoteItems.reduce((sum, item) => sum + calculateItemPrice(item, quoteItems), 0);
-    }, [quoteItems, calculateItemPrice]);
+        let finalSubtotal = subtotalPrice;
+        if (welcomePromoDetails.isActive) {
+            // 50% + 25% discount
+            finalSubtotal = subtotalPrice * 0.5 * 0.75;
+        } else if (currentUser?.discount && currentUser.discount > 0) {
+            finalSubtotal = subtotalPrice * (1 - (currentUser.discount / 100));
+        }
+        return finalSubtotal * 1.21;
+    }, [subtotalPrice, welcomePromoDetails.isActive, currentUser]);
 
     const handleUpdateItemConfig = (updates: Partial<QuoteState>) => {
         setCurrentItemConfig(prev => ({ ...prev, ...updates }));
+    };
+
+    const handleProductLineUpdate = (line: string) => {
+        const updates: Partial<QuoteState> = {
+            productLine: line,
+            model: null,
+            color: null,
+            extras: [],
+            ralCode: '',
+            width: 0,
+            length: 0,
+            structFrames: undefined,
+            kitProduct: null,
+            invoiceReference: '',
+            bitonoColor: null,
+            bitonoRalCode: undefined,
+        };
+
+        if (line === 'SOFTUM') {
+            updates.model = SHOWER_MODELS.find(m => m.id === 'sand') || null;
+        } else if (line === 'LUXE' || line === 'CLASSIC' || line === 'LUXE CON TAPETA') {
+            updates.model = SHOWER_MODELS.find(m => m.id === 'pizarra') || null;
+        } else if (line?.startsWith('FLAT') || line?.startsWith('RATIO')) {
+            updates.model = SHOWER_MODELS.find(m => m.id === 'lisa') || null;
+        }
+
+        if (line !== 'KITS Y ACCESORIOS' && line !== 'CUSTOM' && PRICE_LIST[line]) {
+            const productWidths = Object.keys(PRICE_LIST[line]).map(Number);
+            if (productWidths.length > 0) {
+                updates.width = productWidths[0];
+                const productLengths = Object.keys(PRICE_LIST[line][updates.width]).map(Number);
+                if (productLengths.length > 0) {
+                    updates.length = productLengths[0];
+                }
+            }
+        }
+
+        if (line === 'CUSTOM') {
+            setIsCustomQuoteModalOpen(true);
+        }
+        
+        handleUpdateItemConfig(updates);
     };
 
     const handleDeleteItem = (itemId: string) => {
@@ -842,7 +876,7 @@ const App: React.FC = () => {
         setCurrentStep(1);
     };
 
-    const handleSaveSettings = (settings: { fiscalName: string; preparedBy: string; sucursal: string; logo: string | null; discount: number; }) => {
+    const handleSaveSettings = (settings: { fiscalName: string; preparedBy: string; sucursal: string; logo: string | null; }) => {
         if (!currentUser) return;
         const updatedUser = { ...currentUser, ...settings };
         setCurrentUser(updatedUser);
@@ -953,7 +987,7 @@ const App: React.FC = () => {
         const quoterContent = () => {
             if (isKitFlow) {
                 switch (currentStep) {
-                    case 1: return <Step1ModelSelection onUpdate={(line) => handleUpdateItemConfig({ productLine: line, kitProduct: null, extras: [], color: null, ralCode: '' })} selectedProductLine={productLine} quantity={currentItemConfig.quantity} onUpdateQuantity={(q) => handleUpdateItemConfig({ quantity: q })} />;
+                    case 1: return <Step1ModelSelection onUpdate={handleProductLineUpdate} selectedProductLine={productLine} quantity={currentItemConfig.quantity} onUpdateQuantity={(q) => handleUpdateItemConfig({ quantity: q })} />;
                     case 2: return <Step2KitSelection onSelect={(kit) => handleUpdateItemConfig({ kitProduct: kit })} selectedKit={currentItemConfig.kitProduct ?? null} />;
                     case 3: return <Step3KitDetails currentItemConfig={currentItemConfig} onSelectColor={(c) => handleUpdateItemConfig({ color: c })} onToggleRal={() => { const isRal = currentItemConfig.extras.some(e => e.id === 'ral'); handleUpdateItemConfig({ color: null, extras: isRal ? [] : [{id: 'ral', name: 'RAL', description: '', price: 65}] }); }} onRalCodeChange={(code) => handleUpdateItemConfig({ ralCode: code })} onInvoiceRefChange={(ref) => handleUpdateItemConfig({ invoiceReference: ref })} />;
                     case 4: return <Step5Summary items={quoteItems} totalPrice={totalPrice} onReset={() => handleReset()} onStartNew={handleStartNewItem} onEdit={handleEditItem} onDelete={handleDeleteItem} calculateItemPrice={(item) => calculateItemPrice(item, quoteItems)} onSaveRequest={() => setIsSaveQuoteOpen(true)} onGeneratePdfRequest={handleGeneratePdf} onPrintRequest={handlePrint} />;
@@ -961,7 +995,7 @@ const App: React.FC = () => {
                 }
             } else {
                 switch (currentStep) {
-                    case 1: return <Step1ModelSelection onUpdate={(line) => { handleUpdateItemConfig({ productLine: line, model: null, color: null, extras: [], ralCode: '', width: 0, length: 0 }); if (line === 'CUSTOM') setIsCustomQuoteModalOpen(true); }} selectedProductLine={productLine} quantity={currentItemConfig.quantity} onUpdateQuantity={(q) => handleUpdateItemConfig({ quantity: q })} />;
+                    case 1: return <Step1ModelSelection onUpdate={handleProductLineUpdate} selectedProductLine={productLine} quantity={currentItemConfig.quantity} onUpdateQuantity={(q) => handleUpdateItemConfig({ quantity: q })} />;
                     case 2: return <Step1Dimensions quote={currentItemConfig} onUpdate={(w, l) => handleUpdateItemConfig({ width: w, length: l })} />;
                     case 3: return <Step2Model onSelect={(model) => handleUpdateItemConfig({ model })} selectedModel={currentItemConfig.model} productLine={productLine} />;
                     case 4: return <Step3Color onSelectColor={(c) => handleUpdateItemConfig({ color: c })} selectedColor={currentItemConfig.color} productLine={productLine} onToggleRal={() => { const isRal = currentItemConfig.extras.some(e => e.id === 'ral'); handleUpdateItemConfig({ color: null, extras: isRal ? currentItemConfig.extras.filter(e => e.id !== 'ral') : [...currentItemConfig.extras, {id: 'ral', name: 'RAL', description: '', price: 65}] }); }} isRalSelected={currentItemConfig.extras.some(e => e.id === 'ral')} ralCode={currentItemConfig.ralCode ?? ''} onRalCodeChange={(code) => handleUpdateItemConfig({ ralCode: code })} />;
@@ -1054,8 +1088,8 @@ const App: React.FC = () => {
             </main>
 
             {/* Modals */}
-             <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} onSave={handleSaveSettings} user={currentUser} isSpecialUser={isSpecialUser} onExport={handleExportData} onImport={handleImportData} />
-             <PdfPreviewModal isOpen={isPreviewOpen} onClose={() => setIsPreviewOpen(false)} quote={quoteForPdf} user={currentUser} calculateItemPrice={calculateItemPrice} />
+             <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} onSave={handleSaveSettings} user={currentUser} onExport={handleExportData} onImport={handleImportData} />
+             <PdfPreviewModal isOpen={isPreviewOpen} onClose={() => setIsPreviewOpen(false)} quote={quoteForPdf} user={currentUser} calculateItemPrice={calculateItemPrice} welcomePromoIsActive={welcomePromoDetails.isActive} />
              <SaveQuoteModal isOpen={isSaveQuoteOpen} onClose={() => setIsSaveQuoteOpen(false)} onConfirm={handleConfirmSaveQuote} disabled={quoteItems.length === 0} />
              <CustomQuoteModal isOpen={isCustomQuoteModalOpen} onClose={() => setIsCustomQuoteModalOpen(false)} />
         </div>
