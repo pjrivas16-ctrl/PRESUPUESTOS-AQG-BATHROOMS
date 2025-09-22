@@ -1017,11 +1017,11 @@ const App: React.FC = () => {
         }
 
         if (productLine === 'KITS Y ACCESORIOS') {
-            setCurrentItemConfig({
+            setCurrentItemConfig(prev => ({
                 ...initialQuoteState,
                 productLine: 'KITS Y ACCESORIOS',
-                quantity: 1,
-            });
+                quantity: prev.quantity,
+            }));
             setCurrentStep(2); // Go to kit selection
             return;
         }
@@ -1039,15 +1039,15 @@ const App: React.FC = () => {
         if (isSoftum) defaultModel = sandModel || null;
         if (isFlat || isRatio) defaultModel = lisoModel || null;
 
-        setCurrentItemConfig({
+        setCurrentItemConfig(prev => ({
             ...initialQuoteState,
             productLine,
             model: defaultModel,
             width: isSoftum ? SOFTUM_WIDTHS[0] : STANDARD_WIDTHS[1],
             length: isSoftum ? SOFTUM_LENGTHS[0] : STANDARD_LENGTHS[4],
-            quantity: 1,
+            quantity: prev.quantity,
             structFrames: isStructDetail ? 4 : undefined,
-        });
+        }));
         setCurrentStep(2); // Go to dimensions
     };
     
