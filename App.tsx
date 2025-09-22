@@ -508,7 +508,14 @@ const App: React.FC = () => {
         if (!model || !productLine) return 0;
 
         let discountPercentage = 0;
-        if (isSpecialUser) {
+        
+        // Promotion check
+        const promo = currentUser?.promotion;
+        const PROMO_DURATION = 2 * 30 * 24 * 60 * 60 * 1000; // 2 months
+        if (promo && promo.id === 'new_client_promo' && (Date.now() - promo.activationTimestamp < PROMO_DURATION)) {
+            // 50% + 25% discount is 1 - (0.5 * 0.75) = 0.625 or 62.5%
+            discountPercentage = 62.5;
+        } else if (isSpecialUser) { // Special user check
             if (productLine === 'CLASSIC') {
                 const totalClassicQuantity = allItems
                     .filter(i => i.productLine === 'CLASSIC')
@@ -537,7 +544,7 @@ const App: React.FC = () => {
         const discountedTotalBasePrice = totalBasePrice * (1 - discountPercentage / 100);
 
         return includeVat ? discountedTotalBasePrice * 1.21 : discountedTotalBasePrice;
-    }, [isSpecialUser]);
+    }, [isSpecialUser, currentUser]);
     
     const calculateOriginalItemPrice = useCallback((item: QuoteState, includeVat: boolean = true) => {
         const { productLine, width, length, model, extras, quantity, structFrames, kitProduct } = item;
@@ -764,8 +771,12 @@ const App: React.FC = () => {
                     subDescLines.push(`  · Extras: ${extraNames}`);
                 }
             }
-            if (isSpecialUser && discountOnItem > 0 && !isKit) {
-                subDescLines.push(`  · Descuento (${itemDiscountPercentage.toFixed(0)}%): -${discountOnItem.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}`);
+            if ((isSpecialUser || currentUser?.promotion) && discountOnItem > 0 && !isKit) {
+                 const promo = currentUser.promotion;
+                 const PROMO_DURATION = 2 * 30 * 24 * 60 * 60 * 1000;
+                 const isPromoActive = promo && promo.id === 'new_client_promo' && (Date.now() - promo.activationTimestamp < PROMO_DURATION);
+                 const discountText = isPromoActive ? 'Dto. Bienvenida (50%+25%)' : `Descuento (${itemDiscountPercentage.toFixed(0)}%)`;
+                subDescLines.push(`  · ${discountText}: -${discountOnItem.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}`);
             }
             
             let rowHeight = 8;
@@ -795,7 +806,7 @@ const App: React.FC = () => {
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(SECONDARY_TEXT_COLOR);
             subDescLines.forEach(line => {
-                const isDiscountLine = isSpecialUser && line.includes('Descuento');
+                const isDiscountLine = line.includes('Descuento') || line.includes('Dto. Bienvenida');
                 if (isDiscountLine) {
                     doc.saveGraphicsState();
                     doc.setFont('helvetica', 'italic');
@@ -827,7 +838,11 @@ const App: React.FC = () => {
         let discountAmount = 0;
         let discountedBasePrice: number;
         
-        if (isSpecialUser) {
+        const promo = currentUser.promotion;
+        const PROMO_DURATION = 2 * 30 * 24 * 60 * 60 * 1000;
+        const isPromoActive = promo && promo.id === 'new_client_promo' && (Date.now() - promo.activationTimestamp < PROMO_DURATION);
+
+        if (isSpecialUser || isPromoActive) {
             basePriceToShow = savedQuote.quoteItems.reduce((sum, item) => sum + calculateOriginalItemPrice(item, false), 0);
             discountedBasePrice = savedQuote.quoteItems.reduce((sum, item) => sum + calculateItemPrice(item, savedQuote.quoteItems, false), 0);
             discountAmount = basePriceToShow - discountedBasePrice;
@@ -863,7 +878,9 @@ const App: React.FC = () => {
 
         addPriceLine("Subtotal", basePriceToShow);
         if (discountAmount > 0) {
-            const discountLabel = isSpecialUser ? 'Descuento (aplicado)' : `Descuento (${discountPercentage}%)`;
+            let discountLabel = isSpecialUser ? 'Descuento (aplicado)' : `Descuento (${discountPercentage}%)`;
+            if(isPromoActive) discountLabel = 'Dto. Bienvenida (50%+25%)';
+
             addPriceLine(discountLabel, -discountAmount);
             yPos += 2;
             doc.setDrawColor(BORDER_COLOR);
@@ -901,7 +918,7 @@ const App: React.FC = () => {
     }, [generatePdfWithDiscount]);
 
     const handleOpenDiscountModal = (quoteToProcess: SavedQuote) => {
-        if (isSpecialUser) {
+        if (isSpecialUser || currentUser?.promotion) {
             handleGeneratePdfForQuote(quoteToProcess);
             return;
         }
@@ -955,6 +972,31 @@ const App: React.FC = () => {
         window.print();
     };
 
+    const handleActivatePromotion = useCallback((promoId: string) => {
+        if (!currentUser) return;
+
+        const promotion = {
+            id: promoId,
+            activationTimestamp: Date.now(),
+        };
+
+        const updatedUser = { ...currentUser, promotion };
+        setCurrentUser(updatedUser);
+        
+        // Persist change
+        sessionStorage.setItem('currentUser', JSON.stringify(updatedUser));
+        try {
+            const allUsers = JSON.parse(localStorage.getItem('users') || '[]') as StoredUser[];
+            const userIndex = allUsers.findIndex(u => u.email === currentUser.email);
+            if (userIndex > -1) {
+                allUsers[userIndex].promotion = promotion;
+                localStorage.setItem('users', JSON.stringify(allUsers));
+            }
+        } catch (error) {
+            console.error("Failed to update user promotion in localStorage", error);
+        }
+
+    }, [currentUser]);
 
     const updateProductLine = (productLine: string) => {
         if (productLine === 'CUSTOM') {
@@ -1319,7 +1361,10 @@ const App: React.FC = () => {
                             />
                         )}
                          {appView === 'promotions' && (
-                             <PromotionsPage onNavigateToQuoter={() => handleReset()} />
+                             <PromotionsPage 
+                                user={currentUser}
+                                onActivatePromotion={handleActivatePromotion}
+                             />
                         )}
                     </div>
                 </div>

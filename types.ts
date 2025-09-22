@@ -42,6 +42,10 @@ export interface User {
     preparedBy?: string;
     fiscalName?: string;
     sucursal?: string;
+    promotion?: {
+        id: string;
+        activationTimestamp: number;
+    };
 }
 
 export interface StoredUser extends User {
