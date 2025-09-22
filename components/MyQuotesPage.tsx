@@ -11,51 +11,41 @@ interface MyQuotesPageProps {
 
 
 const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onViewPdf, calculateInternalItemPrice }) => {
-    const [internalQuotes, setInternalQuotes] = useState<SavedQuote[]>([]);
-    const [customerQuotes, setCustomerQuotes] = useState<SavedQuote[]>([]);
+    const [allQuotes, setAllQuotes] = useState<SavedQuote[]>([]);
     const [selectedQuote, setSelectedQuote] = useState<SavedQuote | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [activeTab, setActiveTab] = useState<'internal' | 'customer'>('internal');
 
     useEffect(() => {
         try {
-            const allQuotes = JSON.parse(localStorage.getItem('quotes') || '[]') as SavedQuote[];
-            const userQuotes = allQuotes
+            const storedQuotes = JSON.parse(localStorage.getItem('quotes') || '[]') as SavedQuote[];
+            const userQuotes = storedQuotes
                 .filter(q => q.userEmail === user.email)
                 .sort((a, b) => b.timestamp - a.timestamp);
             
-            setInternalQuotes(userQuotes.filter(q => q.type === 'internal' || !q.type));
-            setCustomerQuotes(userQuotes.filter(q => q.type === 'customer'));
+            setAllQuotes(userQuotes);
         } catch (error) {
             console.error("Failed to load quotes from localStorage", error);
         }
     }, [user.email]);
 
-    const quotesToDisplay = activeTab === 'internal' ? internalQuotes : customerQuotes;
-
     const filteredQuotes = useMemo(() => {
-        if (!searchTerm) return quotesToDisplay;
+        if (!searchTerm) return allQuotes;
         const lowercasedFilter = searchTerm.toLowerCase();
-        return quotesToDisplay.filter(quote => 
+        return allQuotes.filter(quote => 
             (quote.id.toLowerCase().includes(lowercasedFilter)) ||
             (quote.customerName?.toLowerCase().includes(lowercasedFilter)) ||
             (quote.projectReference?.toLowerCase().includes(lowercasedFilter))
         );
-    }, [quotesToDisplay, searchTerm]);
+    }, [allQuotes, searchTerm]);
 
 
     const handleToggleOrdered = (quoteId: string) => {
         const timestamp = Date.now();
-        const updateQuotes = (quotesList: SavedQuote[]) => 
-            quotesList.map(q => 
-                q.id === quoteId ? { ...q, orderedTimestamp: q.orderedTimestamp ? undefined : timestamp } : q
-            );
-
-        if (activeTab === 'internal') {
-            setInternalQuotes(updateQuotes(internalQuotes));
-        } else {
-            setCustomerQuotes(updateQuotes(customerQuotes));
-        }
+        
+        const updatedQuotes = allQuotes.map(q => 
+            q.id === quoteId ? { ...q, orderedTimestamp: q.orderedTimestamp ? undefined : timestamp } : q
+        );
+        setAllQuotes(updatedQuotes);
 
         if (selectedQuote?.id === quoteId) {
             setSelectedQuote(prev => prev ? { ...prev, orderedTimestamp: prev.orderedTimestamp ? undefined : timestamp } : null);
@@ -83,7 +73,6 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
 
         const { quoteItems } = selectedQuote;
         const quoteNumber = selectedQuote.id.replace(/quote_i_|quote_c_/g, '');
-        const isCustomerQuote = selectedQuote.type === 'customer';
 
         const subject = `Pedido para Presupuesto: ${selectedQuote.projectReference || quoteNumber}`;
         
@@ -143,8 +132,8 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                 <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                     <div className="flex justify-between items-start">
                         <div>
-                             <h3 className="text-xl font-bold text-slate-800">Detalles del Presupuesto {isCustomerQuote ? ' (Cliente)' : '(Interno)'}</h3>
-                             <p className="text-sm text-slate-500">Nº <span className="font-semibold">{isCustomerQuote ? 'C-' : ''}{quoteNumber}</span></p>
+                             <h3 className="text-xl font-bold text-slate-800">Detalles del Presupuesto</h3>
+                             <p className="text-sm text-slate-500">Nº <span className="font-semibold">{quoteNumber}</span></p>
                              <p className="text-sm text-slate-500">Para: <span className="font-semibold">{selectedQuote.customerName}</span></p>
                              {selectedQuote.projectReference && <p className="text-xs text-slate-500">Ref: {selectedQuote.projectReference}</p>}
                         </div>
@@ -214,31 +203,6 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full p-3 bg-white border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
                     />
-                </div>
-
-                <div className="border-b border-slate-200">
-                    <nav className="-mb-px flex space-x-6" aria-label="Tabs">
-                        <button
-                            onClick={() => setActiveTab('internal')}
-                            className={`whitespace-nowrap py-3 px-1 border-b-2 font-semibold text-sm transition-colors ${
-                                activeTab === 'internal'
-                                    ? 'border-teal-500 text-teal-600'
-                                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-                            }`}
-                        >
-                            Internos ({internalQuotes.length})
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('customer')}
-                            className={`whitespace-nowrap py-3 px-1 border-b-2 font-semibold text-sm transition-colors ${
-                                activeTab === 'customer'
-                                    ? 'border-teal-500 text-teal-600'
-                                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-                            }`}
-                        >
-                            Para Cliente ({customerQuotes.length})
-                        </button>
-                    </nav>
                 </div>
             </div>
 

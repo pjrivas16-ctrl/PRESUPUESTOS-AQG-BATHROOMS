@@ -1,7 +1,6 @@
 import React from 'react';
 import type { QuoteItem } from '../../types';
 
-// FIX: Update props to include onPrintRequest and remove onGenerateCustomerQuoteRequest
 interface Step5SummaryProps {
     items: QuoteItem[];
     totalPrice: number;
@@ -53,7 +52,6 @@ const QuoteItemCard: React.FC<{ item: QuoteItem; onEdit: () => void; onDelete: (
                     <p className="text-xs text-slate-400">IVA incl.</p>
                 </div>
             </div>
-            {/* FIX: Add no-print class to hide these buttons in print view */}
             <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-end gap-2 no-print">
                  <button onClick={onEdit} className="text-xs font-semibold text-teal-600 hover:underline">Editar</button>
                  <span className="text-slate-300">|</span>
@@ -141,7 +139,6 @@ const Step5Summary: React.FC<Step5SummaryProps> = ({
                 </button>
             </div>
             
-            {/* FIX: Rework actions section to include Print button and align with props */}
             <div className="mt-6 pt-6 border-t border-dashed border-slate-200 no-print">
                 <h3 className="text-xl font-bold text-slate-800 tracking-tight mb-4 text-center">Acciones del Presupuesto</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
