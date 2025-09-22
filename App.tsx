@@ -846,7 +846,7 @@ const App: React.FC = () => {
                 if(item.invoiceReference) subDescLines.push(`  · Ref. Factura: ${item.invoiceReference}`);
             } else {
                 subDescLines = [
-                    `  · Dimensiones: ${item.width}cm x ${item.length}cm`,
+                    `  · Dimensiones: ${item.width}cm x ${item.length}cm (${item.quantity || 1} ud.)`,
                     `  · Color: ${item.color?.name || `RAL ${item.ralCode}`}`,
                 ];
                 if (item.productLine === 'STRUCT DETAIL' && item.structFrames) subDescLines.push(`  · Marcos: ${item.structFrames}`);
@@ -973,7 +973,7 @@ const App: React.FC = () => {
             const footerY = 297 - 10;
             doc.setDrawColor(BORDER_COLOR);
             doc.line(PAGE_MARGIN, footerY - 5, 210 - PAGE_MARGIN, footerY - 5);
-            doc.text('Presupuesto generado con la aplicación de AQG Bathrooms. Precios sin IVA.', PAGE_MARGIN, footerY);
+            doc.text('Presupuesto generado con la aplicación de AQG Bathrooms. Impuestos desglosados.', PAGE_MARGIN, footerY);
             doc.text(`Página ${i} de ${totalPages}`, 210 - PAGE_MARGIN, footerY, { align: 'right' });
         }
         
@@ -1127,7 +1127,7 @@ const App: React.FC = () => {
                 if(item.invoiceReference) subDescLines.push(`  · Ref. Factura: ${item.invoiceReference}`);
             } else {
                  subDescLines = [
-                    `  · Dimensiones: ${item.width}cm x ${item.length}cm`,
+                    `  · Dimensiones: ${item.width}cm x ${item.length}cm (${item.quantity || 1} ud.)`,
                     `  · Color: ${item.color?.name || `RAL ${item.ralCode}`}`,
                 ];
                 if (item.productLine === 'STRUCT DETAIL' && item.structFrames) subDescLines.push(`  · Marcos: ${item.structFrames}`);
@@ -1222,7 +1222,7 @@ const App: React.FC = () => {
             const footerY = 297 - 10;
             doc.setDrawColor(BORDER_COLOR);
             doc.line(PAGE_MARGIN, footerY - 5, 210 - PAGE_MARGIN, footerY - 5);
-            doc.text('Presupuesto generado con la aplicación de AQG Bathrooms. Precios sin IVA.', PAGE_MARGIN, footerY);
+            doc.text('Presupuesto generado con la aplicación de AQG Bathrooms. Impuestos desglosados.', PAGE_MARGIN, footerY);
             doc.text(`Página ${i} de ${totalPages}`, 210 - PAGE_MARGIN, footerY, { align: 'right' });
         }
 
@@ -1584,17 +1584,17 @@ const App: React.FC = () => {
                                 <span>Nuevo Presupuesto</span>
                             </button>
                              <button onClick={() => setAppView('myQuotes')} className={`w-full text-left px-4 py-3 rounded-lg font-semibold transition-colors flex items-center gap-3 ${appView === 'myQuotes' ? 'bg-slate-800' : 'hover:bg-slate-700/50 text-slate-300'}`}>
-                               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM5 11a1 1 0 100 2h4a1 1 0 100-2H5z" /></svg>
+                               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 1a1 1 0 000 2h6a1 1 0 100-2H6z" clipRule="evenodd" /></svg>
                                <span>Mis Presupuestos</span>
                             </button>
                             <button onClick={() => setAppView('promotions')} className={`w-full text-left px-4 py-3 rounded-lg font-semibold transition-colors flex items-center gap-3 ${appView === 'promotions' ? 'bg-slate-800' : 'hover:bg-slate-700/50 text-slate-300'}`}>
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5l.646.646a1 1 0 01.708 0L12 2h5a3 3 0 013 3v5a.997.997 0 01-.293.707zM11 7a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                 </svg>
                                 <span>Promociones</span>
                             </button>
                             <button onClick={() => setIsSettingsOpen(true)} className="w-full text-left px-4 py-3 rounded-lg font-semibold transition-colors hover:bg-slate-700/50 text-slate-300 flex items-center gap-3">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.972.094 2.27-.948 2.286-1.56.38-1.56 2.6 0 2.98.972.54 2.27.094 2.286-.948.836-1.372 2.942-.734-2.106 2.106-.54.972-.094-2.27.948 2.286 1.56.38 1.56 2.6 0 2.98-.972-.54-2.27-.094-2.286.948-.836 1.372-2.942.734-2.106 2.106.54-.972.094-2.27-.948-2.286-1.56-.38-1.56-2.6 0-2.98.972-.54 2.27-.094 2.286-.948.836-1.372 2.942.734 2.106-2.106-.54-.972-.094-2.27.948-2.286zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" /></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.07 2.592a1 1 0 00-2.14 0l-.826 1.37A1.002 1.002 0 017.06 4.4l-1.46-.61a1 1 0 00-1.2.4l-1 1.732a1 1 0 00.4 1.2l1.24 1.03a1 1 0 010 1.52l-1.24 1.03a1 1 0 00-.4 1.2l1 1.732a1 1 0 001.2.4l1.46-.61a1 1 0 011.044.437l.826 1.37a1 1 0 002.14 0l.826-1.37a1 1 0 011.044-.437l1.46.61a1 1 0 001.2-.4l1-1.732a1 1 0 00-.4-1.2l-1.24-1.03a1 1 0 010-1.52l1.24-1.03a1 1 0 00.4-1.2l-1-1.732a1 1 0 00-1.2-.4l-1.46.61a1 1 0 01-1.044-.437l-.826-1.37zM10 12a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" /></svg>
                                 <span>Ajustes</span>
                             </button>
                         </nav>
