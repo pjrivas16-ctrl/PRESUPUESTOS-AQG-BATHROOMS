@@ -489,7 +489,7 @@ const App: React.FC = () => {
     const currentSteps = isKitFlow ? KITS_STEPS : SHOWER_TRAY_STEPS;
     
     const isNextDisabled = useMemo(() => {
-        const { productLine, quantity, model, color, ralCode, extras, kitProduct } = currentItemConfig;
+        const { productLine, quantity, model, color, ralCode, extras, kitProduct, bitonoColor } = currentItemConfig;
         
         if (currentStep === 1 && (!productLine || productLine === 'CUSTOM' || quantity < 1)) return true;
         
@@ -508,6 +508,12 @@ const App: React.FC = () => {
                  const hasRal = extras.some(e => e.id === 'ral');
                  if (!color && !hasRal) return true;
                  if (hasRal && (!ralCode || ralCode.trim() === '')) return true;
+            }
+            if (currentStep === 5) { // Extras step
+                const hasBitono = extras.some(e => e.id === 'bitono');
+                if (hasBitono && !bitonoColor) {
+                    return true;
+                }
             }
         }
 

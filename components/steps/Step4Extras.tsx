@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { SHOWER_EXTRAS, SOFTUM_EXTRAS } from '../../constants';
+import { SHOWER_EXTRAS, SOFTUM_EXTRAS, STANDARD_COLORS } from '../../constants';
 import type { ProductOption, ColorOption } from '../../types';
 
 interface Step4ExtrasProps {
@@ -14,7 +14,7 @@ interface Step4ExtrasProps {
 }
 
 const CheckIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="http://www.w3.org/2000/svg" fill="currentColor">
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
     </svg>
 );
@@ -53,6 +53,11 @@ const Step4Extras: React.FC<Step4ExtrasProps> = ({
                 return generalExtras;
         }
     }, [productLine]);
+
+    const availableBitonoColors = useMemo(() => {
+        if (!mainColor) return STANDARD_COLORS;
+        return STANDARD_COLORS.filter(c => c.id !== mainColor.id);
+    }, [mainColor]);
 
     const renderStructFramesSelector = () => {
         if (productLine !== 'STRUCT DETAIL') return null;
@@ -120,6 +125,39 @@ const Step4Extras: React.FC<Step4ExtrasProps> = ({
                                     + {extra.price}€
                                 </div>
                             </div>
+                            
+                            {isCurrentlySelected && extra.id === 'bitono' && (
+                                <div className="mt-3 ml-4 md:ml-14 p-4 bg-teal-50 rounded-lg animate-fade-in border-t-2 border-teal-200">
+                                    <h4 className="block text-sm font-medium text-teal-800 mb-3">
+                                        Selecciona el color para la tapa
+                                    </h4>
+                                    <div className="flex flex-wrap gap-x-3 gap-y-4">
+                                        {availableBitonoColors.map(color => (
+                                            <button
+                                                key={color.id}
+                                                onClick={() => onSelectBitonoColor(color)}
+                                                className="flex flex-col items-center justify-center space-y-2 group focus:outline-none"
+                                                aria-label={`Seleccionar color de tapa ${color.name}`}
+                                                aria-pressed={bitonoColor?.id === color.id}
+                                            >
+                                                <div
+                                                    style={{ backgroundColor: color.hex }}
+                                                    className={`w-12 h-12 rounded-full border transition-all duration-200 group-focus-visible:ring-2 group-focus-visible:ring-offset-2 group-focus-visible:ring-teal-500
+                                                        ${bitonoColor?.id === color.id ? 'ring-2 ring-offset-2 ring-teal-500 border-teal-500' : 'border-slate-300 group-hover:border-teal-400'}
+                                                        ${color.hex === '#FFFFFF' ? 'border-slate-300' : 'border-transparent'}
+                                                    `}
+                                                ></div>
+                                                <span className={`text-xs font-medium ${bitonoColor?.id === color.id ? 'text-teal-600' : 'text-slate-600'}`}>{color.name}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                    {!bitonoColor && (
+                                        <p className="text-xs text-amber-800 bg-amber-100 p-2 rounded-md mt-4">
+                                            <strong>Atención:</strong> Debes seleccionar un color para la tapa para poder continuar.
+                                        </p>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     );
                 })}
