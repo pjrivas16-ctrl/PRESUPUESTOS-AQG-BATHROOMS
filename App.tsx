@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import type { QuoteState, ProductOption, ColorOption, User, SavedQuote, StoredUser, QuoteItem } from './types';
 // Fix: Added STANDARD_COLORS to the import to resolve an undefined variable error.
@@ -35,6 +36,46 @@ declare global {
         jspdf: any;
     }
 }
+
+
+// --- WelcomePage Component Definition ---
+interface WelcomePageProps {
+    userName: string;
+    onNewQuote: () => void;
+    onViewQuotes: () => void;
+}
+
+const WelcomePage: React.FC<WelcomePageProps> = ({ userName, onNewQuote, onViewQuotes }) => {
+    return (
+        <div className="animate-fade-in text-center flex flex-col items-center justify-center h-full">
+            <h1 className="text-4xl font-extrabold text-slate-800 tracking-tight">Bienvenido, {userName}</h1>
+            <p className="mt-4 text-lg text-slate-600 max-w-2xl">
+                Estás en la Tarifa Digital de AQG. Desde aquí puedes crear nuevos presupuestos, gestionar los existentes y acceder a nuestras guías y promociones.
+            </p>
+            <div className="mt-10 flex flex-col sm:flex-row gap-4">
+                <button
+                    onClick={onNewQuote}
+                    className="px-8 py-4 font-semibold text-white bg-gradient-to-r from-teal-500 to-cyan-500 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 flex items-center gap-2"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Crear Nuevo Presupuesto
+                </button>
+                <button
+                    onClick={onViewQuotes}
+                    className="px-8 py-4 font-semibold text-teal-600 bg-teal-100 rounded-lg hover:bg-teal-200 transition-colors flex items-center justify-center gap-2"
+                >
+                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
+                    </svg>
+                    Ver Mis Presupuestos
+                </button>
+            </div>
+        </div>
+    );
+};
+
 
 // --- SettingsModal Component Definition ---
 interface SettingsModalProps {
@@ -608,7 +649,7 @@ const App: React.FC = () => {
         structFrames: 4,
     };
 
-    const [currentStep, setCurrentStep] = useState(1);
+    const [currentStep, setCurrentStep] = useState(0);
     const [currentItemConfig, setCurrentItemConfig] = useState<QuoteState>(INITIAL_QUOTE_STATE);
     const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([]);
     const [editingItemId, setEditingItemId] = useState<string | null>(null);
@@ -659,7 +700,7 @@ const App: React.FC = () => {
         setView('app');
         setQuoteItems([]);
         setCurrentItemConfig(INITIAL_QUOTE_STATE);
-        setCurrentStep(1);
+        setCurrentStep(0);
     }, []);
 
     const updateUser = useCallback((updatedUser: User) => {
@@ -840,7 +881,6 @@ const App: React.FC = () => {
 
     const handleStartNewItem = () => {
         resetCurrentItem();
-        setCurrentStep(1);
     };
 
     const handleEditItem = (itemId: string) => {
@@ -861,7 +901,9 @@ const App: React.FC = () => {
     const handleResetQuote = () => {
         if (window.confirm('¿Estás seguro de que quieres vaciar todo el presupuesto?')) {
             setQuoteItems([]);
-            handleStartNewItem();
+            setCurrentItemConfig(INITIAL_QUOTE_STATE);
+            setEditingItemId(null);
+            setCurrentStep(0);
         }
     };
     
@@ -885,7 +927,7 @@ const App: React.FC = () => {
         localStorage.setItem('quotes', JSON.stringify(allQuotes));
         alert('Presupuesto guardado con éxito.');
         handleResetQuote();
-    }, [currentUser, quoteItems, totalPrice, calculateBaseItemPrice, handleResetQuote]);
+    }, [currentUser, quoteItems, totalPrice, calculateBaseItemPrice]);
 
     const handleGeneratePdf = useCallback(() => {
         if (!currentUser || quoteItems.length === 0) return;
@@ -980,7 +1022,7 @@ const App: React.FC = () => {
     }
     
     const renderStepContent = () => {
-        if (view !== 'app' || currentStep === steps.length) return null;
+        if (view !== 'app' || currentStep === 0 || currentStep === steps.length) return null;
         
         const isKitFlow = currentItemConfig.productLine === 'KITS Y ACCESORIOS';
         
@@ -1013,10 +1055,22 @@ const App: React.FC = () => {
                 return <MaintenanceGuidesPage />;
             case 'app':
             default:
+                if (currentStep === 0) {
+                    return (
+                        <div className="w-full h-full flex items-center justify-center p-4">
+                            <WelcomePage
+                                userName={currentUser.companyName}
+                                onNewQuote={handleStartNewItem}
+                                onViewQuotes={() => setView('my_quotes')}
+                            />
+                        </div>
+                    );
+                }
+
                 const showSummary = currentStep === steps.length;
                 return (
                     <>
-                        <div className={`w-full lg:w-3/5 xl:w-1/2 pr-0 lg:pr-8 overflow-y-auto main-content ${showSummary ? 'lg:w-full' : ''}`}>
+                        <div className={`w-full overflow-y-auto main-content ${showSummary ? 'lg:w-full' : 'lg:w-3/5 xl:w-1/2 lg:pr-8'}`}>
                             {welcomePromoIsActive && currentUser.promotion && <PromotionBanner expirationDate={new Date(currentUser.promotion.activationTimestamp + (PROMO_DURATION_DAYS * 24 * 60 * 60 * 1000))} />}
                             {showSummary ? (
                                 <Step5Summary items={quoteItems} totalPrice={totalPrice} onReset={handleResetQuote} onSaveRequest={() => setIsSaveModalOpen(true)} onGeneratePdfRequest={handleGeneratePdf} onPrintRequest={handlePrint} onStartNew={handleStartNewItem} onEdit={handleEditItem} onDelete={handleDeleteItem} calculateItemPrice={(item) => calculateCustomerItemPrice(item, quoteItems, true)} />
@@ -1027,7 +1081,7 @@ const App: React.FC = () => {
                                 </>
                             )}
                         </div>
-                        {!showSummary && (
+                        {!showSummary && currentStep > 0 && (
                            <div className="hidden lg:block lg:w-2/5 xl:w-1/2 pl-8 border-l border-slate-200">
                                 <div className="sticky top-8">
                                     <LivePreview item={currentItemConfig} price={currentItemPrice} />
@@ -1042,7 +1096,16 @@ const App: React.FC = () => {
     // Fix: Changed JSX.Element to React.ReactNode to resolve a type error with JSX.
     const NavButton: React.FC<{ viewName: 'app' | 'my_quotes' | 'promotions' | 'guides'; label: string; icon: React.ReactNode; }> = ({ viewName, label, icon }) => (
         <button
-            onClick={() => setView(viewName)}
+            onClick={() => {
+                if (viewName === 'app') {
+                    setView('app');
+                    setCurrentStep(0);
+                    setCurrentItemConfig(INITIAL_QUOTE_STATE);
+                    setEditingItemId(null);
+                } else {
+                    setView(viewName);
+                }
+            }}
             className={`flex items-center w-full px-4 py-3 text-sm font-semibold rounded-lg transition-colors ${view === viewName ? 'bg-teal-500 text-white' : 'text-slate-300 hover:bg-slate-700 hover:text-white'}`}
         >
             {icon}
@@ -1058,11 +1121,11 @@ const App: React.FC = () => {
                 </div>
                 
                 <div className="mt-10 flex-grow">
-                     {view === 'app' ? (
+                     {view === 'app' && currentStep > 0 ? (
                         <StepTracker currentStep={currentStep} steps={steps} />
                      ) : (
                         <nav className="space-y-2">
-                             <NavButton viewName="app" label="Nuevo Presupuesto" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" /></svg>} />
+                             <NavButton viewName="app" label="Inicio" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>} />
                              <NavButton viewName="my_quotes" label="Mis Presupuestos" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" /></svg>} />
                             <NavButton viewName="promotions" label="Promociones" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5 2a1 1 0 00-1 1v1.111l-.473.175A2 2 0 002.13 6.06L4 9.799V14a2 2 0 002 2h8a2 2 0 002-2V9.8l1.87-3.74a2 2 0 00-1.397-2.774l-.473-.175V3a1 1 0 00-1-1H5zm2 5a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" /></svg>} />
                             <NavButton viewName="guides" label="Guías de Mantenimiento" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" /></svg>} />
