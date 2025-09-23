@@ -8,30 +8,62 @@ interface LivePreviewProps {
 
 const LivePreview: React.FC<LivePreviewProps> = ({ item, price }) => {
 
-    const renderDetail = (label: string, value: string | undefined | null) => {
+    const renderDetail = (label: string, value: React.ReactNode) => {
         if (!value) return null;
         return (
             <div className="flex justify-between items-center py-2.5 border-b border-slate-100 last:border-b-0">
                 <span className="text-sm text-slate-500">{label}</span>
-                <span className="text-sm font-semibold text-slate-700 text-right">{value}</span>
+                <div className="text-sm font-semibold text-slate-700 text-right">{value}</div>
             </div>
         );
     };
 
+    const ColorSwatch: React.FC<{ hex?: string; text?: string; }> = ({ hex, text }) => (
+        <div className="flex items-center gap-2">
+            {hex && (
+                <div 
+                    className="w-4 h-4 rounded-full border border-slate-300" 
+                    style={{ backgroundColor: hex }}
+                />
+            )}
+            <span>{text}</span>
+        </div>
+    );
+
     const basePrice = price / 1.21;
     const hasConfig = item.productLine || item.model;
+    
+    // Use dimensions for placeholder image, with sane defaults
+    const imgWidth = item.length > 50 ? Math.round(item.length * 1.5) : 150;
+    const imgHeight = item.width > 50 ? Math.round(item.width * 1.5) : 120;
+
 
     return (
         <div className="bg-white rounded-xl shadow-lg overflow-hidden animate-fade-in border border-slate-200/80">
-            <div className="p-6">
-                <h3 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-200 pb-3">Resumen del Artículo</h3>
+             <div className="p-6">
+                <h3 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-200 pb-3">Tu Configuración</h3>
+                
+                 {/* Visual Preview */}
+                 {item.productLine && item.productLine !== 'KITS Y ACCESORIOS' && (
+                    <div className="mb-6 p-4 bg-slate-100 rounded-lg">
+                        <img 
+                            src={`https://picsum.photos/seed/${item.width}${item.length}/${imgWidth}/${imgHeight}`} 
+                            alt="Previsualización del plato de ducha"
+                            className="rounded-md w-full h-auto object-cover"
+                        />
+                    </div>
+                )}
+
+
                 {hasConfig ? (
                     <div className="space-y-1">
-                        {renderDetail('Modelo', item.productLine)}
+                        {renderDetail('Colección', item.productLine)}
                         {renderDetail('Dimensiones', item.width && item.length ? `${item.width} x ${item.length} cm` : null)}
                         {renderDetail('Textura', item.model?.name)}
-                        {renderDetail('Color', item.color?.name || (item.ralCode ? `RAL ${item.ralCode}` : null))}
-                        {item.extras.length > 0 && renderDetail('Extras', item.extras.map(e => e.name).join(', '))}
+                        {renderDetail('Color', item.color?.name ? <ColorSwatch hex={item.color.hex} text={item.color.name} /> : (item.ralCode ? <ColorSwatch text={`RAL ${item.ralCode}`} /> : null))}
+                        {item.bitonoColor && renderDetail('Color Tapa', <ColorSwatch hex={item.bitonoColor.hex} text={item.bitonoColor.name} />)}
+                        {item.extras.length > 0 && renderDetail('Extras', item.extras.map(e => e.id === 'bitono' ? 'Tapa Bitono' : e.name).join(', '))}
+                        {item.structFrames && item.productLine === 'STRUCT DETAIL' && renderDetail('Marcos', `${item.structFrames}`)}
                     </div>
                 ) : (
                     <p className="text-sm text-slate-400 text-center py-8">Tu configuración aparecerá aquí.</p>
@@ -40,7 +72,7 @@ const LivePreview: React.FC<LivePreviewProps> = ({ item, price }) => {
 
                 <div className="mt-6 pt-4 border-t-2 border-dashed border-slate-200">
                     <div className="flex justify-between items-center">
-                        <span className="text-base font-semibold text-slate-600">Base imponible</span>
+                        <span className="text-base font-semibold text-slate-600">Total Artículo (ud.)</span>
                         <span className="text-2xl font-bold text-teal-600">
                             {basePrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
                         </span>

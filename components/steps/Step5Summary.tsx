@@ -135,9 +135,9 @@ const Step5Summary: React.FC<Step5SummaryProps> = ({
                 </button>
                  <button
                     onClick={onReset}
-                    className="w-full px-4 py-3 text-sm font-semibold text-slate-600 bg-slate-200 rounded-lg hover:bg-slate-300 transition-colors"
+                    className="w-full px-4 py-3 text-sm font-semibold text-red-600 bg-red-100 rounded-lg hover:bg-red-200 transition-colors"
                 >
-                    Vaciar presupuesto
+                    Descartar y Empezar de Nuevo
                 </button>
             </div>
             

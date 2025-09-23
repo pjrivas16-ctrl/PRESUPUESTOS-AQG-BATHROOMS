@@ -1,8 +1,7 @@
 
 
-
-
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+// Fix: Import useState, useEffect, useRef, useCallback, and useMemo from React to resolve multiple hook-related errors.
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type { QuoteState, ProductOption, ColorOption, User, SavedQuote, StoredUser, QuoteItem } from './types';
 // Fix: Added STANDARD_COLORS to the import to resolve an undefined variable error.
 import { 
@@ -43,9 +42,22 @@ interface WelcomePageProps {
     userName: string;
     onNewQuote: () => void;
     onViewQuotes: () => void;
+    onResumeQuote: () => void;
+    hasActiveQuote: boolean;
 }
 
-const WelcomePage: React.FC<WelcomePageProps> = ({ userName, onNewQuote, onViewQuotes }) => {
+const WelcomePage: React.FC<WelcomePageProps> = ({ userName, onNewQuote, onViewQuotes, onResumeQuote, hasActiveQuote }) => {
+    
+    const handleNewQuoteClick = () => {
+        if (hasActiveQuote) {
+            if (window.confirm('Tienes un presupuesto en curso. ¿Quieres descartarlo y empezar uno nuevo?')) {
+                onNewQuote();
+            }
+        } else {
+            onNewQuote();
+        }
+    };
+
     return (
         <div className="animate-fade-in text-center flex flex-col items-center justify-center h-full">
             <h1 className="text-4xl font-extrabold text-slate-800 tracking-tight">Bienvenido, {userName}</h1>
@@ -53,14 +65,25 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ userName, onNewQuote, onViewQ
                 Estás en la Tarifa Digital de AQG. Desde aquí puedes crear nuevos presupuestos, gestionar los existentes y acceder a nuestras guías y promociones.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row gap-4">
+                {hasActiveQuote && (
+                     <button
+                        onClick={onResumeQuote}
+                        className="px-8 py-4 font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center gap-2"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+                        </svg>
+                        Continuar Presupuesto
+                    </button>
+                )}
                 <button
-                    onClick={onNewQuote}
+                    onClick={handleNewQuoteClick}
                     className="px-8 py-4 font-semibold text-white bg-gradient-to-r from-teal-500 to-cyan-500 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 flex items-center gap-2"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                     </svg>
-                    Crear Nuevo Presupuesto
+                    {hasActiveQuote ? 'Crear Presupuesto Nuevo' : 'Crear Nuevo Presupuesto'}
                 </button>
                 <button
                     onClick={onViewQuotes}
@@ -116,7 +139,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
                 <div className="flex justify-between items-start mb-6">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-teal-100 text-teal-600 rounded-lg flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066 2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                         </div>
                         <div>
                             <h3 className="text-xl font-bold text-slate-800">Ajustes de PDF</h3>
@@ -659,6 +682,11 @@ const App: React.FC = () => {
     const [isPdfPreviewModalOpen, setIsPdfPreviewModalOpen] = useState(false);
     const [quoteForPdf, setQuoteForPdf] = useState<SavedQuote | null>(null);
     const [isCustomQuoteModalOpen, setIsCustomQuoteModalOpen] = useState(false);
+    
+    // Tracks if there's a non-empty quote being built
+    const isQuoteActive = useMemo(() => {
+        return currentStep > 0 || quoteItems.length > 0;
+    }, [currentStep, quoteItems]);
 
     // --- Authentication & User Data ---
     useEffect(() => {
@@ -811,6 +839,7 @@ const App: React.FC = () => {
         } : { 
             kitProduct: null, invoiceReference: undefined 
         };
+        // Keep quantity when changing product line
         setCurrentItemConfig(prev => ({ ...INITIAL_QUOTE_STATE, quantity: prev.quantity, productLine: line, ...newDefaults }));
     }, []);
 
@@ -832,7 +861,7 @@ const App: React.FC = () => {
     }, []);
     
     // --- Quote Management ---
-    const resetCurrentItem = useCallback(() => {
+    const resetCurrentItemAndStartOver = useCallback(() => {
         setCurrentItemConfig(INITIAL_QUOTE_STATE);
         setEditingItemId(null);
         setCurrentStep(1);
@@ -845,9 +874,10 @@ const App: React.FC = () => {
             const newItem: QuoteItem = { ...currentItemConfig, id: `item_${Date.now()}` };
             setQuoteItems(items => [...items, newItem]);
         }
-        resetCurrentItem();
+        setEditingItemId(null);
+        setCurrentItemConfig(prev => ({...INITIAL_QUOTE_STATE, quantity: prev.quantity}));
         setCurrentStep(steps.length);
-    }, [currentItemConfig, editingItemId, resetCurrentItem, steps.length]);
+    }, [currentItemConfig, editingItemId, steps.length]);
 
     const handleNext = useCallback(() => {
         if (currentStep === steps.length - 1) {
@@ -880,7 +910,9 @@ const App: React.FC = () => {
     }, [currentStep, currentItemConfig]);
 
     const handleStartNewItem = () => {
-        resetCurrentItem();
+        setEditingItemId(null);
+        setCurrentItemConfig(prev => ({...INITIAL_QUOTE_STATE, quantity: prev.quantity})); // Preserve quantity
+        setCurrentStep(1);
     };
 
     const handleEditItem = (itemId: string) => {
@@ -888,7 +920,8 @@ const App: React.FC = () => {
         if (itemToEdit) {
             setEditingItemId(itemId);
             setCurrentItemConfig(itemToEdit);
-            setCurrentStep(1);
+            setCurrentStep(1); // Go back to the first configuration step
+            setView('app'); // Ensure we are in the main app view
         }
     };
 
@@ -898,12 +931,12 @@ const App: React.FC = () => {
         }
     };
 
-    const handleResetQuote = () => {
-        if (window.confirm('¿Estás seguro de que quieres vaciar todo el presupuesto?')) {
+    const handleFullQuoteReset = () => {
+        if (window.confirm('¿Estás seguro de que quieres vaciar y descartar todo el presupuesto actual?')) {
             setQuoteItems([]);
             setCurrentItemConfig(INITIAL_QUOTE_STATE);
             setEditingItemId(null);
-            setCurrentStep(0);
+            setCurrentStep(0); // Go back to welcome screen
         }
     };
     
@@ -926,7 +959,11 @@ const App: React.FC = () => {
         allQuotes.push(newQuote);
         localStorage.setItem('quotes', JSON.stringify(allQuotes));
         alert('Presupuesto guardado con éxito.');
-        handleResetQuote();
+        // After saving, reset everything and go to welcome page
+        setQuoteItems([]);
+        setCurrentItemConfig(INITIAL_QUOTE_STATE);
+        setEditingItemId(null);
+        setCurrentStep(0);
     }, [currentUser, quoteItems, totalPrice, calculateBaseItemPrice]);
 
     const handleGeneratePdf = useCallback(() => {
@@ -955,7 +992,8 @@ const App: React.FC = () => {
 
     const handleDuplicateQuote = (items: QuoteItem[]) => {
         setQuoteItems(items);
-        setCurrentStep(steps.length);
+        setCurrentItemConfig(INITIAL_QUOTE_STATE);
+        setCurrentStep(items.length > 0 ? SHOWER_TRAY_STEPS.length : 1);
         setView('app');
     };
     
@@ -1022,8 +1060,6 @@ const App: React.FC = () => {
     }
     
     const renderStepContent = () => {
-        if (view !== 'app' || currentStep === 0 || currentStep === steps.length) return null;
-        
         const isKitFlow = currentItemConfig.productLine === 'KITS Y ACCESORIOS';
         
         if (isKitFlow) {
@@ -1045,6 +1081,55 @@ const App: React.FC = () => {
         }
     };
     
+    const renderAppView = () => {
+        // Welcome page if no quote is active
+        if (currentStep === 0) {
+            return (
+                <div className="w-full h-full flex items-center justify-center p-4">
+                    <WelcomePage
+                        userName={currentUser.companyName}
+                        onNewQuote={resetCurrentItemAndStartOver}
+                        onViewQuotes={() => setView('my_quotes')}
+                        hasActiveQuote={isQuoteActive}
+                        onResumeQuote={() => setView('app')}
+                    />
+                </div>
+            );
+        }
+
+        const showSummary = currentStep === steps.length;
+        return (
+            <>
+                <div className={`w-full overflow-y-auto main-content ${showSummary ? 'lg:w-full' : 'lg:w-3/5 xl:w-1/2 lg:pr-8'}`}>
+                    {welcomePromoIsActive && currentUser.promotion && <PromotionBanner expirationDate={new Date(currentUser.promotion.activationTimestamp + (PROMO_DURATION_DAYS * 24 * 60 * 60 * 1000))} />}
+                    
+                    {/* Header for configuration steps */}
+                    {!showSummary && (
+                        <div className="mb-8">
+                            <StepTracker currentStep={currentStep} steps={steps} onStepClick={(step) => setCurrentStep(step)} />
+                        </div>
+                    )}
+
+                    {showSummary ? (
+                        <Step5Summary items={quoteItems} totalPrice={totalPrice} onReset={handleFullQuoteReset} onSaveRequest={() => setIsSaveModalOpen(true)} onGeneratePdfRequest={handleGeneratePdf} onPrintRequest={handlePrint} onStartNew={handleStartNewItem} onEdit={handleEditItem} onDelete={handleDeleteItem} calculateItemPrice={(item) => calculateCustomerItemPrice(item, quoteItems, true)} />
+                    ) : (
+                        <>
+                            {renderStepContent()}
+                             <NextPrevButtons onNext={handleNext} onPrev={() => setCurrentStep(s => s - 1)} currentStep={currentStep} totalSteps={steps.length} isNextDisabled={isNextDisabled} isLastStep={currentStep === steps.length - 1} onDiscard={handleFullQuoteReset} />
+                        </>
+                    )}
+                </div>
+                {!showSummary && (
+                   <div className="hidden lg:block lg:w-2/5 xl:w-1/2 pl-8 border-l border-slate-200">
+                        <div className="sticky top-8">
+                            <LivePreview item={currentItemConfig} price={currentItemPrice} />
+                        </div>
+                    </div>
+                )}
+            </>
+        );
+    }
+    
     const renderMainView = () => {
         switch (view) {
             case 'my_quotes':
@@ -1055,57 +1140,13 @@ const App: React.FC = () => {
                 return <MaintenanceGuidesPage />;
             case 'app':
             default:
-                if (currentStep === 0) {
-                    return (
-                        <div className="w-full h-full flex items-center justify-center p-4">
-                            <WelcomePage
-                                userName={currentUser.companyName}
-                                onNewQuote={handleStartNewItem}
-                                onViewQuotes={() => setView('my_quotes')}
-                            />
-                        </div>
-                    );
-                }
-
-                const showSummary = currentStep === steps.length;
-                return (
-                    <>
-                        <div className={`w-full overflow-y-auto main-content ${showSummary ? 'lg:w-full' : 'lg:w-3/5 xl:w-1/2 lg:pr-8'}`}>
-                            {welcomePromoIsActive && currentUser.promotion && <PromotionBanner expirationDate={new Date(currentUser.promotion.activationTimestamp + (PROMO_DURATION_DAYS * 24 * 60 * 60 * 1000))} />}
-                            {showSummary ? (
-                                <Step5Summary items={quoteItems} totalPrice={totalPrice} onReset={handleResetQuote} onSaveRequest={() => setIsSaveModalOpen(true)} onGeneratePdfRequest={handleGeneratePdf} onPrintRequest={handlePrint} onStartNew={handleStartNewItem} onEdit={handleEditItem} onDelete={handleDeleteItem} calculateItemPrice={(item) => calculateCustomerItemPrice(item, quoteItems, true)} />
-                            ) : (
-                                <>
-                                    {renderStepContent()}
-                                    <NextPrevButtons onNext={handleNext} onPrev={() => setCurrentStep(s => s - 1)} currentStep={currentStep} totalSteps={steps.length} isNextDisabled={isNextDisabled} isLastStep={currentStep === steps.length - 1} />
-                                </>
-                            )}
-                        </div>
-                        {!showSummary && currentStep > 0 && (
-                           <div className="hidden lg:block lg:w-2/5 xl:w-1/2 pl-8 border-l border-slate-200">
-                                <div className="sticky top-8">
-                                    <LivePreview item={currentItemConfig} price={currentItemPrice} />
-                                </div>
-                            </div>
-                        )}
-                    </>
-                );
+                return renderAppView();
         }
     }
 
-    // Fix: Changed JSX.Element to React.ReactNode to resolve a type error with JSX.
     const NavButton: React.FC<{ viewName: 'app' | 'my_quotes' | 'promotions' | 'guides'; label: string; icon: React.ReactNode; }> = ({ viewName, label, icon }) => (
         <button
-            onClick={() => {
-                if (viewName === 'app') {
-                    setView('app');
-                    setCurrentStep(0);
-                    setCurrentItemConfig(INITIAL_QUOTE_STATE);
-                    setEditingItemId(null);
-                } else {
-                    setView(viewName);
-                }
-            }}
+            onClick={() => setView(viewName)}
             className={`flex items-center w-full px-4 py-3 text-sm font-semibold rounded-lg transition-colors ${view === viewName ? 'bg-teal-500 text-white' : 'text-slate-300 hover:bg-slate-700 hover:text-white'}`}
         >
             {icon}
@@ -1121,16 +1162,12 @@ const App: React.FC = () => {
                 </div>
                 
                 <div className="mt-10 flex-grow">
-                     {view === 'app' && currentStep > 0 ? (
-                        <StepTracker currentStep={currentStep} steps={steps} />
-                     ) : (
-                        <nav className="space-y-2">
-                             <NavButton viewName="app" label="Inicio" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>} />
-                             <NavButton viewName="my_quotes" label="Mis Presupuestos" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" /></svg>} />
-                            <NavButton viewName="promotions" label="Promociones" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5 2a1 1 0 00-1 1v1.111l-.473.175A2 2 0 002.13 6.06L4 9.799V14a2 2 0 002 2h8a2 2 0 002-2V9.8l1.87-3.74a2 2 0 00-1.397-2.774l-.473-.175V3a1 1 0 00-1-1H5zm2 5a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" /></svg>} />
-                            <NavButton viewName="guides" label="Guías de Mantenimiento" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" /></svg>} />
-                        </nav>
-                     )}
+                     <nav className="space-y-2">
+                         <NavButton viewName="app" label="Inicio" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>} />
+                         <NavButton viewName="my_quotes" label="Mis Presupuestos" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" /></svg>} />
+                        <NavButton viewName="promotions" label="Promociones" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5 2a1 1 0 00-1 1v1.111l-.473.175A2 2 0 002.13 6.06L4 9.799V14a2 2 0 002 2h8a2 2 0 002-2V9.8l1.87-3.74a2 2 0 00-1.397-2.774l-.473-.175V3a1 1 0 00-1-1H5zm2 5a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" /></svg>} />
+                        <NavButton viewName="guides" label="Guías de Mantenimiento" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" /></svg>} />
+                    </nav>
                 </div>
                 
                 <div className="flex-shrink-0 space-y-3">
