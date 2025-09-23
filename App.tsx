@@ -25,7 +25,7 @@ import PromotionsPage from './components/PromotionsPage';
 import LogoUploader from './components/LogoUploader';
 import PromotionBanner from './components/PromotionBanner';
 import LivePreview from './components/LivePreview';
-import { aqgLogo } from './assets';
+// The aqgLogo is no longer needed as we are removing it to prevent errors.
 
 // Declare jsPDF on window for TypeScript
 declare global {
@@ -218,14 +218,12 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quot
 
             // --- Header ---
             const userLogoData = user.logo ? await processImageForPdf(user.logo).catch(e => { console.error(e); return null; }) : null;
-            const defaultLogoData = await processImageForPdf(aqgLogo);
             
-            const logoToUse = userLogoData || defaultLogoData;
-            if (logoToUse) {
-                const aspectRatio = logoToUse.width / logoToUse.height;
+            if (userLogoData) {
+                const aspectRatio = userLogoData.width / userLogoData.height;
                 const logoHeight = 20;
                 const logoWidth = logoHeight * aspectRatio;
-                doc.addImage(logoToUse.imageData, logoToUse.format, 15, 15, logoWidth, logoHeight);
+                doc.addImage(userLogoData.imageData, userLogoData.format, 15, 15, logoWidth, logoHeight);
             }
 
             doc.setFont('helvetica', 'bold');
@@ -1052,7 +1050,7 @@ const App: React.FC = () => {
         <div className="flex h-screen bg-slate-100 font-sans">
             <aside className="sidebar w-64 bg-slate-800 text-white p-6 flex-col flex-shrink-0 hidden md:flex">
                 <div className="flex-shrink-0">
-                   <img src={aqgLogo} alt="AQG Bathrooms Logo" className="h-12 w-auto" />
+                   <div className="h-12 w-auto flex items-center text-xl font-bold text-white">AQG Bathrooms</div>
                 </div>
                 
                 <div className="mt-10 flex-grow">
