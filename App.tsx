@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import type { QuoteState, ProductOption, ColorOption, User, SavedQuote, StoredUser, QuoteItem } from './types';
 // Fix: Added STANDARD_COLORS to the import to resolve an undefined variable error.
@@ -25,6 +26,7 @@ import PromotionsPage from './components/PromotionsPage';
 import LogoUploader from './components/LogoUploader';
 import PromotionBanner from './components/PromotionBanner';
 import LivePreview from './components/LivePreview';
+import MaintenanceGuidesPage from './components/MaintenanceGuidesPage';
 // The aqgLogo is no longer needed as we are removing it to prevent errors.
 
 // Declare jsPDF on window for TypeScript
@@ -593,7 +595,7 @@ const PROMO_ID = 'new_client_promo';
 
 const App: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-    const [view, setView] = useState<'app' | 'my_quotes' | 'promotions'>('app');
+    const [view, setView] = useState<'app' | 'my_quotes' | 'promotions' | 'guides'>('app');
 
     const INITIAL_QUOTE_STATE: QuoteState = {
         productLine: null,
@@ -1007,6 +1009,8 @@ const App: React.FC = () => {
                 return <MyQuotesPage user={currentUser} onDuplicateQuote={handleDuplicateQuote} onViewPdf={handleViewPdfForSavedQuote} calculateInternalItemPrice={calculateInternalItemPrice} />;
             case 'promotions':
                 return <PromotionsPage user={currentUser} onActivatePromotion={handleActivatePromotion} />;
+            case 'guides':
+                return <MaintenanceGuidesPage />;
             case 'app':
             default:
                 const showSummary = currentStep === steps.length;
@@ -1036,7 +1040,7 @@ const App: React.FC = () => {
     }
 
     // Fix: Changed JSX.Element to React.ReactNode to resolve a type error with JSX.
-    const NavButton: React.FC<{ viewName: 'app' | 'my_quotes' | 'promotions'; label: string; icon: React.ReactNode; }> = ({ viewName, label, icon }) => (
+    const NavButton: React.FC<{ viewName: 'app' | 'my_quotes' | 'promotions' | 'guides'; label: string; icon: React.ReactNode; }> = ({ viewName, label, icon }) => (
         <button
             onClick={() => setView(viewName)}
             className={`flex items-center w-full px-4 py-3 text-sm font-semibold rounded-lg transition-colors ${view === viewName ? 'bg-teal-500 text-white' : 'text-slate-300 hover:bg-slate-700 hover:text-white'}`}
@@ -1061,6 +1065,7 @@ const App: React.FC = () => {
                              <NavButton viewName="app" label="Nuevo Presupuesto" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" /></svg>} />
                              <NavButton viewName="my_quotes" label="Mis Presupuestos" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" /></svg>} />
                             <NavButton viewName="promotions" label="Promociones" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5 2a1 1 0 00-1 1v1.111l-.473.175A2 2 0 002.13 6.06L4 9.799V14a2 2 0 002 2h8a2 2 0 002-2V9.8l1.87-3.74a2 2 0 00-1.397-2.774l-.473-.175V3a1 1 0 00-1-1H5zm2 5a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" /></svg>} />
+                            <NavButton viewName="guides" label="Guías de Mantenimiento" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" /></svg>} />
                         </nav>
                      )}
                 </div>
