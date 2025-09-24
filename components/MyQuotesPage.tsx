@@ -123,7 +123,7 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
 
         quoteItems.forEach((item, index) => {
              body += `\nArtículo ${index + 1}: `;
-            if (item.productLine === 'KITS Y ACCESORIOS') {
+            if (item.productLine === 'KITS') {
                 body += `${item.kitProduct?.name}\n` +
                         `- Unidades: ${item.quantity || 1}\n`;
                 if(item.kitProduct?.id === 'kit-pintura') {
@@ -183,8 +183,8 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                     <div className="mt-6 border-t border-slate-200">
                         {quoteItems.map((item, index) => (
                              <div key={item.id} className="py-4 border-b border-slate-200 last:border-b-0">
-                                <h4 className="font-bold text-teal-700 mb-2">Artículo {index + 1}: {item.productLine === 'KITS Y ACCESORIOS' ? item.kitProduct?.name : `${item.productLine} - ${item.model?.name}`}</h4>
-                                {item.productLine !== 'KITS Y ACCESORIOS' ? (
+                                <h4 className="font-bold text-teal-700 mb-2">Artículo {index + 1}: {item.productLine === 'KITS' ? item.kitProduct?.name : `${item.productLine} - ${item.model?.name}`}</h4>
+                                {item.productLine !== 'KITS' ? (
                                     <>
                                         <p className="text-sm text-slate-500">{item.width}cm x {item.length}cm &bull; ({item.quantity} {item.quantity > 1 ? 'unidades' : 'unidad'})</p>
                                         <p className="text-sm text-slate-500">Color: {item.color?.name || `RAL ${item.ralCode}`}</p>

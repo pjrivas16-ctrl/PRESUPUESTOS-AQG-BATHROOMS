@@ -103,8 +103,8 @@ export const PRODUCT_LINES = [
     'CENTRAL TECH',
     'RATIO',
     'RATIO TECH',
-    'KITS Y ACCESORIOS',
     'CUSTOM',
+    'KITS',
 ];
 
 export const KIT_PRODUCTS: ProductOption[] = [

@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { STANDARD_COLORS } from '../../../constants';
 import type { ColorOption, QuoteState } from '../../../types';
@@ -87,7 +88,6 @@ const Step3KitDetails: React.FC<Step3KitDetailsProps> = ({
                             <div className="ml-4 flex-grow">
                                 <h4 className="font-bold text-slate-800">Color personalizado RAL</h4>
                             </div>
-                            <div className="font-bold text-slate-800 text-lg">+ 65€</div>
                         </div>
                         {isRalSelected && (
                             <div className="mt-3 ml-4 md:ml-14 p-4 bg-teal-50 rounded-lg animate-fade-in">

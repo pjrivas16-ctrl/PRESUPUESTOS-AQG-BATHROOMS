@@ -1,3 +1,5 @@
+
+
 // Fix: Import useState, useEffect, useRef, useCallback, and useMemo from React to resolve multiple hook-related errors.
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type { QuoteState, ProductOption, ColorOption, User, SavedQuote, StoredUser, QuoteItem } from './types';
@@ -379,7 +381,7 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quot
             // --- Table ---
             const tableRows = quote.quoteItems.map(item => {
                 let description = '';
-                if (item.productLine === 'KITS Y ACCESORIOS') {
+                if (item.productLine === 'KITS') {
                     description = `${item.kitProduct?.name || ''}\n`;
                     if (item.kitProduct?.id === 'kit-pintura') {
                         description += `Color: ${item.color?.name || `RAL ${item.ralCode}`}\n`;
@@ -765,568 +767,789 @@ const App: React.FC = () => {
             if (loggedInUserEmail) {
                 const user = finalUsers.find(u => u.email === loggedInUserEmail);
                 if (user) {
-                    const { password, ...userToSet } = user;
-                    setCurrentUser(userToSet);
+                    setCurrentUser(user);
                 } else {
-                    // Log out if the user is no longer in the list
+                    // The user in storage doesn't exist in our authorized list anymore. Log them out.
                     localStorage.removeItem('currentUserEmail');
                 }
             }
         } catch (error) {
-            console.error("Error initializing user data:", error);
-            // Fallback to source if local storage is corrupt
-            localStorage.setItem('users', JSON.stringify(authorizedUsers));
+            console.error('Error managing user data:', error);
+            // Consider clearing storage if it's corrupted.
+            // localStorage.clear();
         }
     }, []);
 
-    const handleLogin = useCallback(async (email: string, passwordAttempt: string) => {
-        const allUsers: StoredUser[] = JSON.parse(localStorage.getItem('users') || '[]');
-        const user = allUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+    const updateUser = (updatedUserData: Partial<User>) => {
+        if (!currentUser) return;
 
-        if (user && user.password === passwordAttempt) {
-            const { password, ...userToSet } = user;
-            setCurrentUser(userToSet);
-            localStorage.setItem('currentUserEmail', user.email);
-        } else {
-            throw new Error('El email o la contraseña son incorrectos.');
-        }
-    }, []);
-
-    const handleLogout = useCallback(() => {
-        setCurrentUser(null);
-        localStorage.removeItem('currentUserEmail');
-        setView('app');
-        setQuoteItems([]);
-        setCurrentItemConfig(INITIAL_QUOTE_STATE);
-        setCurrentStep(0);
-    }, [INITIAL_QUOTE_STATE]);
-
-    const updateUser = useCallback((updatedUser: User) => {
+        const updatedUser = { ...currentUser, ...updatedUserData };
         setCurrentUser(updatedUser);
-        const allUsers: StoredUser[] = JSON.parse(localStorage.getItem('users') || '[]');
-        const userIndex = allUsers.findIndex(u => u.email === updatedUser.email);
-        if (userIndex !== -1) {
-            const updatedStoredUser = { ...allUsers[userIndex], ...updatedUser };
-            allUsers[userIndex] = updatedStoredUser;
-            localStorage.setItem('users', JSON.stringify(allUsers));
-        }
-    }, []);
 
-    const handleSettingsSave = (settings: { fiscalName: string; preparedBy: string; sucursal: string; }) => {
-        if (currentUser) {
-            updateUser({ ...currentUser, ...settings });
+        try {
+            const storedUsersString = localStorage.getItem('users');
+            const storedUsers: StoredUser[] = storedUsersString ? JSON.parse(storedUsersString) : [];
+            const updatedStoredUsers = storedUsers.map(u => u.email === updatedUser.email ? { ...u, ...updatedUserData } : u);
+            localStorage.setItem('users', JSON.stringify(updatedStoredUsers));
+        } catch (error) {
+            console.error("Failed to update user in localStorage", error);
         }
     };
     
-    // --- Price Calculation ---
-    const calculatePromotionTurnover = useCallback((user: User | null): number => {
-        if (!user?.promotion || user.promotion.id !== PROMO_ID) return 0;
-        
+    const handleLogin = async (email: string, password: string): Promise<void> => {
         try {
-            const allQuotes: SavedQuote[] = JSON.parse(localStorage.getItem('quotes') || '[]');
-            const userOrderedQuotes = allQuotes.filter(q => 
-                q.userEmail === user.email && 
-                q.orderedTimestamp && 
-                q.orderedTimestamp >= user.promotion!.activationTimestamp
-            );
-            
-            const turnover = userOrderedQuotes.reduce((acc, quote) => acc + (quote.totalPrice / (1 + VAT_RATE)), 0);
-            return turnover;
-        } catch (error) {
-            console.error("Error calculating promotion turnover:", error);
-            return 0;
-        }
-    }, []);
+            const storedUsersString = localStorage.getItem('users');
+            const users: StoredUser[] = storedUsersString ? JSON.parse(storedUsersString) : [];
+            const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
 
-    const promotionTurnover = useMemo(() => calculatePromotionTurnover(currentUser), [currentUser, calculatePromotionTurnover, view]);
+            if (user && user.password === password) {
+                localStorage.setItem('currentUserEmail', user.email);
+                setCurrentUser(user);
+                resetQuote();
+                setView('app');
+            } else {
+                throw new Error('El correo electrónico o la contraseña no son correctos.');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            throw error; // Re-throw to be caught in the LoginPage component
+        }
+    };
+
+    const handleLogout = () => {
+        if (window.confirm('¿Estás seguro de que quieres cerrar la sesión?')) {
+            setCurrentUser(null);
+            localStorage.removeItem('currentUserEmail');
+        }
+    };
+    
+    // --- Promotion Logic ---
+    const [welcomePromoTurnover, setWelcomePromoTurnover] = useState(0);
 
     const welcomePromoIsActive = useMemo(() => {
-        if (!currentUser?.promotion || currentUser.promotion.id !== PROMO_ID) return false;
-        
-        const expiryTime = currentUser.promotion.activationTimestamp + (PROMO_DURATION_DAYS * 24 * 60 * 60 * 1000);
-        if (Date.now() >= expiryTime) return false;
+        if (!currentUser?.promotion || currentUser.promotion.id !== PROMO_ID) {
+            return false;
+        }
+        const promoEndTime = currentUser.promotion.activationTimestamp + (PROMO_DURATION_DAYS * 24 * 60 * 60 * 1000);
+        return Date.now() < promoEndTime && welcomePromoTurnover < PROMO_TURNOVER_LIMIT;
+    }, [currentUser, welcomePromoTurnover]);
 
-        if (promotionTurnover >= PROMO_TURNOVER_LIMIT) return false;
-        
-        return true;
-    }, [currentUser, promotionTurnover]);
+    useEffect(() => {
+        if (currentUser?.promotion?.id === PROMO_ID) {
+            try {
+                const allQuotes: SavedQuote[] = JSON.parse(localStorage.getItem('quotes') || '[]');
+                const promoStartTime = currentUser.promotion.activationTimestamp;
+                const promoEndTime = promoStartTime + (PROMO_DURATION_DAYS * 24 * 60 * 60 * 1000);
+                
+                const turnover = allQuotes
+                    .filter(q => 
+                        q.userEmail === currentUser.email &&
+                        q.orderedTimestamp &&
+                        q.orderedTimestamp >= promoStartTime &&
+                        q.orderedTimestamp < promoEndTime
+                    )
+                    .reduce((sum, q) => sum + q.totalPrice, 0);
 
+                setWelcomePromoTurnover(turnover);
+            } catch (error) {
+                console.error("Failed to calculate promotion turnover:", error);
+            }
+        }
+    }, [currentUser]);
 
-    const calculateBaseItemPrice = useCallback((item: QuoteState | QuoteItem): number => {
-        if (item.productLine === 'KITS Y ACCESORIOS') {
-            return item.kitProduct?.price || 0;
+    const handleActivatePromotion = (promoId: string) => {
+        if (promoId === PROMO_ID) {
+            updateUser({
+                promotion: {
+                    id: PROMO_ID,
+                    activationTimestamp: Date.now(),
+                }
+            });
+            alert('¡Promoción de bienvenida activada! Ahora se aplicará a tus presupuestos.');
+            setView('app');
+        }
+    };
+
+    // --- Pricing Logic ---
+    const calculateItemPrice = useCallback((item: QuoteState, allItems: QuoteItem[] = []): number => {
+        if (item.productLine === 'KITS') {
+            const basePrice = item.kitProduct?.price || 0;
+            // Color selection (standard or RAL) does not add to the price for kits.
+            return basePrice * item.quantity;
         }
 
-        if (!item.productLine || !PRICE_LIST[item.productLine]) return 0;
-        const priceForWidth = PRICE_LIST[item.productLine][item.width];
-        if (!priceForWidth || !priceForWidth[item.length]) return 0; // Should not happen with selects
-        
-        let price = priceForWidth[item.length];
+        const { productLine, width, length, model, color, extras, quantity, structFrames } = item;
+        if (!productLine || !width || !length) return 0;
 
-        if (item.model?.priceFactor) {
-            price *= item.model.priceFactor;
+        let basePrice = PRICE_LIST[productLine]?.[width]?.[length] || 0;
+
+        if (model?.priceFactor) {
+            basePrice *= model.priceFactor;
+        }
+        if (color?.price) {
+            basePrice += color.price;
         }
 
-        item.extras.forEach(extra => {
-            price += extra.price;
-        });
-
-        if (item.productLine === 'STRUCT DETAIL' && item.structFrames) {
-            const discounts = { 4: 0, 3: 0.05, 2: 0.10, 1: 0.15 };
-            price *= (1 - discounts[item.structFrames]);
+        if (productLine === 'STRUCT DETAIL' && structFrames) {
+            const discountMap = { 4: 1.0, 3: 0.95, 2: 0.90, 1: 0.85 };
+            basePrice *= (discountMap[structFrames] || 1.0);
         }
-        
-        return price;
+
+        const extrasPrice = extras.reduce((sum, extra) => sum + (extra.price || 0), 0);
+        const singleItemPrice = basePrice + extrasPrice;
+
+        return singleItemPrice * quantity;
     }, []);
 
-    const calculateItemPriceDetails = useCallback((item: QuoteItem, allItems: QuoteItem[]): PriceDetails => {
-        const baseItemPrice = calculateBaseItemPrice(item) * item.quantity;
+    const calculateInternalItemPrice = useCallback((item: QuoteItem, allItems: QuoteItem[] = []): number => {
+        if (!currentUser) return 0;
+
+        const basePrice = calculateItemPrice(item, allItems);
         let discountPercent = 0;
 
-        if (currentUser) {
-            const totalClassicQuantity = allItems
-                .filter(i => i.productLine === 'CLASSIC')
-                .reduce((sum, i) => sum + i.quantity, 0);
-            
-            const classicSpecialDiscount = currentUser.discounts?.classicSpecial;
-            const classicSpecialConditionMet = classicSpecialDiscount && totalClassicQuantity >= classicSpecialDiscount.minQuantity;
+        if (item.productLine?.startsWith('CLASSIC') && currentUser.discounts?.classicSpecial) {
+             const classicItems = allItems.filter(i => i.productLine?.startsWith('CLASSIC'));
+             const totalClassicQuantity = classicItems.reduce((sum, i) => sum + i.quantity, 0);
 
-            if (item.productLine === 'CLASSIC' && classicSpecialConditionMet) {
-                discountPercent = classicSpecialDiscount.discount;
-            } else {
-                const isShowerTray = item.productLine && !['KITS Y ACCESORIOS', 'CUSTOM'].includes(item.productLine);
-                if (isShowerTray && currentUser.discounts) {
-                    if (item.productLine.includes('TECH') && currentUser.discounts.terrazzoShowerTrays !== undefined) {
-                        discountPercent = currentUser.discounts.terrazzoShowerTrays;
-                    } else if (currentUser.discounts.showerTrays !== undefined) {
-                        discountPercent = currentUser.discounts.showerTrays;
-                    }
-                }
+            if (totalClassicQuantity >= currentUser.discounts.classicSpecial.minQuantity) {
+                 discountPercent = currentUser.discounts.classicSpecial.discount;
+            } else if (currentUser.discounts?.showerTrays) {
+                 discountPercent = currentUser.discounts.showerTrays;
+            }
+        } else if (currentUser.discounts?.showerTrays) {
+            discountPercent = currentUser.discounts.showerTrays;
+        }
+
+        const discountedPrice = basePrice * (1 - discountPercent / 100);
+        return discountedPrice;
+    }, [calculateItemPrice, currentUser]);
+
+    const calculatePriceDetails = useCallback((item: QuoteItem, allItems: QuoteItem[]): PriceDetails => {
+        const basePrice = calculateItemPrice(item, allItems);
+        
+        let discountPercent = 0;
+        
+        if (welcomePromoIsActive) {
+            // With promo, the discount is calculated on the subtotal, not per item.
+            // But we can model it as a combined discount rate for display if needed.
+            // Effective rate: 1 - (1 - 0.5) * (1 - 0.25) = 1 - 0.5 * 0.75 = 1 - 0.375 = 0.625 or 62.5%
+            discountPercent = 62.5; 
+        } else if (currentUser) {
+            const internalPrice = calculateInternalItemPrice(item, allItems);
+            if (basePrice > 0) {
+                 discountPercent = ((basePrice - internalPrice) / basePrice) * 100;
             }
         }
-        
-        const discountedBasePrice = baseItemPrice * (1 - discountPercent / 100);
-        
+
+        const discountedPrice = basePrice * (1 - discountPercent / 100);
+        const finalPrice = discountedPrice * (1 + VAT_RATE);
+
         return {
-            basePrice: baseItemPrice,
-            discountedPrice: discountedBasePrice,
-            finalPrice: discountedBasePrice * (1 + VAT_RATE),
-            discountPercent: discountPercent,
+            basePrice,
+            discountedPrice,
+            finalPrice,
+            discountPercent
         };
-    }, [calculateBaseItemPrice, currentUser]);
+    }, [calculateItemPrice, calculateInternalItemPrice, currentUser, welcomePromoIsActive]);
 
-    const totalPrice = useMemo(() => {
-        const totalBasePrice = quoteItems.reduce((sum, item) => sum + (calculateBaseItemPrice(item) * item.quantity), 0);
-    
-        if (welcomePromoIsActive) {
-            const promoDiscount1 = totalBasePrice * 0.5;
-            const subtotalAfterPromo1 = totalBasePrice - promoDiscount1;
-            const promoDiscount2 = subtotalAfterPromo1 * 0.25;
-            const finalBase = subtotalAfterPromo1 - promoDiscount2;
-            return finalBase * (1 + VAT_RATE);
-        }
-        
-        const totalDiscountedPrice = quoteItems.reduce((sum, item) => {
-            const details = calculateItemPriceDetails(item, quoteItems);
-            return sum + details.discountedPrice;
-        }, 0);
-    
-        return totalDiscountedPrice * (1 + VAT_RATE);
-    }, [quoteItems, calculateBaseItemPrice, welcomePromoIsActive, calculateItemPriceDetails]);
-
-    const getFinalItemPriceForSummary = useCallback((item: QuoteItem): number => {
-        return calculateItemPriceDetails(item, quoteItems).finalPrice;
-    }, [calculateItemPriceDetails, quoteItems]);
 
     const currentItemPrice = useMemo(() => {
-        // Create a temporary single-item quote to calculate its price correctly
-        const tempQuote: QuoteItem[] = [{ ...currentItemConfig, id: 'temp' }];
-        const priceDetails = calculateItemPriceDetails(tempQuote[0], tempQuote);
-        // We show the price for a single unit in the preview, so divide by quantity
-        const singleItemFinalPrice = currentItemConfig.quantity > 0 ? priceDetails.finalPrice / currentItemConfig.quantity : 0;
-        return singleItemFinalPrice * (1+VAT_RATE); // Live preview price is per unit and includes VAT
-    }, [currentItemConfig, calculateItemPriceDetails]);
+        const pvp = calculateItemPrice(currentItemConfig);
+        const internal = currentUser ? calculateInternalItemPrice({ ...currentItemConfig, id: '' }, []) : pvp;
+        return welcomePromoIsActive ? (pvp * (1 - 0.5) * (1 - 0.25)) : internal;
+    }, [currentItemConfig, calculateItemPrice, calculateInternalItemPrice, currentUser, welcomePromoIsActive]);
 
-
-    // --- Step Navigation & State Updates ---
-    const steps = useMemo(() => 
-        currentItemConfig.productLine === 'KITS Y ACCESORIOS' ? KITS_STEPS : SHOWER_TRAY_STEPS,
-        [currentItemConfig.productLine]
-    );
-
-    const handleUpdateItemConfig = useCallback((updates: Partial<QuoteState>) => {
-        setCurrentItemConfig(prev => ({ ...prev, ...updates }));
-    }, []);
-    
-    const handleUpdateProductLine = useCallback((line: string) => {
-        if (line === 'CUSTOM') {
-            setIsCustomQuoteModalOpen(true);
-            return;
+    const totalQuotePrice = useMemo(() => {
+        let subtotal = 0;
+        if (welcomePromoIsActive) {
+            subtotal = quoteItems.reduce((sum, item) => sum + calculateItemPrice(item, quoteItems), 0);
+            subtotal = subtotal * (1 - 0.5) * (1 - 0.25);
+        } else {
+            subtotal = quoteItems.reduce((sum, item) => sum + calculateInternalItemPrice(item, quoteItems), 0);
         }
-        const isKit = line === 'KITS Y ACCESORIOS';
-        const newDefaults = isKit ? { 
-            width: 0, length: 0, model: null, extras: [], bitonoColor: null, structFrames: undefined 
-        } : { 
-            kitProduct: null, invoiceReference: undefined 
+        return subtotal * (1 + VAT_RATE);
+    }, [quoteItems, calculateItemPrice, calculateInternalItemPrice, welcomePromoIsActive]);
+
+
+    // --- Step Navigation & State Management ---
+    const steps = currentItemConfig.productLine === 'KITS' ? KITS_STEPS : SHOWER_TRAY_STEPS;
+    const totalSteps = steps.length;
+
+    const resetItemConfig = (keepProductLine = false) => {
+        const newState = { ...INITIAL_QUOTE_STATE };
+        if (keepProductLine) {
+            newState.productLine = currentItemConfig.productLine;
+        }
+        setCurrentItemConfig(newState);
+        setEditingItemId(null);
+    };
+
+    const resetQuote = () => {
+        resetItemConfig();
+        setCurrentStep(0);
+        setQuoteItems([]);
+        setEditingItemId(null);
+    };
+
+    const handleDiscard = () => {
+        if (window.confirm('¿Estás seguro de que quieres descartar este presupuesto y volver al inicio?')) {
+            resetQuote();
+        }
+    };
+    
+    const handleStartNewQuote = (fromWelcomePage: boolean = false) => {
+        // fromWelcomePage is true when the user explicitly clicks "New Quote"
+        // from the Welcome page, which implies discarding any active quote.
+        if (fromWelcomePage) {
+            resetQuote();
+        }
+        setCurrentStep(1);
+    };
+
+    const handleNext = () => {
+        if (currentStep < totalSteps) {
+            // Handle specific logic for product lines
+            if (currentStep === 1 && currentItemConfig.productLine === 'CUSTOM') {
+                setIsCustomQuoteModalOpen(true);
+                return; // Stop navigation
+            }
+             if (currentStep === 1 && currentItemConfig.productLine === 'KITS') {
+                setCurrentStep(currentStep + 1);
+                return;
+            }
+
+            // Automatic model selection logic
+            if (currentStep === 2) {
+                const { productLine } = currentItemConfig;
+                const models = SHOWER_MODELS;
+                let autoSelectedModel: ProductOption | null = null;
+
+                if (productLine === 'SOFTUM') autoSelectedModel = models.find(m => m.id === 'sand') || null;
+                else if (productLine === 'LUXE' || productLine === 'CLASSIC' || productLine === 'LUXE CON TAPETA') autoSelectedModel = models.find(m => m.id === 'pizarra') || null;
+                else if (productLine?.startsWith('FLAT') || productLine?.startsWith('RATIO')) autoSelectedModel = models.find(m => m.id === 'lisa') || null;
+                
+                if (autoSelectedModel && !currentItemConfig.model) {
+                    setCurrentItemConfig(prev => ({ ...prev, model: autoSelectedModel }));
+                }
+            }
+
+            setCurrentStep(currentStep + 1);
+        }
+    };
+
+    const handlePrev = () => {
+        if (currentStep > 1) {
+            setCurrentStep(currentStep - 1);
+        }
+    };
+    
+    const handleStepClick = (stepNumber: number) => {
+        if (stepNumber < currentStep) {
+            setCurrentStep(stepNumber);
+        }
+    };
+
+    const handleAddItemToQuote = () => {
+        const newItem: QuoteItem = {
+            ...currentItemConfig,
+            id: editingItemId || `item_${Date.now()}`
         };
-        // Keep quantity when changing product line
-        setCurrentItemConfig(prev => ({ ...INITIAL_QUOTE_STATE, quantity: prev.quantity, productLine: line, ...newDefaults }));
-    }, [INITIAL_QUOTE_STATE]);
 
-    const handleToggleExtra = useCallback((extra: ProductOption) => {
-        setCurrentItemConfig(prev => {
-            const isSelected = prev.extras.some(e => e.id === extra.id);
-            const newExtras = isSelected ? prev.extras.filter(e => e.id !== extra.id) : [...prev.extras, extra];
-            
-            // If toggling off bitono, clear bitono color
-            if (extra.id === 'bitono' && isSelected) {
-                return { ...prev, extras: newExtras, bitonoColor: null };
-            }
-            // If toggling off RAL for main color, clear ralCode
-            if (extra.id === 'ral' && isSelected) {
-                return { ...prev, extras: newExtras, ralCode: undefined, color: STANDARD_COLORS[0] };
-            }
-            return { ...prev, extras: newExtras };
-        });
-    }, []);
-    
-    // --- Quote Management ---
-    const resetCurrentItemAndStartOver = useCallback(() => {
-        setCurrentItemConfig(INITIAL_QUOTE_STATE);
-        setEditingItemId(null);
-        setCurrentStep(1);
-    }, [INITIAL_QUOTE_STATE]);
-
-    const handleAddItemToQuote = useCallback(() => {
         if (editingItemId) {
-            setQuoteItems(items => items.map(item => item.id === editingItemId ? { ...currentItemConfig, id: editingItemId } : item));
+            setQuoteItems(quoteItems.map(item => item.id === editingItemId ? newItem : item));
         } else {
-            const newItem: QuoteItem = { ...currentItemConfig, id: `item_${Date.now()}` };
-            setQuoteItems(items => [...items, newItem]);
+            setQuoteItems([...quoteItems, newItem]);
         }
-        setEditingItemId(null);
-        setCurrentItemConfig(prev => ({...INITIAL_QUOTE_STATE, quantity: prev.quantity}));
-        setCurrentStep(steps.length);
-    }, [currentItemConfig, editingItemId, steps.length, INITIAL_QUOTE_STATE]);
-
-    const handleNext = useCallback(() => {
-        if (currentStep === steps.length - 1) {
-            handleAddItemToQuote();
-        } else {
-            setCurrentStep(s => s + 1);
-        }
-    }, [currentStep, steps, handleAddItemToQuote]);
-    
-    const isNextDisabled = useMemo(() => {
-        const isKit = currentItemConfig.productLine === 'KITS Y ACCESORIOS';
-        if (currentStep === 1 && !currentItemConfig.productLine) return true;
-        if (isKit) {
-            if (currentStep === 2 && !currentItemConfig.kitProduct) return true;
-            if (currentStep === 3 && currentItemConfig.kitProduct?.id === 'kit-pintura') {
-                const isRal = currentItemConfig.extras.some(e => e.id === 'ral');
-                if (isRal && !currentItemConfig.ralCode?.trim()) return true;
-                if (!isRal && !currentItemConfig.color) return true;
-            }
-        } else {
-            if (currentStep === 3 && !currentItemConfig.model) return true;
-            if (currentStep === 4) {
-                 const isRal = currentItemConfig.extras.some(e => e.id === 'ral');
-                 if (isRal && !currentItemConfig.ralCode?.trim()) return true;
-                 if (!isRal && !currentItemConfig.color) return true;
-            }
-            if (currentStep === 5 && currentItemConfig.extras.some(e => e.id === 'bitono') && !currentItemConfig.bitonoColor) return true;
-        }
-        return false;
-    }, [currentStep, currentItemConfig]);
-
-    const handleStartNewItem = () => {
-        setEditingItemId(null);
-        setCurrentItemConfig(prev => ({...INITIAL_QUOTE_STATE, quantity: prev.quantity})); // Preserve quantity
-        setCurrentStep(1);
+        
+        resetItemConfig(true);
+        setCurrentStep(totalSteps); // Go to summary
     };
 
     const handleEditItem = (itemId: string) => {
         const itemToEdit = quoteItems.find(item => item.id === itemId);
         if (itemToEdit) {
-            setEditingItemId(itemId);
             setCurrentItemConfig(itemToEdit);
-            setCurrentStep(1); // Go back to the first configuration step
-            setView('app'); // Ensure we are in the main app view
+            setEditingItemId(itemId);
+            const newSteps = itemToEdit.productLine === 'KITS' ? KITS_STEPS : SHOWER_TRAY_STEPS;
+            setCurrentStep(itemToEdit.productLine === 'KITS' ? newSteps.findIndex(s => s.title === 'Selección de Kit') + 1 : 1);
         }
     };
-
+    
     const handleDeleteItem = (itemId: string) => {
-        if (window.confirm('¿Estás seguro de que quieres eliminar este artículo?')) {
-            setQuoteItems(items => items.filter(item => item.id !== itemId));
+        if(window.confirm('¿Seguro que quieres eliminar este artículo?')) {
+            setQuoteItems(quoteItems.filter(item => item.id !== itemId));
         }
     };
 
-    const handleFullQuoteReset = () => {
-        if (window.confirm('¿Estás seguro de que quieres vaciar y descartar todo el presupuesto actual?')) {
-            setQuoteItems([]);
-            setCurrentItemConfig(INITIAL_QUOTE_STATE);
-            setEditingItemId(null);
-            setCurrentStep(0); // Go back to welcome screen
-        }
-    };
+    const handleStartNewItem = () => {
+        resetItemConfig();
+        setCurrentStep(1);
+    }
     
-    // --- Save, PDF & Print ---
-    const handleSaveQuote = useCallback((details: { customerName: string; projectReference: string }) => {
-        if (!currentUser) return;
-        const pvpTotalPrice = quoteItems.reduce((sum, item) => sum + (calculateBaseItemPrice(item) * item.quantity), 0);
-        const newQuote: SavedQuote = {
-            id: `quote_c_${Date.now()}`,
-            timestamp: Date.now(),
-            userEmail: currentUser.email,
-            quoteItems,
-            totalPrice,
-            pvpTotalPrice,
-            customerName: details.customerName,
-            projectReference: details.projectReference,
-            type: 'customer',
-        };
-        const allQuotes = JSON.parse(localStorage.getItem('quotes') || '[]') as SavedQuote[];
-        allQuotes.push(newQuote);
-        localStorage.setItem('quotes', JSON.stringify(allQuotes));
-        alert('Presupuesto guardado con éxito.');
-        // After saving, reset everything and go to welcome page
-        setQuoteItems([]);
-        setCurrentItemConfig(INITIAL_QUOTE_STATE);
-        setEditingItemId(null);
-        setCurrentStep(0);
-    }, [currentUser, quoteItems, totalPrice, calculateBaseItemPrice, INITIAL_QUOTE_STATE]);
-
-    const handleGeneratePdf = useCallback(() => {
+     // --- Quote Saving & Management ---
+    const handleSaveQuote = (details: { customerName: string; projectReference: string }) => {
         if (!currentUser || quoteItems.length === 0) return;
-        const pvpTotalPrice = quoteItems.reduce((sum, item) => sum + (calculateBaseItemPrice(item) * item.quantity), 0);
-        const temporaryQuote: SavedQuote = {
-            id: `quote_temp_${Date.now()}`,
-            timestamp: Date.now(),
-            userEmail: currentUser.email,
-            quoteItems,
-            totalPrice,
-            pvpTotalPrice,
-            customerName: 'Cliente (temporal)',
-            type: 'customer'
-        };
-        setQuoteForPdf(temporaryQuote);
-        setIsPdfPreviewModalOpen(true);
-    }, [currentUser, quoteItems, totalPrice, calculateBaseItemPrice]);
+
+        try {
+            const allQuotes: SavedQuote[] = JSON.parse(localStorage.getItem('quotes') || '[]');
+            const newQuoteIdNumber = (allQuotes.filter(q => q.userEmail === currentUser.email).length + 1).toString().padStart(4, '0');
+            const newQuote: SavedQuote = {
+                id: `quote_c_${newQuoteIdNumber}`,
+                timestamp: Date.now(),
+                userEmail: currentUser.email,
+                quoteItems: quoteItems,
+                totalPrice: totalQuotePrice,
+                customerName: details.customerName,
+                projectReference: details.projectReference,
+                type: 'customer',
+                 pvpTotalPrice: quoteItems.reduce((sum, item) => sum + calculateItemPrice(item, quoteItems), 0),
+            };
+            
+            allQuotes.push(newQuote);
+            localStorage.setItem('quotes', JSON.stringify(allQuotes));
+            alert(`Presupuesto guardado con éxito. ID: ${newQuoteIdNumber}`);
+            resetQuote();
+            setView('my_quotes');
+        } catch (error) {
+            console.error("Failed to save quote:", error);
+            alert("Error al guardar el presupuesto. Revisa la consola para más detalles.");
+        }
+    };
     
-    const handleViewPdfForSavedQuote = useCallback((quote: SavedQuote) => {
-        setQuoteForPdf(quote);
-        setIsPdfPreviewModalOpen(true);
-    }, []);
-
-    const handlePrint = () => window.print();
-
-    const handleDuplicateQuote = (items: QuoteItem[]) => {
-        setQuoteItems(items);
-        setCurrentItemConfig(INITIAL_QUOTE_STATE);
-        setCurrentStep(items.length > 0 ? SHOWER_TRAY_STEPS.length : 1);
+    const handleDuplicateQuote = (itemsToDuplicate: QuoteItem[]) => {
+        resetQuote();
+        setQuoteItems(itemsToDuplicate);
+        setCurrentStep(totalSteps); // Go straight to summary
         setView('app');
     };
-    
-    const handleActivatePromotion = (promoId: string) => {
-        if (!currentUser || promoId !== PROMO_ID) return;
-        if (window.confirm(`¿Activar la promoción de bienvenida? Válida durante ${PROMO_DURATION_DAYS} días o hasta alcanzar ${PROMO_TURNOVER_LIMIT}€ de facturación, lo que antes ocurra.`)) {
-             updateUser({
-                ...currentUser,
-                promotion: { id: PROMO_ID, activationTimestamp: Date.now() }
-            });
+
+    const handleViewPdf = (quote: SavedQuote) => {
+        setQuoteForPdf(quote);
+        setIsPdfPreviewModalOpen(true);
+    };
+
+    // --- Data Export/Import ---
+    const handleExportData = () => {
+        if (!currentUser) return;
+        try {
+            const allQuotes: SavedQuote[] = JSON.parse(localStorage.getItem('quotes') || '[]');
+            const userQuotes = allQuotes.filter(q => q.userEmail === currentUser.email);
+            
+            const dataToExport = {
+                userSettings: {
+                    preparedBy: currentUser.preparedBy,
+                    fiscalName: currentUser.fiscalName,
+                    sucursal: currentUser.sucursal,
+                },
+                quotes: userQuotes,
+            };
+
+            const dataStr = JSON.stringify(dataToExport, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `aqg_backup_${currentUser.companyName.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+        } catch (error) {
+            console.error("Error exporting data:", error);
+            alert("Hubo un error al exportar los datos.");
         }
     };
     
-    const handleExportData = () => {
-        if (!currentUser) return;
-        const quotes = JSON.parse(localStorage.getItem('quotes') || '[]');
-        const users = JSON.parse(localStorage.getItem('users') || '[]');
-        const data = {
-            quotes,
-            users
-        };
-        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `aqg_backup_${new Date().toISOString().split('T')[0]}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-    };
-
     const handleImportData = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
-        if (!file) return;
+        if (!file || !currentUser) return;
+
+        if (!window.confirm("Atención: Esto reemplazará todos tus presupuestos y ajustes actuales con el contenido del archivo. ¿Deseas continuar?")) {
+            return;
+        }
 
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
                 const text = e.target?.result;
-                if (typeof text !== 'string') throw new Error("File could not be read");
-                const data = JSON.parse(text);
-                if (data.users && data.quotes && window.confirm("¿Seguro que quieres reemplazar todos los datos? Esta acción es irreversible.")) {
-                    localStorage.setItem('users', JSON.stringify(data.users));
-                    localStorage.setItem('quotes', JSON.stringify(data.quotes));
-                    alert("Datos importados con éxito. La página se recargará.");
-                    window.location.reload();
-                } else {
-                    throw new Error("El archivo no tiene el formato correcto.");
+                if (typeof text !== 'string') throw new Error("File could not be read.");
+                
+                const importedData = JSON.parse(text);
+
+                // Basic validation
+                if (!importedData.quotes || !Array.isArray(importedData.quotes)) {
+                    throw new Error("El archivo de importación no tiene el formato correcto (falta la lista de presupuestos).");
                 }
-            } catch (err) {
-                alert(`Error al importar: ${err instanceof Error ? err.message : 'Error desconocido'}`);
+
+                // Update user settings from import
+                if (importedData.userSettings) {
+                    updateUser({
+                        preparedBy: importedData.userSettings.preparedBy,
+                        fiscalName: importedData.userSettings.fiscalName,
+                        sucursal: importedData.userSettings.sucursal,
+                    });
+                }
+
+                // Replace quotes
+                const allQuotes: SavedQuote[] = JSON.parse(localStorage.getItem('quotes') || '[]');
+                // Remove existing quotes for this user
+                const otherUserQuotes = allQuotes.filter(q => q.userEmail !== currentUser.email);
+                // Add imported quotes, ensuring userEmail is correct
+                const userQuotesToImport = importedData.quotes.map((q: SavedQuote) => ({ ...q, userEmail: currentUser.email }));
+                const newQuotes = [...otherUserQuotes, ...userQuotesToImport];
+                
+                localStorage.setItem('quotes', JSON.stringify(newQuotes));
+                
+                alert("Datos importados con éxito. La página se recargará.");
+                window.location.reload();
+
+            } catch (error) {
+                console.error("Error importing data:", error);
+                alert(`Error al importar: ${error instanceof Error ? error.message : 'Error desconocido.'}`);
+            } finally {
+                setIsSettingsModalOpen(false);
             }
         };
         reader.readAsText(file);
     };
 
 
-    // --- Render Logic ---
-    if (!currentUser) {
-        return (
-            <main className="min-h-screen w-full flex items-center justify-center bg-slate-100 p-4">
-                <AuthPage onLogin={handleLogin} />
-            </main>
-        );
-    }
-    
-    const renderStepContent = () => {
-        const isKitFlow = currentItemConfig.productLine === 'KITS Y ACCESORIOS';
-        
-        if (isKitFlow) {
-            switch (currentStep) {
-                case 1: return <Step1ModelSelection selectedProductLine={currentItemConfig.productLine} onUpdate={handleUpdateProductLine} quantity={currentItemConfig.quantity} onUpdateQuantity={(q) => handleUpdateItemConfig({ quantity: q })} />;
-                case 2: return <Step2KitSelection selectedKit={currentItemConfig.kitProduct ?? null} onSelect={(kit) => handleUpdateItemConfig({ kitProduct: kit })} />;
-                case 3: return <Step3KitDetails currentItemConfig={currentItemConfig} onSelectColor={(c) => handleUpdateItemConfig({ color: c, extras: currentItemConfig.extras.filter(e => e.id !== 'ral'), ralCode: undefined })} onToggleRal={() => handleToggleExtra(SHOWER_EXTRAS.find(e => e.id === 'ral')!)} onRalCodeChange={(c) => handleUpdateItemConfig({ ralCode: c })} onInvoiceRefChange={(ref) => handleUpdateItemConfig({ invoiceReference: ref })} />;
-                default: return null;
+    // --- UI Logic & Render State ---
+
+    const isNextDisabled = useMemo(() => {
+        if (currentStep === 1) {
+            return !currentItemConfig.productLine;
+        }
+        if (currentItemConfig.productLine === 'KITS') {
+            if (currentStep === 2) return !currentItemConfig.kitProduct;
+            if (currentStep === 3) {
+                if (currentItemConfig.kitProduct?.id === 'kit-pintura') {
+                    const isRal = currentItemConfig.extras.some(e => e.id === 'ral');
+                    return !currentItemConfig.color && !(isRal && currentItemConfig.ralCode);
+                }
+                return false;
+            }
+        } else {
+            if (currentStep === 2) {
+                return !currentItemConfig.model;
+            }
+            if (currentStep === 3) {
+                 const isRal = currentItemConfig.extras.some(e => e.id === 'ral');
+                 return !currentItemConfig.color && !(isRal && currentItemConfig.ralCode);
+            }
+            if (currentStep === 4) {
+                 const isBitono = currentItemConfig.extras.some(e => e.id === 'bitono');
+                 return isBitono && !currentItemConfig.bitonoColor;
             }
         }
-        
-        switch (currentStep) {
-            case 1: return <Step1ModelSelection selectedProductLine={currentItemConfig.productLine} onUpdate={handleUpdateProductLine} quantity={currentItemConfig.quantity} onUpdateQuantity={(q) => handleUpdateItemConfig({ quantity: q })} />;
-            case 2: return <Step1Dimensions quote={currentItemConfig} onUpdate={(w, l) => handleUpdateItemConfig({ width: w, length: l })} />;
-            case 3: return <Step2Model onSelect={(m) => handleUpdateItemConfig({ model: m })} selectedModel={currentItemConfig.model} productLine={currentItemConfig.productLine} />;
-            case 4: return <Step3Color onSelectColor={(c) => handleUpdateItemConfig({ color: c, extras: currentItemConfig.extras.filter(e => e.id !== 'ral'), ralCode: undefined })} selectedColor={currentItemConfig.color} productLine={currentItemConfig.productLine} onToggleRal={() => handleToggleExtra(SHOWER_EXTRAS.find(e => e.id === 'ral')!)} isRalSelected={currentItemConfig.extras.some(e => e.id === 'ral')} ralCode={currentItemConfig.ralCode ?? ''} onRalCodeChange={(code) => handleUpdateItemConfig({ ralCode: code })} />;
-            case 5: return <Step4Extras onToggle={handleToggleExtra} selectedExtras={currentItemConfig.extras} productLine={currentItemConfig.productLine} mainColor={currentItemConfig.color} bitonoColor={currentItemConfig.bitonoColor} onSelectBitonoColor={(c) => handleUpdateItemConfig({ bitonoColor: c })} structFrames={currentItemConfig.structFrames} onUpdateStructFrames={(f) => handleUpdateItemConfig({ structFrames: f })} />;
-            default: return null;
+        return false;
+    }, [currentStep, currentItemConfig]);
+
+    const renderCurrentStep = () => {
+        if (currentStep === 0) {
+             if (view === 'app') return <WelcomePage userName={currentUser!.companyName} onNewQuote={() => handleStartNewQuote(true)} onViewQuotes={() => setView('my_quotes')} onResumeQuote={() => handleStartNewQuote(false)} hasActiveQuote={isQuoteActive} />;
+             if (view === 'my_quotes') return <MyQuotesPage user={currentUser!} onDuplicateQuote={handleDuplicateQuote} onViewPdf={handleViewPdf} calculateInternalItemPrice={calculateInternalItemPrice} />;
+             if (view === 'promotions') return <PromotionsPage user={currentUser!} onActivatePromotion={handleActivatePromotion} turnover={welcomePromoTurnover} />;
+             if (view === 'guides') return <MaintenanceGuidesPage />;
+        }
+
+        switch (currentItemConfig.productLine) {
+            case 'KITS':
+                switch (currentStep) {
+                    case 1:
+                        return (
+                            <Step1ModelSelection
+                                selectedProductLine={currentItemConfig.productLine}
+                                onUpdate={(line) => setCurrentItemConfig(prev => ({ ...INITIAL_QUOTE_STATE, productLine: line, quantity: prev.quantity }))}
+                                quantity={currentItemConfig.quantity}
+                                onUpdateQuantity={(q) => setCurrentItemConfig(prev => ({...prev, quantity: q}))}
+                            />
+                        );
+                    case 2:
+                        return (
+                            <Step2KitSelection 
+                                onSelect={(kit) => setCurrentItemConfig(prev => ({ ...prev, kitProduct: kit, extras: [] }))}
+                                selectedKit={currentItemConfig.kitProduct || null}
+                            />
+                        );
+                    case 3:
+                        return (
+                             <Step3KitDetails
+                                currentItemConfig={currentItemConfig}
+                                onSelectColor={(color) => setCurrentItemConfig(prev => ({...prev, color, ralCode: '', extras: prev.extras.filter(e => e.id !== 'ral')}))}
+                                onToggleRal={() => setCurrentItemConfig(prev => {
+                                    const hasRal = prev.extras.some(e => e.id === 'ral');
+                                    // For kits, RAL color option has no extra cost.
+                                    const ralExtraForKit: ProductOption = { id: 'ral', name: 'Color personalizado (RAL)', price: 0, description: '' };
+                                    const newExtras = hasRal 
+                                        ? prev.extras.filter(e => e.id !== 'ral') 
+                                        : [...prev.extras, ralExtraForKit];
+                                    return { ...prev, extras: newExtras, color: null };
+                                })}
+                                onRalCodeChange={(code) => setCurrentItemConfig(prev => ({...prev, ralCode: code}))}
+                                onInvoiceRefChange={(ref) => setCurrentItemConfig(prev => ({...prev, invoiceReference: ref}))}
+                            />
+                        );
+                    case 4:
+                        // Summary is handled outside
+                        return null;
+                    default:
+                        return <div>Paso desconocido</div>;
+                }
+            default: // Shower Trays
+                 switch (currentStep) {
+                    case 1:
+                        return (
+                             <Step1ModelSelection
+                                selectedProductLine={currentItemConfig.productLine}
+                                onUpdate={(line) => setCurrentItemConfig(prev => ({...INITIAL_QUOTE_STATE, productLine: line, quantity: prev.quantity}))}
+                                quantity={currentItemConfig.quantity}
+                                onUpdateQuantity={(q) => setCurrentItemConfig(prev => ({...prev, quantity: q}))}
+                             />
+                        );
+                    case 2:
+                        return (
+                            <Step1Dimensions
+                                quote={currentItemConfig}
+                                onUpdate={(width, length) => setCurrentItemConfig(prev => ({ ...prev, width, length }))}
+                            />
+                        );
+                    case 3:
+                        return (
+                            <Step2Model
+                                onSelect={(model) => setCurrentItemConfig(prev => ({ ...prev, model }))}
+                                selectedModel={currentItemConfig.model}
+                                productLine={currentItemConfig.productLine}
+                            />
+                        );
+                    case 4:
+                        return (
+                            <Step3Color
+                                onSelectColor={(color) => setCurrentItemConfig(prev => ({ ...prev, color, ralCode: undefined, extras: prev.extras.filter(e => e.id !== 'ral') }))}
+                                selectedColor={currentItemConfig.color}
+                                productLine={currentItemConfig.productLine}
+                                onToggleRal={() => setCurrentItemConfig(prev => {
+                                    const hasRal = prev.extras.some(e => e.id === 'ral');
+                                    const newExtras = hasRal ? prev.extras.filter(e => e.id !== 'ral') : [...prev.extras, SHOWER_EXTRAS.find(e => e.id === 'ral')!];
+                                    return { ...prev, extras: newExtras, color: null };
+                                })}
+                                isRalSelected={currentItemConfig.extras.some(e => e.id === 'ral')}
+                                ralCode={currentItemConfig.ralCode || ''}
+                                onRalCodeChange={(code) => setCurrentItemConfig(prev => ({ ...prev, ralCode: code }))}
+                            />
+                        );
+                    case 5:
+                        return (
+                             <Step4Extras
+                                onToggle={(extra) => setCurrentItemConfig(prev => {
+                                    const isSelected = prev.extras.some(e => e.id === extra.id);
+                                    let newExtras = isSelected ? prev.extras.filter(e => e.id !== extra.id) : [...prev.extras, extra];
+                                    let newBitonoColor = prev.bitonoColor;
+                                    if (extra.id === 'bitono' && isSelected) { // Untoggling bitono
+                                        newBitonoColor = undefined;
+                                    }
+                                    return { ...prev, extras: newExtras, bitonoColor: newBitonoColor };
+                                })}
+                                selectedExtras={currentItemConfig.extras}
+                                productLine={currentItemConfig.productLine}
+                                mainColor={currentItemConfig.color}
+                                bitonoColor={currentItemConfig.bitonoColor}
+                                onSelectBitonoColor={(color) => setCurrentItemConfig(prev => ({ ...prev, bitonoColor: color }))}
+                                structFrames={currentItemConfig.structFrames}
+                                onUpdateStructFrames={(frames) => setCurrentItemConfig(prev => ({...prev, structFrames: frames}))}
+                            />
+                        );
+                    case 6: // Summary step for shower trays
+                         return (
+                             <Step5Summary
+                                items={quoteItems}
+                                totalPrice={totalQuotePrice}
+                                onReset={resetQuote}
+                                onSaveRequest={() => setIsSaveModalOpen(true)}
+                                onGeneratePdfRequest={() => handleSaveQuote({ customerName: 'provisional', projectReference: '' })}
+                                onPrintRequest={() => window.print()}
+                                onStartNew={handleStartNewItem}
+                                onEdit={handleEditItem}
+                                onDelete={handleDeleteItem}
+                                calculateItemPrice={(item) => calculatePriceDetails(item, quoteItems).finalPrice}
+                            />
+                         );
+                    default:
+                        return <div>Paso desconocido</div>;
+                }
         }
     };
     
-    const renderAppView = () => {
-        // Welcome page if no quote is active
-        if (currentStep === 0) {
-            return (
-                <div className="w-full h-full flex items-center justify-center p-4">
-                    <WelcomePage
-                        userName={currentUser.companyName}
-                        onNewQuote={resetCurrentItemAndStartOver}
-                        onViewQuotes={() => setView('my_quotes')}
-                        hasActiveQuote={isQuoteActive}
-                        onResumeQuote={() => setView('app')}
-                    />
-                </div>
-            );
-        }
+    const showSummaryView = currentStep === totalSteps;
 
-        const showSummary = currentStep === steps.length;
+    if (!currentUser) {
         return (
-            <>
-                <div className={`w-full overflow-y-auto main-content ${showSummary ? 'lg:w-full' : 'lg:w-3/5 xl:w-1/2 lg:pr-8'}`}>
-                    {welcomePromoIsActive && currentUser.promotion && <PromotionBanner expirationDate={new Date(currentUser.promotion.activationTimestamp + (PROMO_DURATION_DAYS * 24 * 60 * 60 * 1000))} />}
-                    
-                    {/* Header for configuration steps */}
-                    {!showSummary && (
-                        <div className="mb-8">
-                            <StepTracker currentStep={currentStep} steps={steps} onStepClick={(step) => setCurrentStep(step)} />
-                        </div>
-                    )}
-
-                    {showSummary ? (
-                        <Step5Summary items={quoteItems} totalPrice={totalPrice} onReset={handleFullQuoteReset} onSaveRequest={() => setIsSaveModalOpen(true)} onGeneratePdfRequest={handleGeneratePdf} onPrintRequest={handlePrint} onStartNew={handleStartNewItem} onEdit={handleEditItem} onDelete={handleDeleteItem} calculateItemPrice={getFinalItemPriceForSummary} />
-                    ) : (
-                        <>
-                            {renderStepContent()}
-                             <NextPrevButtons onNext={handleNext} onPrev={() => setCurrentStep(s => s - 1)} currentStep={currentStep} totalSteps={steps.length} isNextDisabled={isNextDisabled} isLastStep={currentStep === steps.length - 1} onDiscard={handleFullQuoteReset} />
-                        </>
-                    )}
-                </div>
-                {!showSummary && (
-                   <div className="hidden lg:block lg:w-2/5 xl:w-1/2 pl-8 border-l border-slate-200">
-                        <div className="sticky top-8">
-                            <LivePreview item={currentItemConfig} price={currentItemPrice} />
-                        </div>
-                    </div>
-                )}
-            </>
+            <div className="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+                <AuthPage onLogin={handleLogin} />
+            </div>
         );
     }
-    
-    const renderMainView = () => {
-        switch (view) {
-            case 'my_quotes':
-                return <MyQuotesPage user={currentUser} onDuplicateQuote={handleDuplicateQuote} onViewPdf={handleViewPdfForSavedQuote} calculateInternalItemPrice={(item, allItems) => calculateItemPriceDetails(item, allItems).discountedPrice} />;
-            case 'promotions':
-                return <PromotionsPage user={currentUser} onActivatePromotion={handleActivatePromotion} turnover={promotionTurnover} />;
-            case 'guides':
-                return <MaintenanceGuidesPage />;
-            case 'app':
-            default:
-                return renderAppView();
-        }
-    }
 
-    const NavButton: React.FC<{ viewName: 'app' | 'my_quotes' | 'promotions' | 'guides'; label: string; icon: React.ReactNode; }> = ({ viewName, label, icon }) => (
-        <button
-            onClick={() => setView(viewName)}
-            className={`flex items-center w-full px-4 py-3 text-sm font-semibold rounded-lg transition-colors ${view === viewName ? 'bg-teal-500 text-white' : 'text-slate-300 hover:bg-slate-700 hover:text-white'}`}
-        >
-            {icon}
-            <span className="ml-3 whitespace-nowrap">{label}</span>
-        </button>
-    );
+    const navItems = [
+        { id: 'app', label: 'Inicio', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg> },
+        { id: 'my_quotes', label: 'Mis Presupuestos', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" /></svg> },
+        { id: 'promotions', label: 'Promociones', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5l.646.646a1 1 0 00.708.293h2.292a1 1 0 01.707.293L17 5h.5a.5.5 0 01.5.5v3.793zM15 6a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" /></svg> },
+        { id: 'guides', label: 'Guías', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M2 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3 1h6v1H5V6zm6 3H5v1h6V9zm-6 3h6v1H5v-1z" clipRule="evenodd" /></svg> }
+    ];
+
+    const handleNavClick = (viewId: 'app' | 'my_quotes' | 'promotions' | 'guides') => {
+        if (isQuoteActive && viewId !== 'app') {
+            if (window.confirm('Tienes un presupuesto en curso. Si sales, se descartará. ¿Quieres continuar?')) {
+                resetQuote();
+                setView(viewId);
+            }
+        } else {
+            resetQuote();
+            setView(viewId);
+        }
+    };
+    
+    const isSummaryStep = currentStep === totalSteps;
+
 
     return (
-        <div className="flex h-screen bg-slate-100 font-sans">
-            <aside className="sidebar w-64 bg-slate-800 text-white p-6 flex-col flex-shrink-0 hidden md:flex">
-                <div className="flex-shrink-0">
-                   <div className="h-12 w-auto flex items-center text-xl font-bold text-white">AQG Bathrooms</div>
-                </div>
-                
-                <div className="mt-10 flex-grow">
-                     <nav className="space-y-2">
-                         <NavButton viewName="app" label="Inicio" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>} />
-                         <NavButton viewName="my_quotes" label="Mis Presupuestos" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" /></svg>} />
-                        <NavButton viewName="promotions" label="Promociones" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5 2a1 1 0 00-1 1v1.111l-.473.175A2 2 0 002.13 6.06L4 9.799V14a2 2 0 002 2h8a2 2 0 002-2V9.8l1.87-3.74a2 2 0 00-1.397-2.774l-.473-.175V3a1 1 0 00-1-1H5zm2 5a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" /></svg>} />
-                        <NavButton viewName="guides" label="Guías de Mantenimiento" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" /></svg>} />
+        <div className="bg-slate-50 min-h-screen font-sans text-slate-800 flex flex-col md:flex-row">
+            <SettingsModal 
+                isOpen={isSettingsModalOpen}
+                onClose={() => setIsSettingsModalOpen(false)}
+                onSave={({fiscalName, preparedBy, sucursal}) => updateUser({fiscalName, preparedBy, sucursal})}
+                user={currentUser}
+                onExport={handleExportData}
+                onImport={handleImportData}
+                welcomePromoIsActive={welcomePromoIsActive}
+            />
+             <SaveQuoteModal 
+                isOpen={isSaveModalOpen}
+                onClose={() => setIsSaveModalOpen(false)}
+                onConfirm={handleSaveQuote}
+                disabled={quoteItems.length === 0}
+            />
+            <PdfPreviewModal 
+                isOpen={isPdfPreviewModalOpen}
+                onClose={() => setIsPdfPreviewModalOpen(false)}
+                quote={quoteForPdf}
+                user={currentUser}
+                calculatePriceDetails={calculatePriceDetails}
+                welcomePromoIsActive={welcomePromoIsActive}
+            />
+            <CustomQuoteModal 
+                isOpen={isCustomQuoteModalOpen}
+                onClose={() => setIsCustomQuoteModalOpen(false)}
+            />
+
+            {/* --- Sidebar --- */}
+            <aside className="w-full md:w-20 lg:w-64 bg-white border-r border-slate-200 p-4 md:p-2 lg:p-5 flex flex-col flex-shrink-0">
+                <div className="flex-grow">
+                     <div className="flex items-center gap-3 mb-10">
+                        <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-lg"></div>
+                        <span className="hidden lg:block font-bold text-xl text-slate-800">AQG Tarifa</span>
+                    </div>
+                    <nav className="flex md:flex-col justify-around md:justify-start gap-1">
+                        {navItems.map(item => (
+                            <button key={item.id} onClick={() => handleNavClick(item.id as any)} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg w-full md:w-auto lg:w-full text-left transition-colors font-semibold
+                                ${view === item.id && currentStep === 0 ? 'bg-teal-50 text-teal-600' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'}`}>
+                                {item.icon}
+                                <span className="hidden lg:inline">{item.label}</span>
+                            </button>
+                        ))}
                     </nav>
                 </div>
-                
-                <div className="flex-shrink-0 space-y-3">
-                    <div className="text-center text-sm border-t border-slate-700 pt-4">
-                        <p className="font-semibold text-white">{currentUser.companyName}</p>
-                        <p className="text-slate-400">{currentUser.email}</p>
+                <div className="mt-auto pt-4 border-t border-slate-200">
+                    <div className="flex items-center gap-3">
+                         <div className="w-9 h-9 bg-slate-200 rounded-full flex items-center justify-center font-bold text-slate-500 uppercase">
+                            {currentUser.companyName.substring(0, 1)}
+                        </div>
+                        <div className="hidden lg:block flex-grow">
+                            <p className="font-semibold text-sm truncate">{currentUser.companyName}</p>
+                            <p className="text-xs text-slate-400 truncate">{currentUser.email}</p>
+                        </div>
                     </div>
-                     <button onClick={() => setIsSettingsModalOpen(true)} className="flex items-center w-full px-4 py-2 text-sm font-semibold rounded-lg transition-colors text-slate-300 hover:bg-slate-700 hover:text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734 2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" /></svg>
-                        Ajustes
-                    </button>
-                    <button onClick={handleLogout} className="flex items-center w-full px-4 py-2 text-sm font-semibold rounded-lg transition-colors text-slate-300 hover:bg-slate-700 hover:text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" /></svg>
-                        Cerrar Sesión
-                    </button>
+                    <div className="mt-3 flex flex-col lg:flex-row gap-2">
+                         <button onClick={() => setIsSettingsModalOpen(true)} className="w-full text-xs text-slate-500 hover:text-teal-600 p-1.5 rounded-md hover:bg-slate-100 transition-colors">Ajustes</button>
+                         <button onClick={handleLogout} className="w-full text-xs text-slate-500 hover:text-red-600 p-1.5 rounded-md hover:bg-slate-100 transition-colors">Salir</button>
+                    </div>
                 </div>
             </aside>
-            <main className="flex-grow flex flex-col">
-                 <div className="flex-grow p-4 sm:p-6 md:p-8 flex overflow-hidden">
-                    {renderMainView()}
-                 </div>
-            </main>
             
-            <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} user={currentUser} onSave={handleSettingsSave} onExport={handleExportData} onImport={handleImportData} welcomePromoIsActive={welcomePromoIsActive} />
-            <SaveQuoteModal isOpen={isSaveModalOpen} onClose={() => setIsSaveModalOpen(false)} onConfirm={handleSaveQuote} disabled={quoteItems.length === 0} />
-            <PdfPreviewModal isOpen={isPdfPreviewModalOpen} onClose={() => setIsPdfPreviewModalOpen(false)} quote={quoteForPdf} user={currentUser} calculatePriceDetails={calculateItemPriceDetails} welcomePromoIsActive={welcomePromoIsActive} />
-            <CustomQuoteModal isOpen={isCustomQuoteModalOpen} onClose={() => setIsCustomQuoteModalOpen(false)} />
+            {/* --- Main Content --- */}
+            <main className="flex-grow p-6 md:p-10 lg:p-12 overflow-y-auto h-screen">
+                {currentUser ? (
+                    <div className="max-w-7xl mx-auto h-full flex flex-col">
+                        {welcomePromoIsActive && currentStep > 0 && (
+                            <PromotionBanner expirationDate={new Date(currentUser.promotion!.activationTimestamp + (PROMO_DURATION_DAYS * 24 * 60 * 60 * 1000))} />
+                        )}
+
+                        <div className="flex-grow">
+                             {currentStep > 0 ? (
+                                <div className={`grid ${isSummaryStep ? 'grid-cols-1' : 'md:grid-cols-3'} gap-12 h-full`}>
+                                     {/* Step Tracker & Preview */}
+                                    <div className={` ${isSummaryStep ? 'hidden' : 'md:col-span-1'} `}>
+                                        <div className="sticky top-10">
+                                            <StepTracker 
+                                                currentStep={currentStep} 
+                                                steps={steps}
+                                                onStepClick={handleStepClick}
+                                            />
+                                            <div className="mt-10">
+                                                <LivePreview item={currentItemConfig} price={currentItemPrice} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {/* Step Content */}
+                                    <div className={isSummaryStep ? 'col-span-1' : 'md:col-span-2'}>
+                                        <div className="flex flex-col h-full">
+                                            <div className="flex-grow">
+                                                 {showSummaryView ? (
+                                                    <Step5Summary
+                                                        items={quoteItems}
+                                                        totalPrice={totalQuotePrice}
+                                                        onReset={handleDiscard}
+                                                        onSaveRequest={() => setIsSaveModalOpen(true)}
+                                                        onGeneratePdfRequest={() => handleSaveQuote({ customerName: 'provisional', projectReference: '' })}
+                                                        onPrintRequest={() => window.print()}
+                                                        onStartNew={handleStartNewItem}
+                                                        onEdit={handleEditItem}
+                                                        onDelete={handleDeleteItem}
+                                                        calculateItemPrice={(item) => calculatePriceDetails(item, quoteItems).finalPrice}
+                                                    />
+                                                 ) : (
+                                                    renderCurrentStep()
+                                                 )}
+                                            </div>
+                                            {!showSummaryView && (
+                                                <NextPrevButtons 
+                                                    onNext={currentStep === totalSteps - 1 ? handleAddItemToQuote : handleNext} 
+                                                    onPrev={handlePrev} 
+                                                    currentStep={currentStep} 
+                                                    totalSteps={totalSteps} 
+                                                    isNextDisabled={isNextDisabled}
+                                                    isLastStep={currentStep === totalSteps - 1}
+                                                    onDiscard={handleDiscard}
+                                                />
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                             ) : (
+                                renderCurrentStep()
+                             )}
+                        </div>
+                    </div>
+                ) : (
+                    <p className="text-sm text-slate-500">
+                        No tienes una sesión iniciada.
+                    </p>
+                )}
+            </main>
         </div>
     );
 };
 
+// Fix: Export the App component to make it available for import in index.tsx.
 export default App;
