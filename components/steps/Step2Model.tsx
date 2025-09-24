@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { SHOWER_MODELS } from '../../constants';
 import type { ProductOption } from '../../types';
 
@@ -18,7 +18,7 @@ const CheckBadge = () => (
 
 const Step2Model: React.FC<Step2ModelProps> = ({ onSelect, selectedModel, productLine }) => {
     
-    const getShowerModels = () => {
+    const modelsToShow = useMemo(() => {
         if (productLine === 'SOFTUM') {
             return SHOWER_MODELS.filter(m => m.id === 'sand');
         }
@@ -29,9 +29,15 @@ const Step2Model: React.FC<Step2ModelProps> = ({ onSelect, selectedModel, produc
              return SHOWER_MODELS.filter(m => m.id === 'lisa');
         }
         return SHOWER_MODELS.filter(m => m.id !== 'sand');
-    }
+    }, [productLine]);
 
-    const modelsToShow = getShowerModels();
+    useEffect(() => {
+        // If there's only one model option and it's not already selected, select it automatically.
+        if (modelsToShow.length === 1 && (!selectedModel || selectedModel.id !== modelsToShow[0].id)) {
+            onSelect(modelsToShow[0]);
+        }
+    }, [modelsToShow, selectedModel, onSelect]);
+
     const title = 'Selecciona la textura';
     const description = 'Cada textura ofrece una sensación y estética únicas.';
 
@@ -43,6 +49,7 @@ const Step2Model: React.FC<Step2ModelProps> = ({ onSelect, selectedModel, produc
             <div className="grid grid-cols-1 gap-4">
                 {modelsToShow.map((model) => {
                     const isSelected = selectedModel?.id === model.id;
+                    const isDisabled = modelsToShow.length === 1;
                     
                     return (
                         <button
@@ -50,8 +57,10 @@ const Step2Model: React.FC<Step2ModelProps> = ({ onSelect, selectedModel, produc
                             onClick={() => onSelect(model)}
                             role="radio"
                             aria-checked={isSelected}
+                            disabled={isDisabled}
                             className="group relative text-left p-5 border-2 rounded-xl cursor-pointer transition-all duration-200 w-full bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-teal-500
-                            aria-checked:border-teal-500 aria-checked:bg-teal-50 hover:border-teal-400"
+                            aria-checked:border-teal-500 aria-checked:bg-teal-50 hover:border-teal-400
+                            disabled:cursor-default disabled:hover:border-teal-500 disabled:bg-teal-50"
                         >
                             <CheckBadge />
                             <div>
