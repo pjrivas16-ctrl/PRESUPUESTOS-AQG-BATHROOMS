@@ -357,7 +357,7 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quot
             doc.text(`Número:`, 140, 50);
             doc.text(`Fecha:`, 140, 55);
             doc.setFont('helvetica', 'bold');
-            doc.text(quote.id.replace('quote_i_', '').replace('quote_c_', ''), 160, 50);
+            doc.text(quote.id.replace('quote_i_', '').replace('quote_c_', '').replace(/preview_\d+/g, 'PREVIEW'), 160, 50);
             doc.text(new Date(quote.timestamp).toLocaleDateString('es-ES'), 160, 55);
 
             // --- Client Info Box ---
@@ -1117,6 +1117,26 @@ const App: React.FC = () => {
         setView('app');
     };
 
+    const handlePreviewPdf = () => {
+        if (!currentUser || quoteItems.length === 0) return;
+
+        // Create a temporary quote object for the PDF preview without saving it
+        const quoteForPreview: SavedQuote = {
+            id: `preview_${Date.now()}`,
+            timestamp: Date.now(),
+            userEmail: currentUser.email,
+            quoteItems: quoteItems,
+            totalPrice: totalQuotePrice,
+            customerName: 'Cliente (Previsualización)',
+            projectReference: '',
+            type: 'customer',
+            pvpTotalPrice: quoteItems.reduce((sum, item) => sum + calculateItemPrice(item, quoteItems), 0),
+        };
+
+        setQuoteForPdf(quoteForPreview);
+        setIsPdfPreviewModalOpen(true);
+    };
+
     const handleViewPdf = (quote: SavedQuote) => {
         setQuoteForPdf(quote);
         setIsPdfPreviewModalOpen(true);
@@ -1379,7 +1399,7 @@ const App: React.FC = () => {
                         totalPrice={totalQuotePrice}
                         onReset={resetQuote}
                         onSaveRequest={() => setIsSaveModalOpen(true)}
-                        onGeneratePdfRequest={() => handleSaveQuote({ customerName: 'provisional', projectReference: '' })}
+                        onGeneratePdfRequest={handlePreviewPdf}
                         onPrintRequest={() => window.print()}
                         onStartNew={handleStartNewItem}
                         onEdit={handleEditItem}
@@ -1522,7 +1542,7 @@ const App: React.FC = () => {
                                                         totalPrice={totalQuotePrice}
                                                         onReset={handleDiscard}
                                                         onSaveRequest={() => setIsSaveModalOpen(true)}
-                                                        onGeneratePdfRequest={() => handleSaveQuote({ customerName: 'provisional', projectReference: '' })}
+                                                        onGeneratePdfRequest={handlePreviewPdf}
                                                         onPrintRequest={() => window.print()}
                                                         onStartNew={handleStartNewItem}
                                                         onEdit={handleEditItem}
