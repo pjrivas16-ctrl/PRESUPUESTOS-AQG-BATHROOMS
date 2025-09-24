@@ -1,14 +1,6 @@
-import React, { useState } from 'react';
-import { encimera_page_1_b64, encimera_page_2_b64, plato_page_1_b64, plato_page_2_b64 } from '../assets/guides';
+import React from 'react';
 
-// Make jsPDF available from window
-declare global {
-    interface Window {
-        jspdf: any;
-    }
-}
-
-const GuideCard: React.FC<{ title: string; description: string; onDownload: () => void; isGenerating: boolean; }> = ({ title, description, onDownload, isGenerating }) => (
+const GuideCard: React.FC<{ title: string; description: string; onDownload: () => void; }> = ({ title, description, onDownload }) => (
     <div className="bg-white p-8 rounded-2xl shadow-lg border border-slate-200/80 flex flex-col text-center">
         <div className="w-16 h-16 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center mx-auto mb-5">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -19,48 +11,18 @@ const GuideCard: React.FC<{ title: string; description: string; onDownload: () =
         <p className="flex-grow text-slate-500 mb-6 text-sm">{description}</p>
         <button
             onClick={onDownload}
-            disabled={isGenerating}
-            className="w-full mt-auto px-6 py-2.5 font-semibold text-white bg-teal-600 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:bg-teal-300 disabled:cursor-wait"
+            className="w-full mt-auto px-6 py-2.5 font-semibold text-white bg-teal-600 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
         >
-            {isGenerating ? 'Generando PDF...' : 'Descargar Guía'}
+            Descargar Guía
         </button>
     </div>
 );
 
 
 const MaintenanceGuidesPage: React.FC = () => {
-    const [isGenerating, setIsGenerating] = useState<string | null>(null);
-
-    const handleDownload = (guideType: 'platos' | 'encimeras') => {
-        setIsGenerating(guideType);
-        
-        // Using setTimeout to allow UI to update before blocking with PDF generation
-        setTimeout(() => {
-            try {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
-                const pageWidth = 210;
-                const pageHeight = 297;
-
-                if (guideType === 'platos') {
-                    doc.addImage(plato_page_1_b64, 'JPEG', 0, 0, pageWidth, pageHeight);
-                    doc.addPage();
-                    doc.addImage(plato_page_2_b64, 'JPEG', 0, 0, pageWidth, pageHeight);
-                    doc.save('guia_mantenimiento_platos_ducha_aqg.pdf');
-                } else {
-                    doc.addImage(encimera_page_1_b64, 'JPEG', 0, 0, pageWidth, pageHeight);
-                    doc.addPage();
-                    doc.addImage(encimera_page_2_b64, 'JPEG', 0, 0, pageWidth, pageHeight);
-                    doc.save('guia_mantenimiento_encimeras_aqg.pdf');
-                }
-            } catch (error) {
-                console.error('Error generating PDF:', error);
-                alert('Hubo un error al generar el PDF. Por favor, inténtalo de nuevo.');
-            } finally {
-                setIsGenerating(null);
-            }
-        }, 50); // Small delay for UI update
-    };
+    
+    const showerTrayGuideUrl = 'https://www.dropbox.com/scl/fi/hem0jemc8hwwmp8jpv5rt/Guia-de-instalaci-n-platos-de-ducha-ES-EN.pdf?rlkey=q8qvp59tkxv35r0eytpvakq44&st=elqn0fju&dl=0';
+    const countertopGuideUrl = 'https://www.dropbox.com/scl/fi/hn23b3zqodh6zicvkkn5a/Gu-a-de-instalaci-n-y-mantenimiento-de-encimeras.pdf?rlkey=yjypmncjg5dl5xa7y0aonevvb&st=y3ahmt4g&dl=0';
 
     return (
         <div className="animate-fade-in h-full">
@@ -71,14 +33,12 @@ const MaintenanceGuidesPage: React.FC = () => {
                 <GuideCard
                     title="Platos de Ducha"
                     description="Guía completa para la instalación y el cuidado de nuestros platos de ducha de resina con cargas minerales."
-                    onDownload={() => handleDownload('platos')}
-                    isGenerating={isGenerating === 'platos'}
+                    onDownload={() => window.open(showerTrayGuideUrl, '_blank')}
                 />
                 <GuideCard
                     title="Encimeras"
                     description="Instrucciones detalladas para la instalación y el mantenimiento de las encimeras de resina AQG."
-                    onDownload={() => handleDownload('encimeras')}
-                    isGenerating={isGenerating === 'encimeras'}
+                    onDownload={() => window.open(countertopGuideUrl, '_blank')}
                 />
             </div>
         </div>
