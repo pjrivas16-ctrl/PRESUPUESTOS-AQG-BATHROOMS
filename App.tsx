@@ -108,9 +108,10 @@ interface SettingsModalProps {
     user: User;
     onExport: () => void;
     onImport: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    welcomePromoIsActive: boolean;
 }
 
-const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, user, onExport, onImport }) => {
+const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, user, onExport, onImport, welcomePromoIsActive }) => {
     const [preparedBy, setPreparedBy] = useState(user.preparedBy || '');
     const [fiscalName, setFiscalName] = useState(user.fiscalName || user.companyName || '');
     const [sucursal, setSucursal] = useState(user.sucursal || '');
@@ -192,6 +193,56 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
                             className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition"
                         />
                          <p className="text-xs text-slate-500 mt-1">Este nombre aparecerá en los PDFs generados.</p>
+                    </div>
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-slate-200">
+                    <div className="flex items-center gap-3 mb-4">
+                         <div className="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M8.433 7.418c.158-.103.346-.196.567-.267v1.698a2.5 2.5 0 00-1.133 0V7.151c.22.07.408.164.567.267zM11.567 7.151v1.698a2.5 2.5 0 00-1.133 0V7.151c.22.07.408.164.567.267z" />
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-11a1 1 0 10-2 0v1.077a4.5 4.5 0 00-.767 8.058A1 1 0 008 17.5V15a1 1 0 00-2 0v1.077a4.503 4.503 0 000-8.154V7zm4 0a1 1 0 10-2 0v1.077a4.5 4.5 0 000 8.154V17.5a1 1 0 102 0V15a1 1 0 10-2 0v-1.077a4.5 4.5 0 000-8.154V7z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 className="text-lg font-bold text-slate-800">Condiciones Comerciales</h4>
+                             <p className="text-sm text-slate-500">Tus descuentos y promociones aplicables.</p>
+                        </div>
+                    </div>
+                    <div className="space-y-3 text-sm">
+                        {user.discounts?.showerTrays ? (
+                            <div className="flex justify-between p-3 bg-slate-50 rounded-md">
+                                <span className="text-slate-600">Dto. Platos de Ducha:</span>
+                                <span className="font-semibold text-slate-800">{user.discounts.showerTrays}%</span>
+                            </div>
+                        ) : null}
+                        {user.discounts?.terrazzoShowerTrays ? (
+                            <div className="flex justify-between p-3 bg-slate-50 rounded-md">
+                                <span className="text-slate-600">Dto. Platos de Ducha de Terrazo:</span>
+                                <span className="font-semibold text-slate-800">{user.discounts.terrazzoShowerTrays}%</span>
+                            </div>
+                        ) : null}
+                        {user.discounts?.countertops ? (
+                            <div className="flex justify-between p-3 bg-slate-50 rounded-md">
+                                <span className="text-slate-600">Dto. Encimeras y Lavabos:</span>
+                                <span className="font-semibold text-slate-800">{user.discounts.countertops}%</span>
+                            </div>
+                        ) : null}
+                        {user.discounts?.classicSpecialCondition ? (
+                            <div className="p-3 bg-slate-50 rounded-md">
+                                <p className="text-slate-600 font-medium">Condición Especial (Colección CLASSIC):</p>
+                                <p className="text-slate-800 mt-1">{user.discounts.classicSpecialCondition}</p>
+                            </div>
+                        ) : null}
+                        {welcomePromoIsActive && (
+                             <div className="p-3 bg-teal-50 rounded-md border border-teal-200">
+                                <p className="font-semibold text-teal-800">Promoción de Bienvenida Activa</p>
+                                <p className="text-teal-700 text-xs">Descuento del 50% + 25% adicional en todos los pedidos.</p>
+                            </div>
+                        )}
+                        {!(user.discounts?.showerTrays || user.discounts?.terrazzoShowerTrays || user.discounts?.countertops || user.discounts?.classicSpecialCondition || welcomePromoIsActive) && (
+                            <p className="text-slate-500 text-center p-4">No tienes condiciones comerciales especiales asignadas.</p>
+                        )}
                     </div>
                 </div>
 
@@ -421,8 +472,8 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quot
                 doc.setDrawColor(226, 232, 240);
                 doc.line(140, currentY - 8, 195, currentY - 8);
                 drawTotalLine('Base Imponible', baseImponible.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }));
-            } else if (user.discount && user.discount > 0) {
-                const discountPercent = user.discount;
+            } else if (user.discounts?.showerTrays && user.discounts.showerTrays > 0) {
+                const discountPercent = user.discounts.showerTrays;
                 const discountAmount = subtotal * (discountPercent / 100);
                 baseImponible = subtotal - discountAmount;
                 
@@ -810,8 +861,8 @@ const App: React.FC = () => {
             const subtotalAfterPromo1 = subtotal - promoDiscount1;
             const promoDiscount2 = subtotalAfterPromo1 * 0.25;
             finalBase = subtotalAfterPromo1 - promoDiscount2;
-        } else if (currentUser?.discount && currentUser.discount > 0) {
-            finalBase = subtotal * (1 - currentUser.discount / 100);
+        } else if (currentUser?.discounts?.showerTrays && currentUser.discounts.showerTrays > 0) {
+            finalBase = subtotal * (1 - currentUser.discounts.showerTrays / 100);
         }
 
         return finalBase * (1 + VAT_RATE);
@@ -1191,7 +1242,7 @@ const App: React.FC = () => {
                  </div>
             </main>
             
-            <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} user={currentUser} onSave={handleSettingsSave} onExport={handleExportData} onImport={handleImportData} />
+            <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} user={currentUser} onSave={handleSettingsSave} onExport={handleExportData} onImport={handleImportData} welcomePromoIsActive={welcomePromoIsActive} />
             <SaveQuoteModal isOpen={isSaveModalOpen} onClose={() => setIsSaveModalOpen(false)} onConfirm={handleSaveQuote} disabled={quoteItems.length === 0} />
             <PdfPreviewModal isOpen={isPdfPreviewModalOpen} onClose={() => setIsPdfPreviewModalOpen(false)} quote={quoteForPdf} user={currentUser} calculateItemPrice={calculateCustomerItemPrice} welcomePromoIsActive={welcomePromoIsActive} />
             <CustomQuoteModal isOpen={isCustomQuoteModalOpen} onClose={() => setIsCustomQuoteModalOpen(false)} />

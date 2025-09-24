@@ -42,7 +42,12 @@ export interface User {
     preparedBy?: string;
     fiscalName?: string;
     sucursal?: string;
-    discount?: number;
+    discounts?: {
+        showerTrays?: number;
+        terrazzoShowerTrays?: number;
+        countertops?: number;
+        classicSpecialCondition?: string;
+    };
     promotion?: {
         id: string;
         activationTimestamp: number;

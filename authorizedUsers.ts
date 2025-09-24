@@ -18,6 +18,11 @@ export const authorizedUsers: StoredUser[] = [
         password: 'adminpassword',
         logo: undefined,
         preparedBy: 'Equipo AQG',
-        discount: 0,
+        discounts: {
+            showerTrays: 10,
+            terrazzoShowerTrays: 15,
+            countertops: 12,
+            classicSpecialCondition: 'Consultar condiciones especiales para pedidos > 10 unidades.'
+        }
     },
 ];
