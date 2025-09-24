@@ -43,4 +43,9 @@ export const authorizedUsers: StoredUser[] = [
         email: 'susana.delgado1@yahoo.es',
         password: 'Lilaverdeamor',
     },
+    {
+        companyName: 'FAMILIA FALO',
+        email: 'koneri@koneri.es',
+        password: 'Alicantechachi3',
+    }
 ];
