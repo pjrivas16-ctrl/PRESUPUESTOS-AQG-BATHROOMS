@@ -25,7 +25,7 @@ export const authorizedUsers: StoredUser[] = [
         }
     },
     {
-        companyName: 'ALTA NUEVA DE CLIENTE',
+        companyName: 'JAIME',
         email: 'jrodriguezrepresentacion@gmail.com',
         password: 'POLLITOLOCO',
         discounts: {

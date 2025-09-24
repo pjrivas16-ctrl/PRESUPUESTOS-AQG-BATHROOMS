@@ -719,21 +719,52 @@ const App: React.FC = () => {
     // --- Authentication & User Data ---
     useEffect(() => {
         try {
-            const storedUsers = localStorage.getItem('users');
-            if (!storedUsers) {
-                localStorage.setItem('users', JSON.stringify(authorizedUsers));
-            }
+            const storedUsersString = localStorage.getItem('users');
+            let storedUsers: StoredUser[] = storedUsersString ? JSON.parse(storedUsersString) : [];
+
+            // Sync logic: update stored users with data from authorizedUsers.ts
+            // This ensures company names, discounts, etc., are always up-to-date.
+            const updatedUsers = storedUsers.map(storedUser => {
+                const authorizedVersion = authorizedUsers.find(au => au.email === storedUser.email);
+                if (authorizedVersion) {
+                    // Update static data from code, but keep dynamic data from storage
+                    return {
+                        ...storedUser, // Keeps password, promotion, etc. from storage
+                        companyName: authorizedVersion.companyName,
+                        discounts: authorizedVersion.discounts,
+                        // Don't overwrite preparedBy, fiscalName, sucursal if they exist
+                        preparedBy: storedUser.preparedBy || authorizedVersion.preparedBy,
+                        fiscalName: storedUser.fiscalName || authorizedVersion.fiscalName,
+                        sucursal: storedUser.sucursal || authorizedVersion.sucursal,
+                    };
+                }
+                return storedUser; // Keep user if not in authorized list (e.g., registered)
+            });
+
+            // Add new users from authorizedUsers if they don't exist in storage
+            authorizedUsers.forEach(authorizedUser => {
+                if (!updatedUsers.some(u => u.email === authorizedUser.email)) {
+                    updatedUsers.push(authorizedUser);
+                }
+            });
+
+            localStorage.setItem('users', JSON.stringify(updatedUsers));
+
             const loggedInUserEmail = localStorage.getItem('currentUserEmail');
             if (loggedInUserEmail) {
-                const allUsers: StoredUser[] = JSON.parse(localStorage.getItem('users') || '[]');
-                const user = allUsers.find(u => u.email === loggedInUserEmail);
+                const user = updatedUsers.find(u => u.email === loggedInUserEmail);
                 if (user) {
                     const { password, ...userToSet } = user;
                     setCurrentUser(userToSet);
+                } else {
+                    // Log out if the user is no longer in the list
+                    localStorage.removeItem('currentUserEmail');
                 }
             }
         } catch (error) {
-            console.error("Error initializing user data from localStorage:", error);
+            console.error("Error initializing user data:", error);
+            // Fallback to source if local storage is corrupt
+            localStorage.setItem('users', JSON.stringify(authorizedUsers));
         }
     }, []);
 
