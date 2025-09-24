@@ -1,5 +1,6 @@
 
 
+
 // Fix: Import useState, useEffect, useRef, useCallback, and useMemo from React to resolve multiple hook-related errors.
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type { QuoteState, ProductOption, ColorOption, User, SavedQuote, StoredUser, QuoteItem } from './types';
@@ -697,7 +698,7 @@ const CustomQuoteModal: React.FC<CustomQuoteModalProps> = ({ isOpen, onClose }) 
 };
 
 
-const PROMO_TURNOVER_LIMIT = 3000;
+const PROMO_TURNOVER_LIMIT = 5000;
 
 const App: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -1230,15 +1231,18 @@ const App: React.FC = () => {
                 }
                 return false;
             }
-        } else {
-            if (currentStep === 2) {
+        } else { // Shower Trays logic
+            if (currentStep === 2) { // Step 2: Dimensions
+                return false; // Always enabled as there's always a default
+            }
+            if (currentStep === 3) { // Step 3: Model/Texture
                 return !currentItemConfig.model;
             }
-            if (currentStep === 3) {
+            if (currentStep === 4) { // Step 4: Color
                  const isRal = currentItemConfig.extras.some(e => e.id === 'ral');
                  return !currentItemConfig.color && !(isRal && currentItemConfig.ralCode);
             }
-            if (currentStep === 4) {
+            if (currentStep === 5) { // Step 5: Extras
                  const isBitono = currentItemConfig.extras.some(e => e.id === 'bitono');
                  return isBitono && !currentItemConfig.bitonoColor;
             }
@@ -1250,7 +1254,7 @@ const App: React.FC = () => {
         if (currentStep === 0) {
              if (view === 'app') return <WelcomePage userName={currentUser!.companyName} onNewQuote={() => handleStartNewQuote(true)} onViewQuotes={() => setView('my_quotes')} onResumeQuote={() => handleStartNewQuote(false)} hasActiveQuote={isQuoteActive} />;
              if (view === 'my_quotes') return <MyQuotesPage user={currentUser!} onDuplicateQuote={handleDuplicateQuote} onViewPdf={handleViewPdf} calculateInternalItemPrice={calculateInternalItemPrice} />;
-             if (view === 'promotions') return <PromotionsPage user={currentUser!} onActivatePromotion={handleActivatePromotion} turnover={welcomePromoTurnover} />;
+             if (view === 'promotions') return <PromotionsPage user={currentUser!} onActivatePromotion={handleActivatePromotion} turnover={welcomePromoTurnover} turnoverLimit={PROMO_TURNOVER_LIMIT} />;
              if (view === 'guides') return <MaintenanceGuidesPage />;
         }
 
@@ -1297,6 +1301,7 @@ const App: React.FC = () => {
                     default:
                         return <div>Paso desconocido</div>;
                 }
+                break; // Fix: Added break to prevent fallthrough
             default: // Shower Trays
                  switch (currentStep) {
                     case 1:

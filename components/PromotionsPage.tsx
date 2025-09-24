@@ -5,17 +5,16 @@ interface PromotionsPageProps {
     user: User;
     onActivatePromotion: (promoId: string) => void;
     turnover: number;
+    turnoverLimit: number;
 }
 
-const PromotionsPage: React.FC<PromotionsPageProps> = ({ user, onActivatePromotion, turnover }) => {
-    
-    const PROMO_TURNOVER_LIMIT = 3000;
+const PromotionsPage: React.FC<PromotionsPageProps> = ({ user, onActivatePromotion, turnover, turnoverLimit }) => {
     
     // --- Welcome Promo Logic ---
     const welcomePromo = {
         id: 'new_client_promo',
         title: 'Oferta de Bienvenida',
-        description: 'Activa tu promoción para nuevos clientes y disfruta de un 50% + 25% de descuento adicional en todos tus pedidos. Válida durante 3 meses o hasta alcanzar 3000€ de facturación, lo que antes ocurra.',
+        description: 'Activa tu promoción para nuevos clientes y disfruta de un 50% + 25% de descuento adicional en todos tus pedidos. Válida durante 3 meses o hasta alcanzar 5000€ de facturación, lo que antes ocurra.',
         durationDays: 90,
     };
     
@@ -30,7 +29,7 @@ const PromotionsPage: React.FC<PromotionsPageProps> = ({ user, onActivatePromoti
         const expiryTime = activationTime + PROMO_DURATION_MS;
         expirationDate = new Date(expiryTime);
         
-        if (Date.now() < expiryTime && turnover < PROMO_TURNOVER_LIMIT) {
+        if (Date.now() < expiryTime && turnover < turnoverLimit) {
             promoStatus = 'active';
         } else {
             promoStatus = 'expired';
@@ -49,10 +48,10 @@ const PromotionsPage: React.FC<PromotionsPageProps> = ({ user, onActivatePromoti
                             <div>
                                 <div className="flex justify-between items-end mb-1">
                                     <span className="font-semibold">Facturación:</span>
-                                    <span className="text-xs">{turnover.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })} / {PROMO_TURNOVER_LIMIT.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+                                    <span className="text-xs">{turnover.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })} / {turnoverLimit.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
                                 </div>
                                 <div className="w-full bg-teal-200 rounded-full h-2.5">
-                                    <div className="bg-teal-600 h-2.5 rounded-full" style={{ width: `${Math.min(100, (turnover / PROMO_TURNOVER_LIMIT) * 100)}%` }}></div>
+                                    <div className="bg-teal-600 h-2.5 rounded-full" style={{ width: `${Math.min(100, (turnover / turnoverLimit) * 100)}%` }}></div>
                                 </div>
                             </div>
                             <div>
