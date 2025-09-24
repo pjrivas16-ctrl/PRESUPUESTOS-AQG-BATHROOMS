@@ -16,7 +16,7 @@ interface Step5SummaryProps {
 
 
 const QuoteItemCard: React.FC<{ item: QuoteItem; onEdit: () => void; onDelete: () => void; price: number; }> = ({ item, onEdit, onDelete, price }) => {
-    const isKitProduct = item.productLine === 'KITS Y ACCESORIOS';
+    const isKitProduct = item.productLine === 'KITS';
 
     const renderExtras = () => {
         if (item.extras.length === 0) return null;

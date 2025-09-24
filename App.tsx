@@ -873,8 +873,8 @@ const App: React.FC = () => {
     // --- Pricing Logic ---
     const calculateItemPrice = useCallback((item: QuoteState, allItems: QuoteItem[] = []): number => {
         if (item.productLine === 'KITS') {
+            // For KITS, the price is fixed and color selection does not add any extra cost.
             const basePrice = item.kitProduct?.price || 0;
-            // Color selection (standard or RAL) does not add to the price for kits.
             return basePrice * item.quantity;
         }
 
@@ -1091,7 +1091,7 @@ const App: React.FC = () => {
         if (!currentUser || quoteItems.length === 0) return;
 
         try {
-            const allQuotes: SavedQuote[] = JSON.parse(localStorage.getItem('quotes') || '[]');
+            const allQuotes: SavedQuote[] = JSON.parse(localStorage.getItem('quotes') || '[]') as SavedQuote[];
             const newQuoteIdNumber = (allQuotes.filter(q => q.userEmail === currentUser.email).length + 1).toString().padStart(4, '0');
             const newQuote: SavedQuote = {
                 id: `quote_c_${newQuoteIdNumber}`,
@@ -1132,7 +1132,7 @@ const App: React.FC = () => {
     const handleExportData = () => {
         if (!currentUser) return;
         try {
-            const allQuotes: SavedQuote[] = JSON.parse(localStorage.getItem('quotes') || '[]');
+            const allQuotes: SavedQuote[] = JSON.parse(localStorage.getItem('quotes') || '[]') as SavedQuote[];
             const userQuotes = allQuotes.filter(q => q.userEmail === currentUser.email);
             
             const dataToExport = {
@@ -1192,7 +1192,7 @@ const App: React.FC = () => {
                 }
 
                 // Replace quotes
-                const allQuotes: SavedQuote[] = JSON.parse(localStorage.getItem('quotes') || '[]');
+                const allQuotes: SavedQuote[] = JSON.parse(localStorage.getItem('quotes') || '[]') as SavedQuote[];
                 // Remove existing quotes for this user
                 const otherUserQuotes = allQuotes.filter(q => q.userEmail !== currentUser.email);
                 // Add imported quotes, ensuring userEmail is correct
