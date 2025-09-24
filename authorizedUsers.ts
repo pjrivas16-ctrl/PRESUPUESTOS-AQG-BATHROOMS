@@ -16,7 +16,6 @@ export const authorizedUsers: StoredUser[] = [
         companyName: 'AQG Bathrooms (Admin)',
         email: 'admin@aqg.com',
         password: 'adminpassword',
-        logo: undefined,
         preparedBy: 'Equipo AQG',
         discounts: {
             showerTrays: 10,

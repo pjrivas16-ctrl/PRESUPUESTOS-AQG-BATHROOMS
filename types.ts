@@ -38,7 +38,6 @@ export interface QuoteItem extends QuoteState {
 export interface User {
     email: string;
     companyName: string;
-    logo?: string;
     preparedBy?: string;
     fiscalName?: string;
     sucursal?: string;

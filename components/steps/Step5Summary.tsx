@@ -113,8 +113,7 @@ const Step5Summary: React.FC<Step5SummaryProps> = ({
                         <span>IVA (21%)</span>
                         <span>{taxAmount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
                     </div>
-                    <div className="border-t border-slate-300 !my-3"></div>
-                    <div className="flex justify-between items-center text-xl font-bold text-slate-800">
+                    <div className="flex justify-between items-center text-xl font-bold text-slate-800 pt-3 mt-3 border-t border-slate-300">
                         <span>Total Presupuesto</span>
                         <span className="text-teal-600">
                             {totalPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
@@ -135,9 +134,9 @@ const Step5Summary: React.FC<Step5SummaryProps> = ({
                 </button>
                  <button
                     onClick={onReset}
-                    className="w-full px-4 py-3 text-sm font-semibold text-red-600 bg-red-100 rounded-lg hover:bg-red-200 transition-colors"
+                    className="w-full px-4 py-3 text-sm font-semibold text-slate-600 bg-slate-200 rounded-lg hover:bg-slate-300 transition-colors"
                 >
-                    Descartar y Empezar de Nuevo
+                    Vaciar presupuesto
                 </button>
             </div>
             

@@ -1,5 +1,3 @@
-
-
 // Fix: Import useState, useEffect, useRef, useCallback, and useMemo from React to resolve multiple hook-related errors.
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type { QuoteState, ProductOption, ColorOption, User, SavedQuote, StoredUser, QuoteItem } from './types';
@@ -8,7 +6,6 @@ import {
     PRICE_LIST, SHOWER_TRAY_STEPS, KITS_STEPS, SHOWER_MODELS, KIT_PRODUCTS, SHOWER_EXTRAS, STANDARD_COLORS
 } from './constants';
 import { authorizedUsers } from './authorizedUsers';
-import { processImageForPdf } from './utils/pdfUtils';
 
 import StepTracker from './components/StepTracker';
 import Step1ModelSelection from './components/steps/Step1ModelSelection';
@@ -23,11 +20,9 @@ import NextPrevButtons from './components/NextPrevButtons';
 import AuthPage from './components/auth/AuthPage';
 import MyQuotesPage from './components/MyQuotesPage';
 import PromotionsPage from './components/PromotionsPage';
-import LogoUploader from './components/LogoUploader';
 import PromotionBanner from './components/PromotionBanner';
 import LivePreview from './components/LivePreview';
 import MaintenanceGuidesPage from './components/MaintenanceGuidesPage';
-// The aqgLogo is no longer needed as we are removing it to prevent errors.
 
 // Declare jsPDF on window for TypeScript
 declare global {
@@ -104,7 +99,7 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ userName, onNewQuote, onViewQ
 interface SettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (settings: { fiscalName: string; preparedBy: string; sucursal: string; logo: string | null; }) => void;
+    onSave: (settings: { fiscalName: string; preparedBy: string; sucursal: string; }) => void;
     user: User;
     onExport: () => void;
     onImport: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -115,7 +110,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
     const [preparedBy, setPreparedBy] = useState(user.preparedBy || '');
     const [fiscalName, setFiscalName] = useState(user.fiscalName || user.companyName || '');
     const [sucursal, setSucursal] = useState(user.sucursal || '');
-    const [logo, setLogo] = useState<string | null>(user.logo || null);
     const importInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -123,14 +117,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
             setPreparedBy(user.preparedBy || '');
             setFiscalName(user.fiscalName || user.companyName || '');
             setSucursal(user.sucursal || '');
-            setLogo(user.logo || null);
         }
     }, [isOpen, user]);
 
     if (!isOpen) return null;
 
     const handleSave = () => {
-        onSave({ preparedBy, fiscalName, sucursal, logo });
+        onSave({ preparedBy, fiscalName, sucursal });
         onClose();
     };
 
@@ -151,7 +144,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
                 </div>
 
                 <div className="space-y-6">
-                     <LogoUploader logo={logo} onLogoChange={setLogo} />
                      <div>
                         <label htmlFor="fiscal-name" className="block text-sm font-medium text-slate-700 mb-2">
                             Nombre Fiscal (en PDF)
@@ -334,15 +326,6 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quot
             const lightTextColor = '#64748b'; // slate-500
 
             // --- Header ---
-            const userLogoData = user.logo ? await processImageForPdf(user.logo).catch(e => { console.error(e); return null; }) : null;
-            
-            if (userLogoData) {
-                const aspectRatio = userLogoData.width / userLogoData.height;
-                const logoHeight = 20;
-                const logoWidth = logoHeight * aspectRatio;
-                doc.addImage(userLogoData.imageData, userLogoData.format, 15, 15, logoWidth, logoHeight);
-            }
-
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(12);
             doc.setTextColor(textColor);
@@ -423,7 +406,7 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quot
                 startY: 90,
                 head: [['Cant.', 'Descripción', 'P. Unitario', 'Total']],
                 body: tableRows,
-                theme: 'grid',
+                theme: 'striped',
                 headStyles: {
                     fillColor: [241, 245, 249], // slate-100
                     textColor: textColorRgb,
@@ -469,8 +452,6 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quot
                 
                 drawTotalLine('Dto. Bienvenida (50%)', `- ${promoDiscount1.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}`);
                 drawTotalLine('Dto. Adicional (25%)', `- ${promoDiscount2.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}`);
-                doc.setDrawColor(226, 232, 240);
-                doc.line(140, currentY - 8, 195, currentY - 8);
                 drawTotalLine('Base Imponible', baseImponible.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }));
             } else if (user.discounts?.showerTrays && user.discounts.showerTrays > 0) {
                 const discountPercent = user.discounts.showerTrays;
@@ -478,8 +459,6 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quot
                 baseImponible = subtotal - discountAmount;
                 
                 drawTotalLine(`Descuento (${discountPercent}%)`, `- ${discountAmount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}`);
-                doc.setDrawColor(226, 232, 240);
-                doc.line(140, currentY - 8, 195, currentY - 8);
                 drawTotalLine('Base Imponible', baseImponible.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }));
             }
 
@@ -487,9 +466,9 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quot
             const total = baseImponible + ivaAmount;
 
             drawTotalLine('IVA (21%)', ivaAmount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }));
-            doc.setDrawColor(textColor);
-            doc.setLineWidth(0.5);
-            doc.line(140, currentY - 2, 195, currentY - 2);
+            
+            currentY += 2; // Add a small gap before the total line
+
             doc.setFontSize(12);
             drawTotalLine('TOTAL', total.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }), true);
 
@@ -780,7 +759,7 @@ const App: React.FC = () => {
         setQuoteItems([]);
         setCurrentItemConfig(INITIAL_QUOTE_STATE);
         setCurrentStep(0);
-    }, []);
+    }, [INITIAL_QUOTE_STATE]);
 
     const updateUser = useCallback((updatedUser: User) => {
         setCurrentUser(updatedUser);
@@ -793,7 +772,7 @@ const App: React.FC = () => {
         }
     }, []);
 
-    const handleSettingsSave = (settings: { fiscalName: string; preparedBy: string; sucursal: string; logo: string | null; }) => {
+    const handleSettingsSave = (settings: { fiscalName: string; preparedBy: string; sucursal: string; }) => {
         if (currentUser) {
             updateUser({ ...currentUser, ...settings });
         }
@@ -892,7 +871,7 @@ const App: React.FC = () => {
         };
         // Keep quantity when changing product line
         setCurrentItemConfig(prev => ({ ...INITIAL_QUOTE_STATE, quantity: prev.quantity, productLine: line, ...newDefaults }));
-    }, []);
+    }, [INITIAL_QUOTE_STATE]);
 
     const handleToggleExtra = useCallback((extra: ProductOption) => {
         setCurrentItemConfig(prev => {
@@ -916,7 +895,7 @@ const App: React.FC = () => {
         setCurrentItemConfig(INITIAL_QUOTE_STATE);
         setEditingItemId(null);
         setCurrentStep(1);
-    }, []);
+    }, [INITIAL_QUOTE_STATE]);
 
     const handleAddItemToQuote = useCallback(() => {
         if (editingItemId) {
@@ -928,7 +907,7 @@ const App: React.FC = () => {
         setEditingItemId(null);
         setCurrentItemConfig(prev => ({...INITIAL_QUOTE_STATE, quantity: prev.quantity}));
         setCurrentStep(steps.length);
-    }, [currentItemConfig, editingItemId, steps.length]);
+    }, [currentItemConfig, editingItemId, steps.length, INITIAL_QUOTE_STATE]);
 
     const handleNext = useCallback(() => {
         if (currentStep === steps.length - 1) {
@@ -1015,7 +994,7 @@ const App: React.FC = () => {
         setCurrentItemConfig(INITIAL_QUOTE_STATE);
         setEditingItemId(null);
         setCurrentStep(0);
-    }, [currentUser, quoteItems, totalPrice, calculateBaseItemPrice]);
+    }, [currentUser, quoteItems, totalPrice, calculateBaseItemPrice, INITIAL_QUOTE_STATE]);
 
     const handleGeneratePdf = useCallback(() => {
         if (!currentUser || quoteItems.length === 0) return;
@@ -1201,7 +1180,7 @@ const App: React.FC = () => {
             className={`flex items-center w-full px-4 py-3 text-sm font-semibold rounded-lg transition-colors ${view === viewName ? 'bg-teal-500 text-white' : 'text-slate-300 hover:bg-slate-700 hover:text-white'}`}
         >
             {icon}
-            <span className="ml-3">{label}</span>
+            <span className="ml-3 whitespace-nowrap">{label}</span>
         </button>
     );
 
@@ -1227,7 +1206,7 @@ const App: React.FC = () => {
                         <p className="text-slate-400">{currentUser.email}</p>
                     </div>
                      <button onClick={() => setIsSettingsModalOpen(true)} className="flex items-center w-full px-4 py-2 text-sm font-semibold rounded-lg transition-colors text-slate-300 hover:bg-slate-700 hover:text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" /></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734 2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" /></svg>
                         Ajustes
                     </button>
                     <button onClick={handleLogout} className="flex items-center w-full px-4 py-2 text-sm font-semibold rounded-lg transition-colors text-slate-300 hover:bg-slate-700 hover:text-white">
