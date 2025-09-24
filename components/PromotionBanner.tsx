@@ -17,7 +17,7 @@ const PromotionBanner: React.FC<PromotionBannerProps> = ({ expirationDate }) => 
                     <p className="font-bold">¡Oferta de Bienvenida activa!</p>
                     <p className="text-sm">
                         Se está aplicando un <strong>50% + 25% de descuento</strong> en este presupuesto.
-                        Válida hasta el {expirationDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}.
+                        Válida hasta el {expirationDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })} o hasta alcanzar 3000€ de facturación.
                     </p>
                 </div>
             </div>

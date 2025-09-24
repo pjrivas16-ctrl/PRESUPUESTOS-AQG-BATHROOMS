@@ -24,4 +24,14 @@ export const authorizedUsers: StoredUser[] = [
             classicSpecialCondition: 'Consultar condiciones especiales para pedidos > 10 unidades.'
         }
     },
+    {
+        companyName: 'ALTA NUEVA DE CLIENTE',
+        email: 'jrodriguezrepresentacion@gmail.com',
+        password: 'POLLITOLOCO',
+        discounts: {
+            showerTrays: 50,
+            terrazzoShowerTrays: 50,
+            countertops: 50,
+        }
+    },
 ];

@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import type { QuoteState, ProductOption, ColorOption, User, SavedQuote, StoredUser, QuoteItem } from './types';
 // Fix: Added STANDARD_COLORS to the import to resolve an undefined variable error.
 import { 
-    PRICE_LIST, SHOWER_TRAY_STEPS, KITS_STEPS, SHOWER_MODELS, KIT_PRODUCTS, SHOWER_EXTRAS, STANDARD_COLORS
+    PRICE_LIST, SHOWER_TRAY_STEPS, KITS_STEPS, SHOWER_MODELS, KIT_PRODUCTS, SHOWER_EXTRAS, STANDARD_COLORS, VAT_RATE, PROMO_DURATION_DAYS, PROMO_ID
 } from './constants';
 import { authorizedUsers } from './authorizedUsers';
 
@@ -683,9 +683,7 @@ const CustomQuoteModal: React.FC<CustomQuoteModalProps> = ({ isOpen, onClose }) 
 };
 
 
-const VAT_RATE = 0.21;
-const PROMO_DURATION_DAYS = 60;
-const PROMO_ID = 'new_client_promo';
+const PROMO_TURNOVER_LIMIT = 3000;
 
 const App: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -779,11 +777,38 @@ const App: React.FC = () => {
     };
     
     // --- Price Calculation ---
+    const calculatePromotionTurnover = useCallback((user: User | null): number => {
+        if (!user?.promotion || user.promotion.id !== PROMO_ID) return 0;
+        
+        try {
+            const allQuotes: SavedQuote[] = JSON.parse(localStorage.getItem('quotes') || '[]');
+            const userOrderedQuotes = allQuotes.filter(q => 
+                q.userEmail === user.email && 
+                q.orderedTimestamp && 
+                q.orderedTimestamp >= user.promotion!.activationTimestamp
+            );
+            
+            const turnover = userOrderedQuotes.reduce((acc, quote) => acc + (quote.totalPrice / (1 + VAT_RATE)), 0);
+            return turnover;
+        } catch (error) {
+            console.error("Error calculating promotion turnover:", error);
+            return 0;
+        }
+    }, []);
+
+    const promotionTurnover = useMemo(() => calculatePromotionTurnover(currentUser), [currentUser, calculatePromotionTurnover, view]);
+
     const welcomePromoIsActive = useMemo(() => {
         if (!currentUser?.promotion || currentUser.promotion.id !== PROMO_ID) return false;
+        
         const expiryTime = currentUser.promotion.activationTimestamp + (PROMO_DURATION_DAYS * 24 * 60 * 60 * 1000);
-        return Date.now() < expiryTime;
-    }, [currentUser]);
+        if (Date.now() >= expiryTime) return false;
+
+        if (promotionTurnover >= PROMO_TURNOVER_LIMIT) return false;
+        
+        return true;
+    }, [currentUser, promotionTurnover]);
+
 
     const calculateBaseItemPrice = useCallback((item: QuoteState | QuoteItem): number => {
         if (item.productLine === 'KITS Y ACCESORIOS') {
@@ -1029,7 +1054,7 @@ const App: React.FC = () => {
     
     const handleActivatePromotion = (promoId: string) => {
         if (!currentUser || promoId !== PROMO_ID) return;
-        if (window.confirm(`¿Activar la promoción de bienvenida? Durará ${PROMO_DURATION_DAYS} días a partir de ahora.`)) {
+        if (window.confirm(`¿Activar la promoción de bienvenida? Válida durante ${PROMO_DURATION_DAYS} días o hasta alcanzar ${PROMO_TURNOVER_LIMIT}€ de facturación, lo que antes ocurra.`)) {
              updateUser({
                 ...currentUser,
                 promotion: { id: PROMO_ID, activationTimestamp: Date.now() }
@@ -1165,7 +1190,7 @@ const App: React.FC = () => {
             case 'my_quotes':
                 return <MyQuotesPage user={currentUser} onDuplicateQuote={handleDuplicateQuote} onViewPdf={handleViewPdfForSavedQuote} calculateInternalItemPrice={calculateInternalItemPrice} />;
             case 'promotions':
-                return <PromotionsPage user={currentUser} onActivatePromotion={handleActivatePromotion} />;
+                return <PromotionsPage user={currentUser} onActivatePromotion={handleActivatePromotion} turnover={promotionTurnover} />;
             case 'guides':
                 return <MaintenanceGuidesPage />;
             case 'app':

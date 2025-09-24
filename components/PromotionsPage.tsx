@@ -4,16 +4,19 @@ import type { User } from '../types';
 interface PromotionsPageProps {
     user: User;
     onActivatePromotion: (promoId: string) => void;
+    turnover: number;
 }
 
-const PromotionsPage: React.FC<PromotionsPageProps> = ({ user, onActivatePromotion }) => {
+const PromotionsPage: React.FC<PromotionsPageProps> = ({ user, onActivatePromotion, turnover }) => {
+    
+    const PROMO_TURNOVER_LIMIT = 3000;
     
     // --- Welcome Promo Logic ---
     const welcomePromo = {
         id: 'new_client_promo',
         title: 'Oferta de Bienvenida',
-        description: 'Activa tu promoción para nuevos clientes y disfruta de un 50% + 25% de descuento adicional en todos tus pedidos durante 2 meses.',
-        durationDays: 60,
+        description: 'Activa tu promoción para nuevos clientes y disfruta de un 50% + 25% de descuento adicional en todos tus pedidos. Válida durante 3 meses o hasta alcanzar 3000€ de facturación, lo que antes ocurra.',
+        durationDays: 90,
     };
     
     const userPromo = user.promotion;
@@ -27,7 +30,7 @@ const PromotionsPage: React.FC<PromotionsPageProps> = ({ user, onActivatePromoti
         const expiryTime = activationTime + PROMO_DURATION_MS;
         expirationDate = new Date(expiryTime);
         
-        if (Date.now() < expiryTime) {
+        if (Date.now() < expiryTime && turnover < PROMO_TURNOVER_LIMIT) {
             promoStatus = 'active';
         } else {
             promoStatus = 'expired';
@@ -42,9 +45,20 @@ const PromotionsPage: React.FC<PromotionsPageProps> = ({ user, onActivatePromoti
                         <p className="text-slate-500 mb-4 text-sm">
                             ¡Tu promoción de bienvenida está activa! Disfruta de tus descuentos.
                         </p>
-                        <div className="bg-teal-100 border border-teal-200 text-teal-800 p-3 rounded-lg text-center">
-                            <p className="font-semibold text-xs">Válida hasta:</p>
-                            <p className="text-base">{expirationDate?.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                         <div className="bg-teal-100 border border-teal-200 text-teal-800 p-4 rounded-lg text-left space-y-3 text-sm">
+                            <div>
+                                <div className="flex justify-between items-end mb-1">
+                                    <span className="font-semibold">Facturación:</span>
+                                    <span className="text-xs">{turnover.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })} / {PROMO_TURNOVER_LIMIT.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+                                </div>
+                                <div className="w-full bg-teal-200 rounded-full h-2.5">
+                                    <div className="bg-teal-600 h-2.5 rounded-full" style={{ width: `${Math.min(100, (turnover / PROMO_TURNOVER_LIMIT) * 100)}%` }}></div>
+                                </div>
+                            </div>
+                            <div>
+                                <span className="font-semibold">Caducidad:</span>
+                                <p className="text-base">{expirationDate?.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                            </div>
                         </div>
                     </>
                 );
@@ -55,8 +69,7 @@ const PromotionsPage: React.FC<PromotionsPageProps> = ({ user, onActivatePromoti
                            Tu promoción de bienvenida ha finalizado.
                         </p>
                         <div className="bg-slate-100 border border-slate-200 text-slate-600 p-3 rounded-lg text-center">
-                            <p className="font-semibold text-xs">Expiró el:</p>
-                            <p className="text-base">{expirationDate?.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                            <p className="font-semibold text-xs">Promoción expirada</p>
                         </div>
                     </>
                 );

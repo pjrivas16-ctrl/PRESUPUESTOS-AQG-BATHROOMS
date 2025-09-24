@@ -234,3 +234,7 @@ export const KITS_STEPS = [
     { number: 3, title: 'Detalles' },
     { number: 4, title: 'Resumen' },
 ];
+
+export const VAT_RATE = 0.21;
+export const PROMO_DURATION_DAYS = 90;
+export const PROMO_ID = 'new_client_promo';
