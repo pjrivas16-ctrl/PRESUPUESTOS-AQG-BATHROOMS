@@ -29,9 +29,9 @@ export const authorizedUsers: StoredUser[] = [
         email: 'jrodriguezrepresentacion@gmail.com',
         password: 'POLLITOLOCO',
         discounts: {
-            showerTrays: 50,
-            terrazzoShowerTrays: 50,
-            countertops: 50,
+            showerTrays: 55,
+            terrazzoShowerTrays: 55,
+            countertops: 55,
         }
     },
 ];
