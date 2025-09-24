@@ -732,39 +732,38 @@ const App: React.FC = () => {
     useEffect(() => {
         try {
             const storedUsersString = localStorage.getItem('users');
-            let storedUsers: StoredUser[] = storedUsersString ? JSON.parse(storedUsersString) : [];
+            const storedUsers: StoredUser[] = storedUsersString ? JSON.parse(storedUsersString) : [];
 
-            // Sync logic: update stored users with data from authorizedUsers.ts
-            // This ensures company names, discounts, etc., are always up-to-date.
-            const updatedUsers = authorizedUsers.map(authorizedUser => {
-                const storedVersion = storedUsers.find(su => su.email === authorizedUser.email);
-                if (storedVersion) {
-                    // Update static data from code, but keep dynamic data from storage
-                    return {
-                        ...authorizedUser, // Base data from code
-                        password: storedVersion.password,
-                        promotion: storedVersion.promotion,
-                        preparedBy: storedVersion.preparedBy || authorizedUser.preparedBy,
-                        fiscalName: storedVersion.fiscalName || authorizedUser.fiscalName,
-                        sucursal: storedVersion.sucursal || authorizedUser.sucursal,
-                    };
-                }
-                return authorizedUser; // Add new user from code
-            });
-            
-            // Keep users that might exist in storage but not in code (e.g. registered users)
-            storedUsers.forEach(storedUser => {
-                if (!updatedUsers.some(u => u.email === storedUser.email)) {
-                    updatedUsers.push(storedUser);
-                }
-            });
+            // Use a map to handle user merging correctly. This ensures that the authorizedUsers list in the
+            // code is the source of truth for passwords and base data, while preserving user-specific settings.
+            const usersMap = new Map<string, StoredUser>();
 
+            // 1. Load all current users from storage.
+            for (const storedUser of storedUsers) {
+                usersMap.set(storedUser.email, storedUser);
+            }
 
-            localStorage.setItem('users', JSON.stringify(updatedUsers));
+            // 2. Iterate through the "source of truth" user list from the code.
+            //    This will add new users and update existing ones.
+            for (const authorizedUser of authorizedUsers) {
+                const storedVersion = usersMap.get(authorizedUser.email);
+                const updatedUser = {
+                    ...authorizedUser, // Start with the base data from code (name, discounts, password).
+                    // Preserve dynamic/user-editable fields from storage if they exist.
+                    promotion: storedVersion?.promotion,
+                    preparedBy: storedVersion?.preparedBy || authorizedUser.preparedBy,
+                    fiscalName: storedVersion?.fiscalName || authorizedUser.fiscalName,
+                    sucursal: storedVersion?.sucursal || authorizedUser.sucursal,
+                };
+                usersMap.set(authorizedUser.email, updatedUser);
+            }
+
+            const finalUsers = Array.from(usersMap.values());
+            localStorage.setItem('users', JSON.stringify(finalUsers));
 
             const loggedInUserEmail = localStorage.getItem('currentUserEmail');
             if (loggedInUserEmail) {
-                const user = updatedUsers.find(u => u.email === loggedInUserEmail);
+                const user = finalUsers.find(u => u.email === loggedInUserEmail);
                 if (user) {
                     const { password, ...userToSet } = user;
                     setCurrentUser(userToSet);
