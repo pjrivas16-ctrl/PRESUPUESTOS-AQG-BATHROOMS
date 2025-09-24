@@ -46,6 +46,10 @@ export interface User {
         terrazzoShowerTrays?: number;
         countertops?: number;
         classicSpecialCondition?: string;
+        classicSpecial?: {
+            minQuantity: number;
+            discount: number;
+        };
     };
     promotion?: {
         id: string;

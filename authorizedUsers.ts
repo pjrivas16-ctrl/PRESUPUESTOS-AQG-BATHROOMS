@@ -18,10 +18,14 @@ export const authorizedUsers: StoredUser[] = [
         password: 'adminpassword',
         preparedBy: 'Equipo AQG',
         discounts: {
-            showerTrays: 10,
-            terrazzoShowerTrays: 15,
-            countertops: 12,
-            classicSpecialCondition: 'Consultar condiciones especiales para pedidos > 10 unidades.'
+            showerTrays: 50,
+            terrazzoShowerTrays: 50,
+            countertops: 50,
+            classicSpecialCondition: 'Si se iguala o supera 10 unidades en la colección CLASSIC, se aplica un 71% de descuento.',
+            classicSpecial: {
+                minQuantity: 10,
+                discount: 71,
+            }
         }
     },
     {
@@ -33,5 +37,10 @@ export const authorizedUsers: StoredUser[] = [
             terrazzoShowerTrays: 55,
             countertops: 55,
         }
+    },
+    {
+        companyName: 'SUSANA',
+        email: 'susana.delgado1@yahoo.es',
+        password: 'Lilaverdeamor',
     },
 ];
