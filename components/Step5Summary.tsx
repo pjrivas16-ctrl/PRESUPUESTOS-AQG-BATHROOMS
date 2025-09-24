@@ -36,7 +36,7 @@ const QuoteItemCard: React.FC<{ item: QuoteItem; onEdit: () => void; onDelete: (
                     {isKitProduct ? (
                         <>
                             <h4 className="font-bold text-slate-800">{item.kitProduct?.name} ({item.quantity} {item.quantity > 1 ? 'unidades' : 'unidad'})</h4>
-                            {item.kitProduct?.id === 'kit-pintura' && <p className="text-sm text-slate-500">Color: {item.color?.name || `RAL ${item.ralCode}`}</p>}
+                            {(item.kitProduct?.id === 'kit-pintura' || item.kitProduct?.id === 'kit-reparacion') && <p className="text-sm text-slate-500">Color: {item.color?.name || `RAL ${item.ralCode}`}</p>}
                             {item.invoiceReference && <p className="text-sm text-slate-500">Ref. Factura: {item.invoiceReference}</p>}
                         </>
                     ) : (

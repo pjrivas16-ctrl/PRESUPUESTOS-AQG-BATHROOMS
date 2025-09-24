@@ -1,7 +1,3 @@
-
-
-
-
 // Fix: Import useState, useEffect, useRef, useCallback, and useMemo from React to resolve multiple hook-related errors.
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type { QuoteState, ProductOption, ColorOption, User, SavedQuote, StoredUser, QuoteItem } from './types';
@@ -1222,9 +1218,12 @@ const App: React.FC = () => {
         if (currentItemConfig.productLine === 'KITS') {
             if (currentStep === 2) return !currentItemConfig.kitProduct;
             if (currentStep === 3) {
-                if (currentItemConfig.kitProduct?.id === 'kit-pintura') {
+                const kitId = currentItemConfig.kitProduct?.id;
+                if (kitId === 'kit-pintura' || kitId === 'kit-reparacion') {
                     const isRal = currentItemConfig.extras.some(e => e.id === 'ral');
-                    return !currentItemConfig.color && !(isRal && currentItemConfig.ralCode);
+                    const isColorSelected = !!currentItemConfig.color;
+                    const isRalCompleted = isRal && !!currentItemConfig.ralCode?.trim();
+                    return !(isColorSelected || isRalCompleted);
                 }
                 return false;
             }

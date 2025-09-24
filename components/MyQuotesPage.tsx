@@ -126,7 +126,7 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
             if (item.productLine === 'KITS') {
                 body += `${item.kitProduct?.name}\n` +
                         `- Unidades: ${item.quantity || 1}\n`;
-                if(item.kitProduct?.id === 'kit-pintura') {
+                if(item.kitProduct?.id === 'kit-pintura' || item.kitProduct?.id === 'kit-reparacion') {
                     body += `- Color: ${item.color?.name || `RAL ${item.ralCode}`}\n`;
                 }
                 if(item.invoiceReference) {
@@ -193,7 +193,7 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                                 ) : (
                                     <>
                                         <p className="text-sm text-slate-500">({item.quantity} {item.quantity > 1 ? 'unidades' : 'unidad'})</p>
-                                        {item.kitProduct?.id === 'kit-pintura' && <p className="text-sm text-slate-500">Color: {item.color?.name || `RAL ${item.ralCode}`}</p>}
+                                        {(item.kitProduct?.id === 'kit-pintura' || item.kitProduct?.id === 'kit-reparacion') && <p className="text-sm text-slate-500">Color: {item.color?.name || `RAL ${item.ralCode}`}</p>}
                                         {item.invoiceReference && <p className="text-sm text-slate-500">Ref. Factura: {item.invoiceReference}</p>}
                                     </>
                                 )}
