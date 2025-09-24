@@ -1,6 +1,5 @@
 import React from 'react';
 import type { QuoteState } from '../types';
-import { softumImageB64 } from '../assets/images';
 
 interface LivePreviewProps {
     item: QuoteState;
@@ -33,32 +32,11 @@ const LivePreview: React.FC<LivePreviewProps> = ({ item, price }) => {
 
     const basePrice = price / 1.21;
     const hasConfig = item.productLine || item.model;
-    
-    // Use dimensions for placeholder image, with sane defaults
-    const imgWidth = item.length > 50 ? Math.round(item.length * 1.5) : 150;
-    const imgHeight = item.width > 50 ? Math.round(item.width * 1.5) : 120;
-    
-    const previewImageSrc = item.productLine === 'SOFTUM' 
-        ? softumImageB64 
-        : `https://picsum.photos/seed/${item.width}${item.length}/${imgWidth}/${imgHeight}`;
-
 
     return (
         <div className="bg-white rounded-xl shadow-lg overflow-hidden animate-fade-in border border-slate-200/80">
              <div className="p-6">
                 <h3 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-200 pb-3">Tu Configuración</h3>
-                
-                 {/* Visual Preview */}
-                 {item.productLine && item.productLine !== 'KITS Y ACCESORIOS' && (
-                    <div className="mb-6 p-4 bg-slate-100 rounded-lg">
-                        <img 
-                            src={previewImageSrc} 
-                            alt="Previsualización del plato de ducha"
-                            className="rounded-md w-full h-auto object-cover"
-                        />
-                    </div>
-                )}
-
 
                 {hasConfig ? (
                     <div className="space-y-1">
