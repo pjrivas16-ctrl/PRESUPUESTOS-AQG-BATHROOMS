@@ -15,8 +15,8 @@ export interface ColorOption {
 
 export interface QuoteState {
     productLine: string | null;
-    width: number;
-    length: number;
+    width?: number;
+    length?: number;
     quantity: number;
     model: ProductOption | null;
     color: ColorOption | null;

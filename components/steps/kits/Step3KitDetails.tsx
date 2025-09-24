@@ -22,7 +22,8 @@ const Step3KitDetails: React.FC<Step3KitDetailsProps> = ({
     const { kitProduct, color: selectedColor, ralCode, invoiceReference } = currentItemConfig;
     const isRalSelected = currentItemConfig.extras.some(e => e.id === 'ral');
 
-    const showColorSelector = kitProduct?.id === 'kit-pintura';
+    // Show color selector for both Repair and Paint kits.
+    const showColorSelector = kitProduct?.id === 'kit-pintura' || kitProduct?.id === 'kit-reparacion';
 
     return (
         <div className="animate-fade-in">
@@ -47,7 +48,7 @@ const Step3KitDetails: React.FC<Step3KitDetailsProps> = ({
             
             {showColorSelector && (
                 <div className="mt-8 pt-6 border-t border-slate-200">
-                    <h3 className="text-xl font-semibold text-slate-700 mb-4">Color para el Kit de Pintura</h3>
+                    <h3 className="text-xl font-semibold text-slate-700 mb-4">Selección de Color del Kit</h3>
                      <h4 className="text-base font-semibold text-slate-700 mb-4">Colores Estándar</h4>
                     <div className="flex flex-wrap gap-x-4 gap-y-5">
                         {STANDARD_COLORS.map((color) => (
@@ -87,6 +88,7 @@ const Step3KitDetails: React.FC<Step3KitDetailsProps> = ({
                             </div>
                             <div className="ml-4 flex-grow">
                                 <h4 className="font-bold text-slate-800">Color personalizado RAL</h4>
+                                <p className="text-sm text-slate-500">Indica un color de la carta RAL sin coste adicional para este producto.</p>
                             </div>
                         </div>
                         {isRalSelected && (

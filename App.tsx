@@ -1,6 +1,7 @@
 
 
 
+
 // Fix: Import useState, useEffect, useRef, useCallback, and useMemo from React to resolve multiple hook-related errors.
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type { QuoteState, ProductOption, ColorOption, User, SavedQuote, StoredUser, QuoteItem } from './types';
@@ -977,7 +978,7 @@ const App: React.FC = () => {
     const totalSteps = steps.length;
 
     const resetItemConfig = (keepProductLine = false) => {
-        const newState = { ...INITIAL_QUOTE_STATE };
+        const newState: QuoteState = { ...INITIAL_QUOTE_STATE };
         if (keepProductLine) {
             newState.productLine = currentItemConfig.productLine;
         }
@@ -1014,13 +1015,9 @@ const App: React.FC = () => {
                 setIsCustomQuoteModalOpen(true);
                 return; // Stop navigation
             }
-             if (currentStep === 1 && currentItemConfig.productLine === 'KITS') {
-                setCurrentStep(currentStep + 1);
-                return;
-            }
-
-            // Automatic model selection logic
-            if (currentStep === 2) {
+            
+            // Automatic model selection logic for shower trays
+            if (currentItemConfig.productLine !== 'KITS' && currentStep === 2) {
                 const { productLine } = currentItemConfig;
                 const models = SHOWER_MODELS;
                 let autoSelectedModel: ProductOption | null = null;
@@ -1233,7 +1230,7 @@ const App: React.FC = () => {
             }
         } else { // Shower Trays logic
             if (currentStep === 2) { // Step 2: Dimensions
-                return false; // Always enabled as there's always a default
+                return !currentItemConfig.width || !currentItemConfig.length;
             }
             if (currentStep === 3) { // Step 3: Model/Texture
                 return !currentItemConfig.model;
@@ -1250,6 +1247,17 @@ const App: React.FC = () => {
         return false;
     }, [currentStep, currentItemConfig]);
 
+    const handleProductLineUpdate = (line: string) => {
+        const baseState = { ...INITIAL_QUOTE_STATE, productLine: line, quantity: currentItemConfig.quantity };
+        if (line === 'KITS') {
+            // For KITS, we don't need dimensions or model.
+            const { width, length, model, structFrames, ...kitState } = baseState;
+            setCurrentItemConfig(kitState as QuoteState);
+        } else {
+            setCurrentItemConfig(baseState);
+        }
+    }
+
     const renderCurrentStep = () => {
         if (currentStep === 0) {
              if (view === 'app') return <WelcomePage userName={currentUser!.companyName} onNewQuote={() => handleStartNewQuote(true)} onViewQuotes={() => setView('my_quotes')} onResumeQuote={() => handleStartNewQuote(false)} hasActiveQuote={isQuoteActive} />;
@@ -1257,132 +1265,131 @@ const App: React.FC = () => {
              if (view === 'promotions') return <PromotionsPage user={currentUser!} onActivatePromotion={handleActivatePromotion} turnover={welcomePromoTurnover} turnoverLimit={PROMO_TURNOVER_LIMIT} />;
              if (view === 'guides') return <MaintenanceGuidesPage />;
         }
-
-        switch (currentItemConfig.productLine) {
-            case 'KITS':
-                switch (currentStep) {
-                    case 1:
-                        return (
-                            <Step1ModelSelection
-                                selectedProductLine={currentItemConfig.productLine}
-                                onUpdate={(line) => setCurrentItemConfig(prev => ({ ...INITIAL_QUOTE_STATE, productLine: line, quantity: prev.quantity }))}
-                                quantity={currentItemConfig.quantity}
-                                onUpdateQuantity={(q) => setCurrentItemConfig(prev => ({...prev, quantity: q}))}
-                            />
-                        );
-                    case 2:
-                        return (
-                            <Step2KitSelection 
-                                onSelect={(kit) => setCurrentItemConfig(prev => ({ ...prev, kitProduct: kit, extras: [] }))}
-                                selectedKit={currentItemConfig.kitProduct || null}
-                            />
-                        );
-                    case 3:
-                        return (
-                             <Step3KitDetails
-                                currentItemConfig={currentItemConfig}
-                                onSelectColor={(color) => setCurrentItemConfig(prev => ({...prev, color, ralCode: '', extras: prev.extras.filter(e => e.id !== 'ral')}))}
-                                onToggleRal={() => setCurrentItemConfig(prev => {
-                                    const hasRal = prev.extras.some(e => e.id === 'ral');
-                                    // For kits, RAL color option has no extra cost.
-                                    const ralExtraForKit: ProductOption = { id: 'ral', name: 'Color personalizado (RAL)', price: 0, description: '' };
-                                    const newExtras = hasRal 
-                                        ? prev.extras.filter(e => e.id !== 'ral') 
-                                        : [...prev.extras, ralExtraForKit];
-                                    return { ...prev, extras: newExtras, color: null };
-                                })}
-                                onRalCodeChange={(code) => setCurrentItemConfig(prev => ({...prev, ralCode: code}))}
-                                onInvoiceRefChange={(ref) => setCurrentItemConfig(prev => ({...prev, invoiceReference: ref}))}
-                            />
-                        );
-                    case 4:
-                        // Summary is handled outside
-                        return null;
-                    default:
-                        return <div>Paso desconocido</div>;
-                }
-                break; // Fix: Added break to prevent fallthrough
-            default: // Shower Trays
-                 switch (currentStep) {
-                    case 1:
-                        return (
-                             <Step1ModelSelection
-                                selectedProductLine={currentItemConfig.productLine}
-                                onUpdate={(line) => setCurrentItemConfig(prev => ({...INITIAL_QUOTE_STATE, productLine: line, quantity: prev.quantity}))}
-                                quantity={currentItemConfig.quantity}
-                                onUpdateQuantity={(q) => setCurrentItemConfig(prev => ({...prev, quantity: q}))}
-                             />
-                        );
-                    case 2:
-                        return (
-                            <Step1Dimensions
-                                quote={currentItemConfig}
-                                onUpdate={(width, length) => setCurrentItemConfig(prev => ({ ...prev, width, length }))}
-                            />
-                        );
-                    case 3:
-                        return (
-                            <Step2Model
-                                onSelect={(model) => setCurrentItemConfig(prev => ({ ...prev, model }))}
-                                selectedModel={currentItemConfig.model}
-                                productLine={currentItemConfig.productLine}
-                            />
-                        );
-                    case 4:
-                        return (
-                            <Step3Color
-                                onSelectColor={(color) => setCurrentItemConfig(prev => ({ ...prev, color, ralCode: undefined, extras: prev.extras.filter(e => e.id !== 'ral') }))}
-                                selectedColor={currentItemConfig.color}
-                                productLine={currentItemConfig.productLine}
-                                onToggleRal={() => setCurrentItemConfig(prev => {
-                                    const hasRal = prev.extras.some(e => e.id === 'ral');
-                                    const newExtras = hasRal ? prev.extras.filter(e => e.id !== 'ral') : [...prev.extras, SHOWER_EXTRAS.find(e => e.id === 'ral')!];
-                                    return { ...prev, extras: newExtras, color: null };
-                                })}
-                                isRalSelected={currentItemConfig.extras.some(e => e.id === 'ral')}
-                                ralCode={currentItemConfig.ralCode || ''}
-                                onRalCodeChange={(code) => setCurrentItemConfig(prev => ({ ...prev, ralCode: code }))}
-                            />
-                        );
-                    case 5:
-                        return (
-                             <Step4Extras
-                                onToggle={(extra) => setCurrentItemConfig(prev => {
-                                    const isSelected = prev.extras.some(e => e.id === extra.id);
-                                    let newExtras = isSelected ? prev.extras.filter(e => e.id !== extra.id) : [...prev.extras, extra];
-                                    let newBitonoColor = prev.bitonoColor;
-                                    if (extra.id === 'bitono' && isSelected) { // Untoggling bitono
-                                        newBitonoColor = undefined;
-                                    }
-                                    return { ...prev, extras: newExtras, bitonoColor: newBitonoColor };
-                                })}
-                                selectedExtras={currentItemConfig.extras}
-                                productLine={currentItemConfig.productLine}
-                                mainColor={currentItemConfig.color}
-                                bitonoColor={currentItemConfig.bitonoColor}
-                                onSelectBitonoColor={(color) => setCurrentItemConfig(prev => ({ ...prev, bitonoColor: color }))}
-                                structFrames={currentItemConfig.structFrames}
-                                onUpdateStructFrames={(frames) => setCurrentItemConfig(prev => ({...prev, structFrames: frames}))}
-                            />
-                        );
-                    case 6: // Summary step for shower trays
-                         return (
-                             <Step5Summary
-                                items={quoteItems}
-                                totalPrice={totalQuotePrice}
-                                onReset={resetQuote}
-                                onSaveRequest={() => setIsSaveModalOpen(true)}
-                                onGeneratePdfRequest={() => handleSaveQuote({ customerName: 'provisional', projectReference: '' })}
-                                onPrintRequest={() => window.print()}
-                                onStartNew={handleStartNewItem}
-                                onEdit={handleEditItem}
-                                onDelete={handleDeleteItem}
-                                calculateItemPrice={(item) => calculatePriceDetails(item, quoteItems).finalPrice}
-                            />
-                         );
-                    default:
-                        return <div>Paso desconocido</div>;
-                }
+        
+        // --- KITS Flow ---
+        if (currentItemConfig.productLine === 'KITS') {
+             switch (currentStep) {
+                case 1:
+                    return (
+                        <Step1ModelSelection
+                            selectedProductLine={currentItemConfig.productLine}
+                            onUpdate={handleProductLineUpdate}
+                            quantity={currentItemConfig.quantity}
+                            onUpdateQuantity={(q) => setCurrentItemConfig(prev => ({...prev, quantity: q}))}
+                        />
+                    );
+                case 2:
+                    return (
+                        <Step2KitSelection 
+                            onSelect={(kit) => setCurrentItemConfig(prev => ({ ...prev, kitProduct: kit, extras: [] }))}
+                            selectedKit={currentItemConfig.kitProduct || null}
+                        />
+                    );
+                case 3:
+                    return (
+                         <Step3KitDetails
+                            currentItemConfig={currentItemConfig}
+                            onSelectColor={(color) => setCurrentItemConfig(prev => ({...prev, color, ralCode: '', extras: prev.extras.filter(e => e.id !== 'ral')}))}
+                            onToggleRal={() => setCurrentItemConfig(prev => {
+                                const hasRal = prev.extras.some(e => e.id === 'ral');
+                                // For kits, RAL color option has no extra cost.
+                                const ralExtraForKit: ProductOption = { id: 'ral', name: 'Color personalizado (RAL)', price: 0, description: '' };
+                                const newExtras = hasRal 
+                                    ? prev.extras.filter(e => e.id !== 'ral') 
+                                    : [...prev.extras, ralExtraForKit];
+                                return { ...prev, extras: newExtras, color: null };
+                            })}
+                            onRalCodeChange={(code) => setCurrentItemConfig(prev => ({...prev, ralCode: code}))}
+                            onInvoiceRefChange={(ref) => setCurrentItemConfig(prev => ({...prev, invoiceReference: ref}))}
+                        />
+                    );
+                case 4: // Summary step for KITS
+                    return null; // Handled by showSummaryView
+                default:
+                    return <div>Paso desconocido</div>;
+            }
+        }
+        
+        // --- Shower Tray Flow ---
+        switch (currentStep) {
+            case 1:
+                return (
+                     <Step1ModelSelection
+                        selectedProductLine={currentItemConfig.productLine}
+                        onUpdate={handleProductLineUpdate}
+                        quantity={currentItemConfig.quantity}
+                        onUpdateQuantity={(q) => setCurrentItemConfig(prev => ({...prev, quantity: q}))}
+                     />
+                );
+            case 2:
+                return (
+                    <Step1Dimensions
+                        quote={currentItemConfig}
+                        onUpdate={(width, length) => setCurrentItemConfig(prev => ({ ...prev, width, length }))}
+                    />
+                );
+            case 3:
+                return (
+                    <Step2Model
+                        onSelect={(model) => setCurrentItemConfig(prev => ({ ...prev, model }))}
+                        selectedModel={currentItemConfig.model}
+                        productLine={currentItemConfig.productLine}
+                    />
+                );
+            case 4:
+                return (
+                    <Step3Color
+                        onSelectColor={(color) => setCurrentItemConfig(prev => ({ ...prev, color, ralCode: undefined, extras: prev.extras.filter(e => e.id !== 'ral') }))}
+                        selectedColor={currentItemConfig.color}
+                        productLine={currentItemConfig.productLine}
+                        onToggleRal={() => setCurrentItemConfig(prev => {
+                            const hasRal = prev.extras.some(e => e.id === 'ral');
+                            const newExtras = hasRal ? prev.extras.filter(e => e.id !== 'ral') : [...prev.extras, SHOWER_EXTRAS.find(e => e.id === 'ral')!];
+                            return { ...prev, extras: newExtras, color: null };
+                        })}
+                        isRalSelected={currentItemConfig.extras.some(e => e.id === 'ral')}
+                        ralCode={currentItemConfig.ralCode || ''}
+                        onRalCodeChange={(code) => setCurrentItemConfig(prev => ({ ...prev, ralCode: code }))}
+                    />
+                );
+            case 5:
+                return (
+                     <Step4Extras
+                        onToggle={(extra) => setCurrentItemConfig(prev => {
+                            const isSelected = prev.extras.some(e => e.id === extra.id);
+                            let newExtras = isSelected ? prev.extras.filter(e => e.id !== extra.id) : [...prev.extras, extra];
+                            let newBitonoColor = prev.bitonoColor;
+                            if (extra.id === 'bitono' && isSelected) { // Untoggling bitono
+                                newBitonoColor = undefined;
+                            }
+                            return { ...prev, extras: newExtras, bitonoColor: newBitonoColor };
+                        })}
+                        selectedExtras={currentItemConfig.extras}
+                        productLine={currentItemConfig.productLine}
+                        mainColor={currentItemConfig.color}
+                        bitonoColor={currentItemConfig.bitonoColor}
+                        onSelectBitonoColor={(color) => setCurrentItemConfig(prev => ({ ...prev, bitonoColor: color }))}
+                        structFrames={currentItemConfig.structFrames}
+                        onUpdateStructFrames={(frames) => setCurrentItemConfig(prev => ({...prev, structFrames: frames}))}
+                    />
+                );
+            case 6: // Summary step for shower trays
+                 return (
+                     <Step5Summary
+                        items={quoteItems}
+                        totalPrice={totalQuotePrice}
+                        onReset={resetQuote}
+                        onSaveRequest={() => setIsSaveModalOpen(true)}
+                        onGeneratePdfRequest={() => handleSaveQuote({ customerName: 'provisional', projectReference: '' })}
+                        onPrintRequest={() => window.print()}
+                        onStartNew={handleStartNewItem}
+                        onEdit={handleEditItem}
+                        onDelete={handleDeleteItem}
+                        calculateItemPrice={(item) => calculatePriceDetails(item, quoteItems).finalPrice}
+                    />
+                 );
+            default:
+                return <div>Paso desconocido</div>;
         }
     };
     

@@ -231,7 +231,7 @@ export const SHOWER_TRAY_STEPS = [
 export const KITS_STEPS = [
     { number: 1, title: 'Colección' },
     { number: 2, title: 'Selección de Kit' },
-    { number: 3, title: 'Detalles' },
+    { number: 3, title: 'Color y Referencia' },
     { number: 4, title: 'Resumen' },
 ];
 
