@@ -1419,7 +1419,7 @@ const App: React.FC = () => {
                 <div className="flex-grow">
                      <div className="flex items-center gap-3 mb-10">
                         <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-lg"></div>
-                        <span className="hidden lg:block font-bold text-xl text-slate-800">AQG Tarifa</span>
+                        <span className="hidden lg:block font-bold text-xl text-slate-800">AQG Comercial</span>
                     </div>
                     <nav className="flex md:flex-col justify-around md:justify-start gap-1">
                         {navItems.map(item => (
