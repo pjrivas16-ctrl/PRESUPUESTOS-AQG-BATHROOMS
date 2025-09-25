@@ -78,15 +78,7 @@ const MaintenanceGuidesPage: React.FC = () => {
                 />
                  <ResourceCard
                     title="Catálogo General"
-                    description="Descarga nuestro catálogo general con todas las colecciones y productos. Próximamente disponible."
-                    onClick={() => {}}
-                    buttonText="Próximamente"
-                    icon={<DownloadIcon />}
-                    disabled={true}
-                />
-                 <ResourceCard
-                    title="Tarifa en Vigor"
-                    description="Accede a la lista de precios actualizada para todos nuestros productos. Próximamente disponible."
+                    description="Descarga nuestro catálogo general con todas las colecciones, productos y tarifa de precios incluida. Próximamente disponible."
                     onClick={() => {}}
                     buttonText="Próximamente"
                     icon={<DownloadIcon />}
