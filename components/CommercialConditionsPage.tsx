@@ -27,7 +27,7 @@ const CommercialConditionsPage: React.FC = () => {
                 <ToolCard
                     title="Oferta de Bienvenida"
                     description="Ofrece a tus nuevos clientes un descuento de bienvenida para conseguir tu primera venta y abrir nuevas cuentas. Es nuestra mejor herramienta para captación."
-                    details="Argumento de venta: Descuento equivalente a un 50% + 25%. Aplica un descuento similar en el resumen del presupuesto para reflejar esta oferta."
+                    details="El argumento de venta es ofrecer en todos los productos un 50%+25% durante 2 meses ó hasta 5000 euros de compra, lo que antes ocurra."
                     icon={
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
@@ -56,6 +56,18 @@ const CommercialConditionsPage: React.FC = () => {
                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                          <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                        </svg>
+                    }
+                />
+
+                 {/* Card 4: Showroom Amortization */}
+                <ToolCard
+                    title="Amortización de Exposición"
+                    description="Facilita que tus clientes expongan producto AQG en su tienda. El cliente puede comprar el producto para su exposición y recupera la inversión con un descuento en sus futuros pedidos."
+                    details="Argumento de venta: El cliente compra producto para su exposición y se le aplicará un 10% de descuento en todos sus pedidos hasta cubrir el coste del producto de exposición."
+                    icon={
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
+                        </svg>
                     }
                 />
             </div>
