@@ -37,7 +37,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     return (
         <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-2xl animate-fade-in">
             <h2 className="text-3xl font-bold text-center text-slate-800 mb-2">Acceso Privado</h2>
-            <p className="text-center text-slate-500 mb-8">Introduce tus credenciales para acceder a la tarifa digital de AQG BATHROOMS.</p>
+            <p className="text-center text-slate-500 mb-8">Introduce tus credenciales para acceder a tu espacio comercial de AQG</p>
             {error && <p className="bg-red-100 text-red-700 p-3 rounded-md mb-4 text-sm">{error}</p>}
             <form onSubmit={handleLoginSubmit} className="space-y-6">
                 <div>
