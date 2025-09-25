@@ -1,3 +1,11 @@
+// Fix: Added and exported PriceDetails interface to be used across components.
+export interface PriceDetails {
+    basePrice: number;       // PVP price for quantity, before discount, before VAT
+    discountedPrice: number; // Price for quantity, after discount, before VAT
+    finalPrice: number;      // Price for quantity, after discount, after VAT
+    discountPercent: number;
+}
+
 export interface ProductOption {
     id: string;
     name: string;
@@ -43,16 +51,6 @@ export interface User {
     preparedBy?: string;
     fiscalName?: string;
     sucursal?: string;
-    discounts?: {
-        showerTrays?: number;
-        terrazzoShowerTrays?: number;
-        countertops?: number;
-        classicSpecialCondition?: string;
-        classicSpecial?: {
-            minQuantity: number;
-            discount: number;
-        };
-    };
     promotion?: {
         id: string;
         activationTimestamp: number;

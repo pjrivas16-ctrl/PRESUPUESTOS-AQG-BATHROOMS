@@ -1,5 +1,5 @@
-import React from 'react';
-import type { QuoteItem } from '../../types';
+import React, { useMemo } from 'react';
+import type { QuoteItem, PriceDetails } from '../../types';
 
 interface Step5SummaryProps {
     items: QuoteItem[];
@@ -11,11 +11,13 @@ interface Step5SummaryProps {
     onStartNew: () => void;
     onEdit: (itemId: string) => void;
     onDelete: (itemId: string) => void;
-    calculateItemPrice: (item: QuoteItem) => number;
+    calculatePriceDetails: (item: QuoteItem) => PriceDetails;
+    appliedDiscounts: { [key: string]: number };
+    onUpdateDiscounts: (discounts: { [key: string]: number }) => void;
 }
 
 
-const QuoteItemCard: React.FC<{ item: QuoteItem; onEdit: () => void; onDelete: () => void; price: number; }> = ({ item, onEdit, onDelete, price }) => {
+const QuoteItemCard: React.FC<{ item: QuoteItem; onEdit: () => void; onDelete: () => void; priceDetails: PriceDetails; }> = ({ item, onEdit, onDelete, priceDetails }) => {
     const isKitProduct = item.productLine === 'KITS';
 
     const renderExtras = () => {
@@ -53,7 +55,15 @@ const QuoteItemCard: React.FC<{ item: QuoteItem; onEdit: () => void; onDelete: (
                     )}
                 </div>
                  <div className="text-right flex-shrink-0">
-                    <p className="font-bold text-slate-800">{price.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</p>
+                    <p className="font-bold text-slate-800">{priceDetails.finalPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</p>
+                    {priceDetails.discountPercent > 0 && (
+                        <>
+                            <p className="text-xs text-green-600 font-semibold">{priceDetails.discountPercent.toFixed(2)}% Dto.</p>
+                            <p className="text-xs text-slate-400 line-through">
+                                {(priceDetails.basePrice * 1.21).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
+                            </p>
+                        </>
+                    )}
                     <p className="text-xs text-slate-400">IVA incl.</p>
                 </div>
             </div>
@@ -77,12 +87,32 @@ const Step5Summary: React.FC<Step5SummaryProps> = ({
     onStartNew,
     onEdit,
     onDelete,
-    calculateItemPrice,
+    calculatePriceDetails,
+    appliedDiscounts,
+    onUpdateDiscounts,
 }) => {
     
     const VAT_RATE = 0.21;
     const basePrice = totalPrice / (1 + VAT_RATE);
     const taxAmount = totalPrice - basePrice;
+
+    const productLinesInQuote = useMemo(() => {
+        const lines = new Set(items.map(item => item.productLine).filter(Boolean));
+        return Array.from(lines) as string[];
+    }, [items]);
+
+    const handleDiscountChange = (line: string, value: string) => {
+        const percentage = parseFloat(value);
+        const newDiscounts = { ...appliedDiscounts };
+
+        if (!isNaN(percentage) && percentage >= 0 && percentage <= 100) {
+            newDiscounts[line] = percentage;
+        } else {
+            // If the value is empty or invalid, remove the discount for that line
+            delete newDiscounts[line];
+        }
+        onUpdateDiscounts(newDiscounts);
+    };
 
     return (
         <div id="printable-summary" className="animate-fade-in">
@@ -96,7 +126,7 @@ const Step5Summary: React.FC<Step5SummaryProps> = ({
                         item={item} 
                         onEdit={() => onEdit(item.id)}
                         onDelete={() => onDelete(item.id)}
-                        price={calculateItemPrice(item)}
+                        priceDetails={calculatePriceDetails(item)}
                     />
                 ))}
             </div>
@@ -107,22 +137,48 @@ const Step5Summary: React.FC<Step5SummaryProps> = ({
                     <p className="mt-1 text-sm text-slate-500">Añade un modelo para empezar.</p>
                 </div>
             ) : (
-                <div className="bg-slate-100 border border-slate-200 rounded-lg p-6 space-y-4">
-                    <div className="flex justify-between items-center text-slate-600">
-                        <span>Base imponible</span>
-                        <span>{basePrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+                <>
+                    <div className="mt-6 pt-6 border-t border-dashed border-slate-200 no-print">
+                        <h3 className="text-xl font-bold text-slate-800 mb-4">Aplicar Descuentos</h3>
+                        <div className="space-y-3 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                            {productLinesInQuote.map(line => (
+                                <div key={line} className="flex items-center justify-between">
+                                    <label htmlFor={`discount-${line}`} className="font-medium text-slate-700">{line}</label>
+                                    <div className="relative w-28">
+                                        <input
+                                            id={`discount-${line}`}
+                                            type="number"
+                                            value={appliedDiscounts[line] || ''}
+                                            onChange={(e) => handleDiscountChange(line, e.target.value)}
+                                            placeholder="0"
+                                            min="0"
+                                            max="100"
+                                            step="0.01"
+                                            className="w-full p-2 text-right border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition pr-6"
+                                        />
+                                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">%</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                    <div className="flex justify-between items-center text-slate-600">
-                        <span>IVA (21%)</span>
-                        <span>{taxAmount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+                    <div className="bg-slate-100 border border-slate-200 rounded-lg p-6 space-y-4 mt-6">
+                        <div className="flex justify-between items-center text-slate-600">
+                            <span>Base imponible</span>
+                            <span>{basePrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-slate-600">
+                            <span>IVA (21%)</span>
+                            <span>{taxAmount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xl font-bold text-slate-800 pt-3 mt-3 border-t border-slate-300">
+                            <span>Total Presupuesto</span>
+                            <span className="text-teal-600">
+                                {totalPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
+                            </span>
+                        </div>
                     </div>
-                    <div className="flex justify-between items-center text-xl font-bold text-slate-800 pt-3 mt-3 border-t border-slate-300">
-                        <span>Total Presupuesto</span>
-                        <span className="text-teal-600">
-                            {totalPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
-                        </span>
-                    </div>
-                </div>
+                </>
             )}
             
             <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 no-print">

@@ -1,6 +1,7 @@
 // Fix: Import useState, useEffect, useRef, useCallback, and useMemo from React to resolve multiple hook-related errors.
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import type { QuoteState, ProductOption, ColorOption, User, SavedQuote, StoredUser, QuoteItem } from './types';
+// Fix: Import PriceDetails from types.ts to use a shared type definition.
+import type { QuoteState, ProductOption, ColorOption, User, SavedQuote, StoredUser, QuoteItem, PriceDetails } from './types';
 // Fix: Added STANDARD_COLORS to the import to resolve an undefined variable error.
 import { 
     PRICE_LIST, SHOWER_TRAY_STEPS, KITS_STEPS, SHOWER_MODELS, KIT_PRODUCTS, SHOWER_EXTRAS, STANDARD_COLORS, VAT_RATE, PROMO_DURATION_DAYS, PROMO_ID
@@ -243,22 +244,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
 };
 
 
-// --- Price Details Interface ---
-interface PriceDetails {
-    basePrice: number;       // Price for quantity, before discount, before VAT
-    discountedPrice: number; // Price for quantity, after discount, before VAT
-    finalPrice: number;      // Price for quantity, after discount, after VAT
-    discountPercent: number;
-}
-
-
 // --- PDF Preview Modal ---
 interface PdfPreviewModalProps {
     isOpen: boolean;
     onClose: () => void;
     quote: SavedQuote | null;
     user: User;
-    calculatePriceDetails: (item: QuoteItem, allItems: QuoteItem[]) => PriceDetails;
+    calculatePriceDetails: (item: QuoteItem, discounts: { [key: string]: number }) => PriceDetails;
 }
 
 const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quote, user, calculatePriceDetails }) => {
@@ -364,21 +356,23 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quot
                     }
                 }
                 
-                const priceDetails = calculatePriceDetails(item, quote.quoteItems);
-                const unitPrice = item.quantity > 0 ? priceDetails.basePrice / item.quantity : 0;
+                const effectiveDiscounts = quote.customerDiscounts || {};
+                const priceDetails = calculatePriceDetails(item, effectiveDiscounts);
+                const unitPVP = item.quantity > 0 ? priceDetails.basePrice / item.quantity : 0;
             
                 return [
                     item.quantity,
                     description.trim(),
-                    unitPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }),
-                    priceDetails.basePrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })
+                    unitPVP.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }),
+                    `${priceDetails.discountPercent.toFixed(2)}%`,
+                    priceDetails.discountedPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })
                 ];
             });
 
             // @ts-ignore
             doc.autoTable({
                 startY: boxHeight + 68,
-                head: [['Cant.', 'Descripción', 'P. Unitario', 'Total']],
+                head: [['Cant.', 'Descripción', 'PVP Unit.', 'Dto. %', 'Subtotal']],
                 body: tableRows,
                 theme: 'striped',
                 headStyles: {
@@ -395,15 +389,15 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quot
                 columnStyles: {
                     0: { cellWidth: 15, halign: 'center' },
                     1: { cellWidth: 'auto' },
-                    2: { cellWidth: 30, halign: 'right' },
-                    3: { cellWidth: 30, halign: 'right' },
+                    2: { cellWidth: 25, halign: 'right' },
+                    3: { cellWidth: 20, halign: 'right' },
+                    4: { cellWidth: 30, halign: 'right' },
                 }
             });
 
             // --- Totals ---
             const finalY = (doc as any).autoTable.previous.finalY || 150;
-            const priceCalculations = quote.quoteItems.map(item => calculatePriceDetails(item, quote.quoteItems));
-            const subtotal = priceCalculations.reduce((sum, details) => sum + details.basePrice, 0);
+            const priceCalculations = quote.quoteItems.map(item => calculatePriceDetails(item, quote.customerDiscounts || {}));
             
             let currentY = finalY + 10;
             doc.setFontSize(10);
@@ -415,17 +409,7 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quot
                 currentY += 6;
             };
 
-            drawTotalLine('Subtotal', subtotal.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }));
-            
-            let baseImponible = 0;
-
-            const discountedSubtotal = priceCalculations.reduce((sum, details) => sum + details.discountedPrice, 0);
-            const totalDiscountAmount = subtotal - discountedSubtotal;
-            baseImponible = discountedSubtotal;
-            
-            if (totalDiscountAmount > 0) {
-                drawTotalLine(`Descuento aplicado`, `- ${totalDiscountAmount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}`);
-            }
+            const baseImponible = priceCalculations.reduce((sum, details) => sum + details.discountedPrice, 0);
             
             drawTotalLine('Base Imponible', baseImponible.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }));
             
@@ -697,8 +681,6 @@ const CustomQuoteModal: React.FC<CustomQuoteModalProps> = ({ isOpen, onClose }) 
 };
 
 
-const PROMO_TURNOVER_LIMIT = 5000;
-
 const App: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [view, setView] = useState<'app' | 'my_quotes' | 'conditions' | 'guides'>('app');
@@ -718,6 +700,7 @@ const App: React.FC = () => {
     const [currentItemConfig, setCurrentItemConfig] = useState<QuoteState>(INITIAL_QUOTE_STATE);
     const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([]);
     const [editingItemId, setEditingItemId] = useState<string | null>(null);
+    const [appliedDiscounts, setAppliedDiscounts] = useState<{ [key: string]: number }>({});
 
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
     const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
@@ -750,14 +733,14 @@ const App: React.FC = () => {
             for (const authorizedUser of authorizedUsers) {
                 const storedVersion = usersMap.get(authorizedUser.email);
                 const updatedUser = {
-                    ...authorizedUser, // Start with the base data from code (name, discounts, password).
+                    ...authorizedUser, // Start with the base data from code (name, password).
                     // Preserve dynamic/user-editable fields from storage if they exist.
                     promotion: storedVersion?.promotion,
                     preparedBy: storedVersion?.preparedBy || authorizedUser.preparedBy,
                     fiscalName: storedVersion?.fiscalName || authorizedUser.fiscalName,
                     sucursal: storedVersion?.sucursal || authorizedUser.sucursal,
                 };
-                usersMap.set(authorizedUser.email, updatedUser);
+                usersMap.set(authorizedUser.email, updatedUser as StoredUser);
             }
 
             const finalUsers = Array.from(usersMap.values());
@@ -824,7 +807,7 @@ const App: React.FC = () => {
     };
     
     // --- Pricing Logic ---
-    const calculateItemPrice = useCallback((item: QuoteState, allItems: QuoteItem[] = []): number => {
+    const calculateItemPrice = useCallback((item: QuoteState): number => {
         if (item.productLine === 'KITS') {
             // For KITS, the price is fixed and color selection does not add any extra cost.
             const basePrice = item.kitProduct?.price || 0;
@@ -854,41 +837,9 @@ const App: React.FC = () => {
         return singleItemPrice * quantity;
     }, []);
 
-    const calculateInternalItemPrice = useCallback((item: QuoteItem, allItems: QuoteItem[] = []): number => {
-        if (!currentUser) return 0;
-
-        const basePrice = calculateItemPrice(item, allItems);
-        let discountPercent = 0;
-
-        if (item.productLine?.startsWith('CLASSIC') && currentUser.discounts?.classicSpecial) {
-             const classicItems = allItems.filter(i => i.productLine?.startsWith('CLASSIC'));
-             const totalClassicQuantity = classicItems.reduce((sum, i) => sum + i.quantity, 0);
-
-            if (totalClassicQuantity >= currentUser.discounts.classicSpecial.minQuantity) {
-                 discountPercent = currentUser.discounts.classicSpecial.discount;
-            } else if (currentUser.discounts?.showerTrays) {
-                 discountPercent = currentUser.discounts.showerTrays;
-            }
-        } else if (currentUser.discounts?.showerTrays) {
-            discountPercent = currentUser.discounts.showerTrays;
-        }
-
-        const discountedPrice = basePrice * (1 - discountPercent / 100);
-        return discountedPrice;
-    }, [calculateItemPrice, currentUser]);
-
-    const calculatePriceDetails = useCallback((item: QuoteItem, allItems: QuoteItem[]): PriceDetails => {
-        const basePrice = calculateItemPrice(item, allItems);
-        
-        let discountPercent = 0;
-        
-        if (currentUser) {
-            const internalPrice = calculateInternalItemPrice(item, allItems);
-            if (basePrice > 0) {
-                 discountPercent = ((basePrice - internalPrice) / basePrice) * 100;
-            }
-        }
-
+    const calculatePriceDetails = useCallback((item: QuoteItem, discounts: { [key: string]: number }): PriceDetails => {
+        const basePrice = calculateItemPrice(item); // PVP
+        const discountPercent = (item.productLine && discounts[item.productLine]) || 0;
         const discountedPrice = basePrice * (1 - discountPercent / 100);
         const finalPrice = discountedPrice * (1 + VAT_RATE);
 
@@ -898,19 +849,24 @@ const App: React.FC = () => {
             finalPrice,
             discountPercent
         };
-    }, [calculateItemPrice, calculateInternalItemPrice, currentUser]);
+    }, [calculateItemPrice]);
 
 
     const currentItemPrice = useMemo(() => {
         const pvp = calculateItemPrice(currentItemConfig);
-        return currentUser ? calculateInternalItemPrice({ ...currentItemConfig, id: '' }, []) : pvp;
-    }, [currentItemConfig, calculateItemPrice, calculateInternalItemPrice, currentUser]);
+        const discountPercent = (currentItemConfig.productLine && appliedDiscounts[currentItemConfig.productLine]) || 0;
+        const discountedPVP = pvp * (1 - discountPercent / 100);
+        return discountedPVP * (1 + VAT_RATE);
+    }, [currentItemConfig, calculateItemPrice, appliedDiscounts]);
+
 
     const totalQuotePrice = useMemo(() => {
-        let subtotal = 0;
-        subtotal = quoteItems.reduce((sum, item) => sum + calculateInternalItemPrice(item, quoteItems), 0);
+        const subtotal = quoteItems.reduce((sum, item) => {
+            const details = calculatePriceDetails(item, appliedDiscounts);
+            return sum + details.discountedPrice;
+        }, 0);
         return subtotal * (1 + VAT_RATE);
-    }, [quoteItems, calculateInternalItemPrice]);
+    }, [quoteItems, appliedDiscounts, calculatePriceDetails]);
 
 
     // --- Step Navigation & State Management ---
@@ -931,6 +887,7 @@ const App: React.FC = () => {
         setCurrentStep(0);
         setQuoteItems([]);
         setEditingItemId(null);
+        setAppliedDiscounts({});
     };
 
     const handleDiscard = () => {
@@ -1031,6 +988,9 @@ const App: React.FC = () => {
         try {
             const allQuotes: SavedQuote[] = JSON.parse(localStorage.getItem('quotes') || '[]') as SavedQuote[];
             const newQuoteIdNumber = (allQuotes.filter(q => q.userEmail === currentUser.email).length + 1).toString().padStart(4, '0');
+            
+            const pvpTotal = quoteItems.reduce((sum, item) => sum + calculateItemPrice(item), 0);
+            
             const newQuote: SavedQuote = {
                 id: `quote_c_${newQuoteIdNumber}`,
                 timestamp: Date.now(),
@@ -1043,7 +1003,8 @@ const App: React.FC = () => {
                 sucursal: details.sucursal,
                 deliveryAddress: details.deliveryAddress,
                 type: 'customer',
-                 pvpTotalPrice: quoteItems.reduce((sum, item) => sum + calculateItemPrice(item, quoteItems), 0),
+                pvpTotalPrice: pvpTotal,
+                customerDiscounts: appliedDiscounts,
             };
             
             allQuotes.push(newQuote);
@@ -1057,9 +1018,10 @@ const App: React.FC = () => {
         }
     };
     
-    const handleDuplicateQuote = (itemsToDuplicate: QuoteItem[]) => {
+    const handleDuplicateQuote = (quoteToDuplicate: SavedQuote) => {
         resetQuote();
-        setQuoteItems(itemsToDuplicate);
+        setQuoteItems(JSON.parse(JSON.stringify(quoteToDuplicate.quoteItems)));
+        setAppliedDiscounts(quoteToDuplicate.customerDiscounts || {});
         setCurrentStep(totalSteps); // Go straight to summary
         setView('app');
     };
@@ -1077,7 +1039,8 @@ const App: React.FC = () => {
             customerName: 'Cliente (Previsualización)',
             projectReference: '',
             type: 'customer',
-            pvpTotalPrice: quoteItems.reduce((sum, item) => sum + calculateItemPrice(item, quoteItems), 0),
+            pvpTotalPrice: quoteItems.reduce((sum, item) => sum + calculateItemPrice(item), 0),
+            customerDiscounts: appliedDiscounts,
         };
 
         setQuoteForPdf(quoteForPreview);
@@ -1243,7 +1206,7 @@ const App: React.FC = () => {
     const renderCurrentStep = () => {
         if (currentStep === 0) {
              if (view === 'app') return <WelcomePage userName={currentUser!.companyName} onNewQuote={() => handleStartNewQuote(true)} onViewQuotes={() => setView('my_quotes')} onResumeQuote={() => handleStartNewQuote(false)} hasActiveQuote={isQuoteActive} />;
-             if (view === 'my_quotes') return <MyQuotesPage user={currentUser!} onDuplicateQuote={handleDuplicateQuote} onViewPdf={handleViewPdf} calculateInternalItemPrice={calculateInternalItemPrice} />;
+             if (view === 'my_quotes') return <MyQuotesPage user={currentUser!} onDuplicateQuote={handleDuplicateQuote} onViewPdf={handleViewPdf} />;
              if (view === 'conditions') return <CommercialConditionsPage user={currentUser!} />;
              if (view === 'guides') return <MaintenanceGuidesPage />;
         }
@@ -1381,7 +1344,9 @@ const App: React.FC = () => {
                         onStartNew={handleStartNewItem}
                         onEdit={handleEditItem}
                         onDelete={handleDeleteItem}
-                        calculateItemPrice={(item) => calculatePriceDetails(item, quoteItems).finalPrice}
+                        calculatePriceDetails={(item) => calculatePriceDetails(item, appliedDiscounts)}
+                        appliedDiscounts={appliedDiscounts}
+                        onUpdateDiscounts={setAppliedDiscounts}
                     />
                  );
             default:
@@ -1518,7 +1483,9 @@ const App: React.FC = () => {
                                                         onStartNew={handleStartNewItem}
                                                         onEdit={handleEditItem}
                                                         onDelete={handleDeleteItem}
-                                                        calculateItemPrice={(item) => calculatePriceDetails(item, quoteItems).finalPrice}
+                                                        calculatePriceDetails={(item) => calculatePriceDetails(item, appliedDiscounts)}
+                                                        appliedDiscounts={appliedDiscounts}
+                                                        onUpdateDiscounts={setAppliedDiscounts}
                                                     />
                                                  ) : (
                                                     renderCurrentStep()

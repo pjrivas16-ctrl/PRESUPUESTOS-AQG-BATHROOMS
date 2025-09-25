@@ -16,27 +16,12 @@ export const authorizedUsers: StoredUser[] = [
         companyName: 'AQG Bathrooms (Admin)',
         email: 'admin@aqg.com',
         password: 'adminpassword',
-        preparedBy: 'Equipo AQG',
-        discounts: {
-            showerTrays: 50,
-            terrazzoShowerTrays: 50,
-            countertops: 50,
-            classicSpecialCondition: 'Si se iguala o supera 10 unidades en la colección CLASSIC, se aplica un 71% de descuento.',
-            classicSpecial: {
-                minQuantity: 10,
-                discount: 71,
-            }
-        }
+        preparedBy: 'Equipo AQG'
     },
     {
         companyName: 'JAIME',
         email: 'jrodriguezrepresentacion@gmail.com',
-        password: 'POLLITOLOCO',
-        discounts: {
-            showerTrays: 55,
-            terrazzoShowerTrays: 55,
-            countertops: 55,
-        }
+        password: 'POLLITOLOCO'
     },
     {
         companyName: 'SUSANA',

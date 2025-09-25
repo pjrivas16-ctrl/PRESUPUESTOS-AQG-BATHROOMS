@@ -5,13 +5,12 @@ import type { User, SavedQuote, QuoteItem } from '../types';
 
 interface MyQuotesPageProps {
     user: User;
-    onDuplicateQuote: (quoteItems: QuoteItem[]) => void;
+    onDuplicateQuote: (quote: SavedQuote) => void;
     onViewPdf: (quote: SavedQuote) => void;
-    calculateInternalItemPrice: (item: QuoteItem, allItems: QuoteItem[]) => number;
 }
 
 
-const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onViewPdf, calculateInternalItemPrice }) => {
+const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onViewPdf }) => {
     const [allQuotes, setAllQuotes] = useState<SavedQuote[]>([]);
     const [selectedQuote, setSelectedQuote] = useState<SavedQuote | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -86,8 +85,7 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
     
     const handleDuplicate = () => {
         if (!selectedQuote) return;
-        const duplicatedItems = JSON.parse(JSON.stringify(selectedQuote.quoteItems));
-        onDuplicateQuote(duplicatedItems);
+        onDuplicateQuote(selectedQuote);
     };
 
     const renderModal = () => {
@@ -158,11 +156,20 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
             }
         });
         
-        const internalTotalBase = quoteItems.reduce((sum, item) => sum + calculateInternalItemPrice(item, quoteItems), 0);
-        const internalTotal = internalTotalBase * 1.21;
+        
+        body += `\n--- DESCUENTOS APLICADOS ---\n`;
+        if (selectedQuote.customerDiscounts && Object.keys(selectedQuote.customerDiscounts).length > 0) {
+            for (const [line, discount] of Object.entries(selectedQuote.customerDiscounts)) {
+                body += `${line}: ${discount}%\n`;
+            }
+        } else {
+            body += `Ninguno\n`;
+        }
 
-        body += `\n--- FIN DETALLES ---\n\n` +
-                `Total (condiciones internas): ${internalTotal.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}\n\n` +
+        body += `\n--- TOTALES ---\n` +
+                `Subtotal (PVP): ${ (selectedQuote.pvpTotalPrice || 0).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }) }\n` +
+                `Base Imponible (con Dtos.): ${ (selectedQuote.totalPrice / 1.21).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }) }\n` +
+                `Total (IVA Incl.): ${ selectedQuote.totalPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }) }\n\n` +
                 `Gracias.`;
 
         const mailtoLink = `mailto:sandra.martinez@aqgbathrooms.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
