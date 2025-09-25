@@ -26,8 +26,8 @@ const MaintenanceGuidesPage: React.FC = () => {
 
     return (
         <div className="animate-fade-in h-full">
-            <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">Guías de Mantenimiento</h2>
-            <p className="text-slate-500 mb-8">Descarga nuestras guías de instalación y mantenimiento para asegurar la longevidad y el correcto funcionamiento de tus productos AQG.</p>
+            <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">Descargas</h2>
+            <p className="text-slate-500 mb-8">Descarga nuestros catálogos, guías de instalación y otros documentos de interés.</p>
     
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <GuideCard
