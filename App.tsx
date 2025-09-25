@@ -390,6 +390,9 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quot
                 } else {
                     description = `Plato de ducha ${item.productLine} - ${item.model?.name}\n`;
                     description += `Dimensiones: ${item.width}x${item.length}cm\n`;
+                    if (item.cutWidth && item.cutLength) {
+                        description += `Corte a medida: ${item.cutWidth}x${item.cutLength}cm\n`;
+                    }
                     description += `Color: ${item.color?.name || `RAL ${item.ralCode}`}\n`;
                     if (item.extras.length > 0) {
                         description += `Extras: ${item.extras.map(e => e.id === 'bitono' && item.bitonoColor ? `Tapa bitono: ${item.bitonoColor.name}` : e.name).join(', ')}`;
@@ -1259,8 +1262,24 @@ const App: React.FC = () => {
                  return !currentItemConfig.color && !(isRal && currentItemConfig.ralCode);
             }
             if (currentStep === 5) { // Step 5: Extras
-                 const isBitono = currentItemConfig.extras.some(e => e.id === 'bitono');
-                 return isBitono && !currentItemConfig.bitonoColor;
+                const isBitono = currentItemConfig.extras.some(e => e.id === 'bitono');
+                if (isBitono && !currentItemConfig.bitonoColor) return true;
+
+                const hasCut = currentItemConfig.extras.some(e => e.id.startsWith('corte'));
+                if (hasCut) {
+                    const { cutWidth, cutLength, width, length } = currentItemConfig;
+                    if (!cutWidth || cutWidth <= 0 || !cutLength || cutLength <= 0) {
+                        return true; // Must provide positive dimensions
+                    }
+                    if (width && length) {
+                        const baseSorted = [width, length].sort((a, b) => a - b);
+                        const cutSorted = [cutWidth, cutLength].sort((a, b) => a - b);
+                        if (cutSorted[0] > baseSorted[0] || cutSorted[1] > baseSorted[1]) {
+                            return true; // Cut dimensions (even if rotated) are larger than base dimensions
+                        }
+                    }
+                }
+                return false;
             }
         }
         return false;
@@ -1377,11 +1396,20 @@ const App: React.FC = () => {
                         onToggle={(extra) => setCurrentItemConfig(prev => {
                             const isSelected = prev.extras.some(e => e.id === extra.id);
                             let newExtras = isSelected ? prev.extras.filter(e => e.id !== extra.id) : [...prev.extras, extra];
+                            
+                            const hasCut = newExtras.some(e => e.id.startsWith('corte'));
+                            
                             let newBitonoColor = prev.bitonoColor;
                             if (extra.id === 'bitono' && isSelected) { // Untoggling bitono
                                 newBitonoColor = undefined;
                             }
-                            return { ...prev, extras: newExtras, bitonoColor: newBitonoColor };
+                            return { 
+                                ...prev, 
+                                extras: newExtras, 
+                                bitonoColor: newBitonoColor,
+                                cutWidth: hasCut ? prev.cutWidth : undefined,
+                                cutLength: hasCut ? prev.cutLength : undefined,
+                            };
                         })}
                         selectedExtras={currentItemConfig.extras}
                         productLine={currentItemConfig.productLine}
@@ -1390,6 +1418,11 @@ const App: React.FC = () => {
                         onSelectBitonoColor={(color) => setCurrentItemConfig(prev => ({ ...prev, bitonoColor: color }))}
                         structFrames={currentItemConfig.structFrames}
                         onUpdateStructFrames={(frames) => setCurrentItemConfig(prev => ({...prev, structFrames: frames}))}
+                        baseWidth={currentItemConfig.width}
+                        baseLength={currentItemConfig.length}
+                        cutWidth={currentItemConfig.cutWidth}
+                        cutLength={currentItemConfig.cutLength}
+                        onUpdateCutDimensions={(dims) => setCurrentItemConfig(prev => ({...prev, ...dims}))}
                     />
                 );
             case 6: // Summary step for shower trays

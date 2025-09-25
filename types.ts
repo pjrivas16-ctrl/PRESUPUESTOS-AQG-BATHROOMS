@@ -25,6 +25,8 @@ export interface QuoteState {
     bitonoColor?: ColorOption | null;
     bitonoRalCode?: string;
     structFrames?: 1 | 2 | 3 | 4;
+    cutWidth?: number;
+    cutLength?: number;
 
     // For Kits
     kitProduct?: ProductOption | null;

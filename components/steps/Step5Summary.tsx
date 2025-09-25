@@ -19,7 +19,7 @@ const QuoteItemCard: React.FC<{ item: QuoteItem; onEdit: () => void; onDelete: (
     const isKitProduct = item.productLine === 'KITS';
 
     const renderExtras = () => {
-        if (item.extras.length === 0) return null;
+        if (!item.extras || item.extras.length === 0) return null;
 
         const extrasList = item.extras.map(e => {
             if (e.id === 'bitono' && item.bitonoColor) return `Tapa bitono: ${item.bitonoColor.name}`;
@@ -43,6 +43,9 @@ const QuoteItemCard: React.FC<{ item: QuoteItem; onEdit: () => void; onDelete: (
                         <>
                             <h4 className="font-bold text-slate-800">{item.productLine} - {item.model?.name}</h4>
                             <p className="text-sm text-slate-500">{item.width}cm x {item.length}cm ({item.quantity} {item.quantity > 1 ? 'unidades' : 'unidad'})</p>
+                            {item.cutWidth && item.cutLength && (
+                                <p className="text-sm text-slate-500 font-medium">Corte a: <span className="text-teal-600">{item.cutWidth}cm x {item.cutLength}cm</span></p>
+                            )}
                             <p className="text-sm text-slate-500">Color: {item.color?.name || `RAL ${item.ralCode}`}</p>
                             {item.productLine === 'STRUCT DETAIL' && <p className="text-sm text-slate-500">Marcos: {item.structFrames}</p>}
                             {renderExtras()}

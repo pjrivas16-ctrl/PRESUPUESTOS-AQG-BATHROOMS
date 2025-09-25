@@ -11,6 +11,11 @@ interface Step4ExtrasProps {
     onSelectBitonoColor: (color: ColorOption) => void;
     structFrames?: 1 | 2 | 3 | 4;
     onUpdateStructFrames: (frames: 1 | 2 | 3 | 4) => void;
+    baseWidth?: number;
+    baseLength?: number;
+    cutWidth?: number;
+    cutLength?: number;
+    onUpdateCutDimensions: (dims: { cutWidth?: number; cutLength?: number }) => void;
 }
 
 const CheckIcon = () => (
@@ -29,9 +34,15 @@ const Step4Extras: React.FC<Step4ExtrasProps> = ({
     onSelectBitonoColor,
     structFrames,
     onUpdateStructFrames,
+    baseWidth,
+    baseLength,
+    cutWidth,
+    cutLength,
+    onUpdateCutDimensions,
 }) => {
     
     const isSelected = (extraId: string) => selectedExtras.some(e => e.id === extraId);
+    const hasCut = selectedExtras.some(e => e.id.startsWith('corte'));
     
     const availableExtras = useMemo(() => {
         const generalExtras = SHOWER_EXTRAS.filter(e => e.id.startsWith('corte'));
@@ -59,6 +70,22 @@ const Step4Extras: React.FC<Step4ExtrasProps> = ({
         if (!mainColor) return STANDARD_COLORS;
         return STANDARD_COLORS.filter(c => c.id !== mainColor.id);
     }, [mainColor]);
+    
+    const cutValidationError = useMemo(() => {
+        if (!hasCut || !cutWidth || !cutLength || !baseWidth || !baseLength) {
+            return '';
+        }
+        if (cutWidth <= 0 || cutLength <= 0) {
+            return 'Las medidas de corte deben ser mayores que cero.';
+        }
+        const baseSorted = [baseWidth, baseLength].sort((a, b) => a - b);
+        const cutSorted = [cutWidth, cutLength].sort((a, b) => a - b);
+
+        if (cutSorted[0] > baseSorted[0] || cutSorted[1] > baseSorted[1]) {
+            return `Las medidas de corte (${cutWidth}x${cutLength}) no pueden ser mayores que las del plato original (${baseWidth}x${baseLength}).`;
+        }
+        return '';
+    }, [hasCut, cutWidth, cutLength, baseWidth, baseLength]);
 
     const renderStructFramesSelector = () => {
         if (productLine !== 'STRUCT DETAIL') return null;
@@ -166,6 +193,48 @@ const Step4Extras: React.FC<Step4ExtrasProps> = ({
                     );
                 })}
             </div>
+            
+            {hasCut && (
+                 <div className="mt-6 p-4 bg-teal-50/50 rounded-lg animate-fade-in border-t-2 border-teal-200">
+                    <h4 className="block text-base font-semibold text-teal-800 mb-3">
+                        Medidas Finales del Plato (Corte)
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label htmlFor="cutWidth" className="block text-sm font-medium text-slate-700 mb-1">Ancho Final (cm)</label>
+                            <input
+                                id="cutWidth"
+                                type="number"
+                                placeholder={`Máx: ${baseWidth} cm`}
+                                value={cutWidth || ''}
+                                onChange={(e) => onUpdateCutDimensions({ cutWidth: e.target.value ? Number(e.target.value) : undefined, cutLength })}
+                                className="w-full p-2 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="cutLength" className="block text-sm font-medium text-slate-700 mb-1">Largo Final (cm)</label>
+                             <input
+                                id="cutLength"
+                                type="number"
+                                placeholder={`Máx: ${baseLength} cm`}
+                                value={cutLength || ''}
+                                onChange={(e) => onUpdateCutDimensions({ cutWidth, cutLength: e.target.value ? Number(e.target.value) : undefined })}
+                                className="w-full p-2 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition"
+                            />
+                        </div>
+                    </div>
+                    {cutValidationError ? (
+                        <p className="text-xs text-red-700 bg-red-100 p-2 rounded-md mt-4">
+                           {cutValidationError}
+                        </p>
+                    ) : (
+                         <p className="text-xs text-teal-700 mt-3">
+                            Introduce las dimensiones exactas a las que se debe cortar el plato.
+                        </p>
+                    )}
+                </div>
+            )}
+
             {renderStructFramesSelector()}
         </div>
     );

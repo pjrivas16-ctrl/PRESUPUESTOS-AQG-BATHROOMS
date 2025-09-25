@@ -136,8 +136,11 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                 body += `Plato de ducha ${item.productLine}\n` +
                         `- Unidades: ${item.quantity || 1}\n` +
                         `- Textura: ${item.model?.name}\n` +
-                        `- Dimensiones: ${item.width}x${item.length}cm\n` +
-                        `- Color: ${item.color?.name || `RAL ${item.ralCode}`}\n`;
+                        `- Dimensiones: ${item.width}x${item.length}cm\n`;
+                if (item.cutWidth && item.cutLength) {
+                    body += `- Corte a medida: ${item.cutWidth}x${item.cutLength}cm\n`;
+                }
+                body += `- Color: ${item.color?.name || `RAL ${item.ralCode}`}\n`;
 
                 if (item.extras.length > 0) {
                     body += `  Extras:\n`;
@@ -187,6 +190,9 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                                 {item.productLine !== 'KITS' ? (
                                     <>
                                         <p className="text-sm text-slate-500">{item.width}cm x {item.length}cm &bull; ({item.quantity} {item.quantity > 1 ? 'unidades' : 'unidad'})</p>
+                                        {item.cutWidth && item.cutLength && (
+                                            <p className="text-sm text-slate-500 font-medium">Corte a: <span className="text-teal-600">{item.cutWidth}cm x {item.cutLength}cm</span></p>
+                                        )}
                                         <p className="text-sm text-slate-500">Color: {item.color?.name || `RAL ${item.ralCode}`}</p>
                                         {item.extras.length > 0 && <p className="text-xs text-slate-400 mt-1">Extras: {item.extras.map(e => e.name).join(', ')}</p>}
                                     </>

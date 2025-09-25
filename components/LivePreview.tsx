@@ -42,6 +42,7 @@ const LivePreview: React.FC<LivePreviewProps> = ({ item, price }) => {
                     <div className="space-y-1">
                         {renderDetail('Colección', item.productLine)}
                         {renderDetail('Dimensiones', item.width && item.length ? `${item.width} x ${item.length} cm` : null)}
+                        {renderDetail('Medidas de Corte', item.cutWidth && item.cutLength ? <span className="text-teal-600">{`${item.cutWidth} x ${item.cutLength} cm`}</span> : null)}
                         {renderDetail('Textura', item.model?.name)}
                         {renderDetail('Color', item.color?.name ? <ColorSwatch hex={item.color.hex} text={item.color.name} /> : (item.ralCode ? <ColorSwatch text={`RAL ${item.ralCode}`} /> : null))}
                         {item.bitonoColor && renderDetail('Color Tapa', <ColorSwatch hex={item.bitonoColor.hex} text={item.bitonoColor.name} />)}
