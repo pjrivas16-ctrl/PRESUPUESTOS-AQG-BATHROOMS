@@ -19,8 +19,7 @@ import Step3KitDetails from './components/steps/kits/Step3KitDetails';
 import NextPrevButtons from './components/NextPrevButtons';
 import AuthPage from './components/auth/AuthPage';
 import MyQuotesPage from './components/MyQuotesPage';
-import PromotionsPage from './components/PromotionsPage';
-import PromotionBanner from './components/PromotionBanner';
+import CommercialConditionsPage from './components/CommercialConditionsPage';
 import LivePreview from './components/LivePreview';
 import MaintenanceGuidesPage from './components/MaintenanceGuidesPage';
 
@@ -57,7 +56,7 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ userName, onNewQuote, onViewQ
         <div className="animate-fade-in text-center flex flex-col items-center justify-center h-full">
             <h1 className="text-4xl font-extrabold text-slate-800 tracking-tight">Bienvenido, {userName}</h1>
             <p className="mt-4 text-lg text-slate-600 max-w-2xl">
-                Estás en la Tarifa Digital de AQG. Desde aquí puedes crear nuevos presupuestos, gestionar los existentes y acceder a nuestras guías y promociones.
+                Estás en la Herramienta Comercial de AQG. Desde aquí puedes crear nuevos presupuestos, gestionar los existentes y acceder a guías de producto.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row gap-4">
                 {hasActiveQuote && (
@@ -103,10 +102,9 @@ interface SettingsModalProps {
     user: User;
     onExport: () => void;
     onImport: (event: React.ChangeEvent<HTMLInputElement>) => void;
-    welcomePromoIsActive: boolean;
 }
 
-const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, user, onExport, onImport, welcomePromoIsActive }) => {
+const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, user, onExport, onImport }) => {
     const [preparedBy, setPreparedBy] = useState(user.preparedBy || '');
     const [fiscalName, setFiscalName] = useState(user.fiscalName || user.companyName || '');
     const [sucursal, setSucursal] = useState(user.sucursal || '');
@@ -136,7 +134,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066 2.573c-.94-1.543.826 3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-slate-800">Ajustes de PDF</h3>
+                            <h3 className="text-xl font-bold text-slate-800">Ajustes de Comercial</h3>
                             <p className="text-sm text-slate-500">Personaliza la información en tus presupuestos.</p>
                         </div>
                     </div>
@@ -146,7 +144,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
                 <div className="space-y-6">
                      <div>
                         <label htmlFor="fiscal-name" className="block text-sm font-medium text-slate-700 mb-2">
-                            Nombre Fiscal (en PDF)
+                            Tu Nombre Fiscal (Remitente en PDF)
                         </label>
                         <input
                             id="fiscal-name"
@@ -156,11 +154,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
                             placeholder="Nombre fiscal de tu empresa"
                             className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition"
                         />
-                         <p className="text-xs text-slate-500 mt-1">Este es el nombre que aparecerá como remitente.</p>
+                         <p className="text-xs text-slate-500 mt-1">Este es el nombre que aparecerá como emisor del presupuesto.</p>
                     </div>
                      <div>
                         <label htmlFor="sucursal" className="block text-sm font-medium text-slate-700 mb-2">
-                            Sucursal (Opcional)
+                            Tu Sucursal (Opcional)
                         </label>
                         <input
                             id="sucursal"
@@ -170,11 +168,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
                             placeholder="Ej: Tienda Centro"
                             className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition"
                         />
-                         <p className="text-xs text-slate-500 mt-1">Identifica la sucursal que emite el presupuesto.</p>
+                         <p className="text-xs text-slate-500 mt-1">Identifica la sucursal desde la que operas.</p>
                     </div>
                     <div>
                         <label htmlFor="prepared-by" className="block text-sm font-medium text-slate-700 mb-2">
-                            Preparado por (nombre del comercial)
+                            Tu Nombre (Preparado por)
                         </label>
                         <input
                             id="prepared-by"
@@ -190,67 +188,17 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
 
                 <div className="mt-8 pt-6 border-t border-slate-200">
                     <div className="flex items-center gap-3 mb-4">
-                         <div className="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M8.433 7.418c.158-.103.346-.196.567-.267v1.698a2.5 2.5 0 00-1.133 0V7.151c.22.07.408.164.567.267zM11.567 7.151v1.698a2.5 2.5 0 00-1.133 0V7.151c.22.07.408.164.567.267z" />
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-11a1 1 0 10-2 0v1.077a4.5 4.5 0 00-.767 8.058A1 1 0 008 17.5V15a1 1 0 00-2 0v1.077a4.503 4.503 0 000-8.154V7zm4 0a1 1 0 10-2 0v1.077a4.5 4.5 0 000 8.154V17.5a1 1 0 102 0V15a1 1 0 10-2 0v-1.077a4.5 4.5 0 000-8.154V7z" clipRule="evenodd" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h4 className="text-lg font-bold text-slate-800">Condiciones Comerciales</h4>
-                             <p className="text-sm text-slate-500">Tus descuentos y promociones aplicables.</p>
-                        </div>
-                    </div>
-                    <div className="space-y-3 text-sm">
-                        {user.discounts?.showerTrays ? (
-                            <div className="flex justify-between p-3 bg-slate-50 rounded-md">
-                                <span className="text-slate-600">Dto. Platos de Ducha:</span>
-                                <span className="font-semibold text-slate-800">{user.discounts.showerTrays}%</span>
-                            </div>
-                        ) : null}
-                        {user.discounts?.terrazzoShowerTrays ? (
-                            <div className="flex justify-between p-3 bg-slate-50 rounded-md">
-                                <span className="text-slate-600">Dto. Platos de Ducha de Terrazo:</span>
-                                <span className="font-semibold text-slate-800">{user.discounts.terrazzoShowerTrays}%</span>
-                            </div>
-                        ) : null}
-                        {user.discounts?.countertops ? (
-                            <div className="flex justify-between p-3 bg-slate-50 rounded-md">
-                                <span className="text-slate-600">Dto. Encimeras y Lavabos:</span>
-                                <span className="font-semibold text-slate-800">{user.discounts.countertops}%</span>
-                            </div>
-                        ) : null}
-                        {user.discounts?.classicSpecialCondition ? (
-                            <div className="p-3 bg-slate-50 rounded-md">
-                                <p className="text-slate-600 font-medium">Condición Especial (Colección CLASSIC):</p>
-                                <p className="text-slate-800 mt-1">{user.discounts.classicSpecialCondition}</p>
-                            </div>
-                        ) : null}
-                        {welcomePromoIsActive && (
-                             <div className="p-3 bg-teal-50 rounded-md border border-teal-200">
-                                <p className="font-semibold text-teal-800">Promoción de Bienvenida Activa</p>
-                                <p className="text-teal-700 text-xs">Descuento del 50% + 25% adicional en todos los pedidos.</p>
-                            </div>
-                        )}
-                        {!(user.discounts?.showerTrays || user.discounts?.terrazzoShowerTrays || user.discounts?.countertops || user.discounts?.classicSpecialCondition || welcomePromoIsActive) && (
-                            <p className="text-slate-500 text-center p-4">No tienes condiciones comerciales especiales asignadas.</p>
-                        )}
-                    </div>
-                </div>
-
-                <div className="mt-8 pt-6 border-t border-slate-200">
-                    <div className="flex items-center gap-3 mb-4">
                          <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4M4 7v1.111c0 .488.132.953.375 1.36M20 7v1.111c0 .488-.132.953-.375 1.36M12 11c-4.418 0-8-1.79-8-4" /></svg>
                         </div>
                         <div>
                             <h4 className="text-lg font-bold text-slate-800">Gestión de Datos</h4>
-                             <p className="text-sm text-slate-500">Guarda o restaura tus datos de la aplicación.</p>
+                             <p className="text-sm text-slate-500">Guarda o restaura tus presupuestos y ajustes.</p>
                         </div>
                     </div>
                     <div className="space-y-4">
                         <p className="text-sm text-slate-600">
-                            Guarda una copia de seguridad de todos tus presupuestos y ajustes, o restaura desde un archivo guardado.
+                            Guarda una copia de seguridad de todos tus presupuestos, o restaura desde un archivo guardado.
                         </p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <button 
@@ -311,10 +259,9 @@ interface PdfPreviewModalProps {
     quote: SavedQuote | null;
     user: User;
     calculatePriceDetails: (item: QuoteItem, allItems: QuoteItem[]) => PriceDetails;
-    welcomePromoIsActive: boolean;
 }
 
-const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quote, user, calculatePriceDetails, welcomePromoIsActive }) => {
+const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quote, user, calculatePriceDetails }) => {
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const pdfDoc = useRef<any>(null); // To store the jsPDF instance
@@ -361,19 +308,34 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quot
             doc.text(new Date(quote.timestamp).toLocaleDateString('es-ES'), 160, 55);
 
             // --- Client Info Box ---
+            const hasDeliveryAddress = quote.deliveryAddress && quote.deliveryAddress.trim() !== '';
+            const boxHeight = hasDeliveryAddress ? 32 : 22;
             doc.setDrawColor(226, 232, 240); // slate-200
-            doc.roundedRect(14, 62, 90, 22, 2, 2, 'S');
+            doc.roundedRect(14, 62, 181, boxHeight, 2, 2, 'S');
             doc.setFontSize(9);
             doc.setTextColor(lightTextColor);
             doc.text('PRESUPUESTO PARA:', 20, 68);
             doc.setFontSize(11);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(textColor);
-            doc.text(quote.customerName || 'Cliente sin especificar', 20, 74);
+            
+            let clientLine1 = quote.fiscalName || quote.customerName || 'Cliente sin especificar';
+            if (quote.sucursal) {
+                clientLine1 += ` (${quote.sucursal})`;
+            }
+            doc.text(clientLine1, 20, 74);
+            
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(9);
             doc.setTextColor(lightTextColor);
             if (quote.projectReference) doc.text(`Referencia: ${quote.projectReference}`, 20, 79);
+
+            if (hasDeliveryAddress) {
+                doc.setFont('helvetica', 'bold');
+                doc.text(`Dirección de Entrega:`, 20, 89);
+                doc.setFont('helvetica', 'normal');
+                doc.text(quote.deliveryAddress!, 58, 89);
+            }
 
 
             // --- Table ---
@@ -415,7 +377,7 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quot
 
             // @ts-ignore
             doc.autoTable({
-                startY: 90,
+                startY: boxHeight + 68,
                 head: [['Cant.', 'Descripción', 'P. Unitario', 'Total']],
                 body: tableRows,
                 theme: 'striped',
@@ -457,22 +419,12 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quot
             
             let baseImponible = 0;
 
-            if (welcomePromoIsActive) {
-                const promoDiscount1 = subtotal * 0.5;
-                const subtotalAfterPromo1 = subtotal - promoDiscount1;
-                const promoDiscount2 = subtotalAfterPromo1 * 0.25;
-                baseImponible = subtotalAfterPromo1 - promoDiscount2;
-                
-                drawTotalLine('Dto. Bienvenida (50%)', `- ${promoDiscount1.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}`);
-                drawTotalLine('Dto. Adicional (25%)', `- ${promoDiscount2.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}`);
-            } else {
-                const discountedSubtotal = priceCalculations.reduce((sum, details) => sum + details.discountedPrice, 0);
-                const totalDiscountAmount = subtotal - discountedSubtotal;
-                baseImponible = discountedSubtotal;
-                
-                if (totalDiscountAmount > 0) {
-                    drawTotalLine(`Descuento aplicado`, `- ${totalDiscountAmount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}`);
-                }
+            const discountedSubtotal = priceCalculations.reduce((sum, details) => sum + details.discountedPrice, 0);
+            const totalDiscountAmount = subtotal - discountedSubtotal;
+            baseImponible = discountedSubtotal;
+            
+            if (totalDiscountAmount > 0) {
+                drawTotalLine(`Descuento aplicado`, `- ${totalDiscountAmount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}`);
             }
             
             drawTotalLine('Base Imponible', baseImponible.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }));
@@ -505,7 +457,7 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quot
         } finally {
             setIsGenerating(false);
         }
-    }, [quote, user, calculatePriceDetails, welcomePromoIsActive]);
+    }, [quote, user, calculatePriceDetails]);
 
     useEffect(() => {
         if (isOpen) {
@@ -567,36 +519,43 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quot
 interface SaveQuoteModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: (details: { customerName: string; projectReference: string }) => void;
+    onConfirm: (details: { customerName: string; projectReference: string; fiscalName: string; sucursal: string; deliveryAddress: string; }) => void;
     disabled: boolean;
 }
 
 const SaveQuoteModal: React.FC<SaveQuoteModalProps> = ({ isOpen, onClose, onConfirm, disabled }) => {
     const [customerName, setCustomerName] = useState('');
     const [projectReference, setProjectReference] = useState('');
+    const [fiscalName, setFiscalName] = useState('');
+    const [sucursal, setSucursal] = useState('');
+    const [deliveryAddress, setDeliveryAddress] = useState('');
 
     if (!isOpen) return null;
 
     const handleConfirm = () => {
-        if (customerName.trim()) {
-            onConfirm({ customerName, projectReference });
+        if (customerName.trim() || fiscalName.trim()) {
+            onConfirm({ customerName, projectReference, fiscalName, sucursal, deliveryAddress });
             onClose();
+            // Reset fields
             setCustomerName('');
             setProjectReference('');
+            setFiscalName('');
+            setSucursal('');
+            setDeliveryAddress('');
         }
     };
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
-            <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-md w-full" onClick={e => e.stopPropagation()}>
+            <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-lg w-full" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-start mb-4">
                      <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-teal-100 text-teal-600 rounded-lg flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z" /></svg>
                         </div>
                         <div>
                             <h3 className="text-xl font-bold text-slate-800">Guardar Presupuesto</h3>
-                            <p className="text-sm text-slate-500">Añade los detalles para identificarlo.</p>
+                            <p className="text-sm text-slate-500">Añade los detalles del cliente final.</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
@@ -604,8 +563,21 @@ const SaveQuoteModal: React.FC<SaveQuoteModalProps> = ({ isOpen, onClose, onConf
 
                 <div className="space-y-4">
                     <div>
+                        <label htmlFor="fiscalName" className="block text-sm font-medium text-slate-700 mb-2">
+                            Nombre Fiscal del Cliente
+                        </label>
+                        <input
+                            id="fiscalName"
+                            type="text"
+                            value={fiscalName}
+                            onChange={(e) => setFiscalName(e.target.value)}
+                            placeholder="Ej: Proyectos Baño S.L."
+                            className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition"
+                        />
+                    </div>
+                    <div>
                         <label htmlFor="customerName" className="block text-sm font-medium text-slate-700 mb-2">
-                            Nombre del Cliente <span className="text-red-500">*</span>
+                            Nombre Comercial / Contacto <span className="text-red-500">*</span>
                         </label>
                         <input
                             id="customerName"
@@ -613,6 +585,20 @@ const SaveQuoteModal: React.FC<SaveQuoteModalProps> = ({ isOpen, onClose, onConf
                             value={customerName}
                             onChange={(e) => setCustomerName(e.target.value)}
                             placeholder="Ej: Juan Pérez"
+                            className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition"
+                        />
+                         <p className="text-xs text-slate-500 mt-1">Este o el Nombre Fiscal es obligatorio.</p>
+                    </div>
+                    <div>
+                        <label htmlFor="sucursalCliente" className="block text-sm font-medium text-slate-700 mb-2">
+                            Población / Sucursal del Cliente (Opcional)
+                        </label>
+                        <input
+                            id="sucursalCliente"
+                            type="text"
+                            value={sucursal}
+                            onChange={(e) => setSucursal(e.target.value)}
+                            placeholder="Ej: Madrid Centro"
                             className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition"
                         />
                     </div>
@@ -629,6 +615,19 @@ const SaveQuoteModal: React.FC<SaveQuoteModalProps> = ({ isOpen, onClose, onConf
                             className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition"
                         />
                     </div>
+                     <div>
+                        <label htmlFor="deliveryAddress" className="block text-sm font-medium text-slate-700 mb-2">
+                            Dirección de Entrega (Si es diferente)
+                        </label>
+                        <textarea
+                            id="deliveryAddress"
+                            value={deliveryAddress}
+                            onChange={(e) => setDeliveryAddress(e.target.value)}
+                            placeholder="Dejar en blanco para usar la dirección principal del cliente."
+                            rows={3}
+                            className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition"
+                        />
+                    </div>
                 </div>
                 {disabled && (
                     <p className="text-sm text-amber-700 bg-amber-100 p-3 rounded-md mt-4">
@@ -639,7 +638,7 @@ const SaveQuoteModal: React.FC<SaveQuoteModalProps> = ({ isOpen, onClose, onConf
                      <button onClick={onClose} className="px-6 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors">
                         Cancelar
                     </button>
-                    <button onClick={handleConfirm} disabled={disabled || !customerName.trim()} className="px-8 py-2 font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 disabled:bg-teal-300 transition-colors">
+                    <button onClick={handleConfirm} disabled={disabled || (!customerName.trim() && !fiscalName.trim())} className="px-8 py-2 font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 disabled:bg-teal-300 transition-colors">
                         Guardar
                     </button>
                 </div>
@@ -702,7 +701,7 @@ const PROMO_TURNOVER_LIMIT = 5000;
 
 const App: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-    const [view, setView] = useState<'app' | 'my_quotes' | 'promotions' | 'guides'>('app');
+    const [view, setView] = useState<'app' | 'my_quotes' | 'conditions' | 'guides'>('app');
 
     const INITIAL_QUOTE_STATE: QuoteState = {
         productLine: null,
@@ -824,53 +823,6 @@ const App: React.FC = () => {
         }
     };
     
-    // --- Promotion Logic ---
-    const [welcomePromoTurnover, setWelcomePromoTurnover] = useState(0);
-
-    const welcomePromoIsActive = useMemo(() => {
-        if (!currentUser?.promotion || currentUser.promotion.id !== PROMO_ID) {
-            return false;
-        }
-        const promoEndTime = currentUser.promotion.activationTimestamp + (PROMO_DURATION_DAYS * 24 * 60 * 60 * 1000);
-        return Date.now() < promoEndTime && welcomePromoTurnover < PROMO_TURNOVER_LIMIT;
-    }, [currentUser, welcomePromoTurnover]);
-
-    useEffect(() => {
-        if (currentUser?.promotion?.id === PROMO_ID) {
-            try {
-                const allQuotes: SavedQuote[] = JSON.parse(localStorage.getItem('quotes') || '[]');
-                const promoStartTime = currentUser.promotion.activationTimestamp;
-                const promoEndTime = promoStartTime + (PROMO_DURATION_DAYS * 24 * 60 * 60 * 1000);
-                
-                const turnover = allQuotes
-                    .filter(q => 
-                        q.userEmail === currentUser.email &&
-                        q.orderedTimestamp &&
-                        q.orderedTimestamp >= promoStartTime &&
-                        q.orderedTimestamp < promoEndTime
-                    )
-                    .reduce((sum, q) => sum + q.totalPrice, 0);
-
-                setWelcomePromoTurnover(turnover);
-            } catch (error) {
-                console.error("Failed to calculate promotion turnover:", error);
-            }
-        }
-    }, [currentUser]);
-
-    const handleActivatePromotion = (promoId: string) => {
-        if (promoId === PROMO_ID) {
-            updateUser({
-                promotion: {
-                    id: PROMO_ID,
-                    activationTimestamp: Date.now(),
-                }
-            });
-            alert('¡Promoción de bienvenida activada! Ahora se aplicará a tus presupuestos.');
-            setView('app');
-        }
-    };
-
     // --- Pricing Logic ---
     const calculateItemPrice = useCallback((item: QuoteState, allItems: QuoteItem[] = []): number => {
         if (item.productLine === 'KITS') {
@@ -930,12 +882,7 @@ const App: React.FC = () => {
         
         let discountPercent = 0;
         
-        if (welcomePromoIsActive) {
-            // With promo, the discount is calculated on the subtotal, not per item.
-            // But we can model it as a combined discount rate for display if needed.
-            // Effective rate: 1 - (1 - 0.5) * (1 - 0.25) = 1 - 0.5 * 0.75 = 1 - 0.375 = 0.625 or 62.5%
-            discountPercent = 62.5; 
-        } else if (currentUser) {
+        if (currentUser) {
             const internalPrice = calculateInternalItemPrice(item, allItems);
             if (basePrice > 0) {
                  discountPercent = ((basePrice - internalPrice) / basePrice) * 100;
@@ -951,25 +898,19 @@ const App: React.FC = () => {
             finalPrice,
             discountPercent
         };
-    }, [calculateItemPrice, calculateInternalItemPrice, currentUser, welcomePromoIsActive]);
+    }, [calculateItemPrice, calculateInternalItemPrice, currentUser]);
 
 
     const currentItemPrice = useMemo(() => {
         const pvp = calculateItemPrice(currentItemConfig);
-        const internal = currentUser ? calculateInternalItemPrice({ ...currentItemConfig, id: '' }, []) : pvp;
-        return welcomePromoIsActive ? (pvp * (1 - 0.5) * (1 - 0.25)) : internal;
-    }, [currentItemConfig, calculateItemPrice, calculateInternalItemPrice, currentUser, welcomePromoIsActive]);
+        return currentUser ? calculateInternalItemPrice({ ...currentItemConfig, id: '' }, []) : pvp;
+    }, [currentItemConfig, calculateItemPrice, calculateInternalItemPrice, currentUser]);
 
     const totalQuotePrice = useMemo(() => {
         let subtotal = 0;
-        if (welcomePromoIsActive) {
-            subtotal = quoteItems.reduce((sum, item) => sum + calculateItemPrice(item, quoteItems), 0);
-            subtotal = subtotal * (1 - 0.5) * (1 - 0.25);
-        } else {
-            subtotal = quoteItems.reduce((sum, item) => sum + calculateInternalItemPrice(item, quoteItems), 0);
-        }
+        subtotal = quoteItems.reduce((sum, item) => sum + calculateInternalItemPrice(item, quoteItems), 0);
         return subtotal * (1 + VAT_RATE);
-    }, [quoteItems, calculateItemPrice, calculateInternalItemPrice, welcomePromoIsActive]);
+    }, [quoteItems, calculateInternalItemPrice]);
 
 
     // --- Step Navigation & State Management ---
@@ -1084,7 +1025,7 @@ const App: React.FC = () => {
     }
     
      // --- Quote Saving & Management ---
-    const handleSaveQuote = (details: { customerName: string; projectReference: string }) => {
+    const handleSaveQuote = (details: { customerName: string; projectReference: string; fiscalName: string; sucursal: string; deliveryAddress: string; }) => {
         if (!currentUser || quoteItems.length === 0) return;
 
         try {
@@ -1098,6 +1039,9 @@ const App: React.FC = () => {
                 totalPrice: totalQuotePrice,
                 customerName: details.customerName,
                 projectReference: details.projectReference,
+                fiscalName: details.fiscalName,
+                sucursal: details.sucursal,
+                deliveryAddress: details.deliveryAddress,
                 type: 'customer',
                  pvpTotalPrice: quoteItems.reduce((sum, item) => sum + calculateItemPrice(item, quoteItems), 0),
             };
@@ -1300,7 +1244,7 @@ const App: React.FC = () => {
         if (currentStep === 0) {
              if (view === 'app') return <WelcomePage userName={currentUser!.companyName} onNewQuote={() => handleStartNewQuote(true)} onViewQuotes={() => setView('my_quotes')} onResumeQuote={() => handleStartNewQuote(false)} hasActiveQuote={isQuoteActive} />;
              if (view === 'my_quotes') return <MyQuotesPage user={currentUser!} onDuplicateQuote={handleDuplicateQuote} onViewPdf={handleViewPdf} calculateInternalItemPrice={calculateInternalItemPrice} />;
-             if (view === 'promotions') return <PromotionsPage user={currentUser!} onActivatePromotion={handleActivatePromotion} turnover={welcomePromoTurnover} turnoverLimit={PROMO_TURNOVER_LIMIT} />;
+             if (view === 'conditions') return <CommercialConditionsPage user={currentUser!} />;
              if (view === 'guides') return <MaintenanceGuidesPage />;
         }
         
@@ -1458,11 +1402,11 @@ const App: React.FC = () => {
     const navItems = [
         { id: 'app', label: 'Inicio', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg> },
         { id: 'my_quotes', label: 'Mis Presupuestos', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" /></svg> },
-        { id: 'promotions', label: 'Promociones', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5l.646.646a1 1 0 00.708.293h2.292a1 1 0 01.707.293L17 5h.5a.5.5 0 01.5.5v3.793zM15 6a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" /></svg> },
+        { id: 'conditions', label: 'Condiciones', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5l.646.646a1 1 0 00.708.293h2.292a1 1 0 01.707.293L17 5h.5a.5.5 0 01.5.5v3.793zM15 6a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" /></svg> },
         { id: 'guides', label: 'Guías', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M2 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3 1h6v1H5V6zm6 3H5v1h6V9zm-6 3h6v1H5v-1z" clipRule="evenodd" /></svg> }
     ];
 
-    const handleNavClick = (viewId: 'app' | 'my_quotes' | 'promotions' | 'guides') => {
+    const handleNavClick = (viewId: 'app' | 'my_quotes' | 'conditions' | 'guides') => {
         if (isQuoteActive && viewId !== 'app') {
             if (window.confirm('Tienes un presupuesto en curso. Si sales, se descartará. ¿Quieres continuar?')) {
                 resetQuote();
@@ -1486,7 +1430,6 @@ const App: React.FC = () => {
                 user={currentUser}
                 onExport={handleExportData}
                 onImport={handleImportData}
-                welcomePromoIsActive={welcomePromoIsActive}
             />
              <SaveQuoteModal 
                 isOpen={isSaveModalOpen}
@@ -1500,7 +1443,6 @@ const App: React.FC = () => {
                 quote={quoteForPdf}
                 user={currentUser}
                 calculatePriceDetails={calculatePriceDetails}
-                welcomePromoIsActive={welcomePromoIsActive}
             />
             <CustomQuoteModal 
                 isOpen={isCustomQuoteModalOpen}
@@ -1545,10 +1487,6 @@ const App: React.FC = () => {
             <main className="flex-grow p-6 md:p-10 lg:p-12 overflow-y-auto h-screen">
                 {currentUser ? (
                     <div className="max-w-7xl mx-auto h-full flex flex-col">
-                        {welcomePromoIsActive && currentStep > 0 && (
-                            <PromotionBanner expirationDate={new Date(currentUser.promotion!.activationTimestamp + (PROMO_DURATION_DAYS * 24 * 60 * 60 * 1000))} />
-                        )}
-
                         <div className="flex-grow">
                              {currentStep > 0 ? (
                                 <div className={`grid ${isSummaryStep ? 'grid-cols-1' : 'md:grid-cols-3'} gap-12 h-full`}>

@@ -73,8 +73,11 @@ export interface SavedQuote {
     customerName?: string;
     projectReference?: string;
     
-    // New fields for quote separation
+    // New fields for quote separation & client details
     type: 'internal' | 'customer';
     pvpTotalPrice?: number; // Total based on PVP, before any discounts
     customerDiscounts?: { [key:string]: number };
+    fiscalName?: string;
+    sucursal?: string;
+    deliveryAddress?: string;
 }

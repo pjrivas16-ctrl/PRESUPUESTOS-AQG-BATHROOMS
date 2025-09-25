@@ -55,6 +55,7 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
         return quotes.filter(quote => 
             (quote.id.toLowerCase().includes(lowercasedFilter)) ||
             (quote.customerName?.toLowerCase().includes(lowercasedFilter)) ||
+            (quote.fiscalName?.toLowerCase().includes(lowercasedFilter)) ||
             (quote.projectReference?.toLowerCase().includes(lowercasedFilter))
         );
     }, [allQuotes, searchTerm, filter]);
@@ -99,23 +100,25 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
         const subject = `Nuevo Pedido de ${clientIdentifier} - Presupuesto Nº ${quoteNumber}`;
         
         let body = `Hola,\n\n` +
-                   `El cliente ${clientIdentifier} ha solicitado tramitar el pedido correspondiente al presupuesto Nº ${quoteNumber}.\n\n`;
+                   `El comercial ${user.preparedBy || user.companyName} ha solicitado tramitar el pedido correspondiente al presupuesto Nº ${quoteNumber}.\n\n`;
         
         if (user.sucursal) {
-            body += `Sucursal: ${user.sucursal}\n\n`;
+            body += `Sucursal Comercial: ${user.sucursal}\n\n`;
         }
+        
+        body += `--- DATOS DEL CLIENTE FINAL ---\n` +
+                `Nombre Fiscal: ${selectedQuote.fiscalName || 'No especificado'}\n` +
+                `Nombre Comercial: ${selectedQuote.customerName || 'No especificado'}\n` +
+                `Población/Sucursal: ${selectedQuote.sucursal || 'No especificada'}\n`;
 
-        if (user.preparedBy) {
-            body += `Persona de contacto: ${user.preparedBy} (${user.email})\n\n`;
-        } else {
-            body += `Email de contacto: ${user.email}\n\n`;
-        }
-        
-        body += `--- Datos del cliente final ---\n` +
-                `Cliente: ${selectedQuote.customerName || 'No especificado'}\n`;
-        
         if (selectedQuote.projectReference) {
             body += `Referencia del Proyecto: ${selectedQuote.projectReference}\n`;
+        }
+        
+        if(selectedQuote.deliveryAddress) {
+            body += `\nDIRECCIÓN DE ENTREGA:\n${selectedQuote.deliveryAddress}\n`;
+        } else {
+            body += `\n(Utilizar dirección principal del cliente para la entrega)\n`;
         }
 
         body += `\n--- DETALLES DEL PEDIDO ---\n`;
@@ -171,8 +174,10 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                         <div>
                              <h3 className="text-xl font-bold text-slate-800">Detalles del Presupuesto</h3>
                              <p className="text-sm text-slate-500">Nº <span className="font-semibold">{quoteNumber}</span></p>
-                             <p className="text-sm text-slate-500">Para: <span className="font-semibold">{selectedQuote.customerName}</span></p>
+                             <p className="text-sm text-slate-500">Cliente: <span className="font-semibold">{selectedQuote.fiscalName || selectedQuote.customerName}</span></p>
+                             {selectedQuote.sucursal && <p className="text-xs text-slate-500">Sucursal: {selectedQuote.sucursal}</p>}
                              {selectedQuote.projectReference && <p className="text-xs text-slate-500">Ref: {selectedQuote.projectReference}</p>}
+                             {selectedQuote.deliveryAddress && <p className="text-xs text-slate-500 mt-2"><b>Entrega:</b> {selectedQuote.deliveryAddress}</p>}
                         </div>
                         <button onClick={() => setSelectedQuote(null)} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
                     </div>
@@ -282,8 +287,8 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                             >
                                 <div className="flex justify-between items-start gap-4">
                                     <div>
-                                        <p className="font-bold text-slate-800">{quote.customerName}</p>
-                                        {quote.projectReference && <p className="text-sm text-slate-500">{quote.projectReference}</p>}
+                                        <p className="font-bold text-slate-800">{quote.fiscalName || quote.customerName}</p>
+                                        <p className="text-sm text-slate-500">{quote.customerName && quote.fiscalName ? quote.customerName : quote.projectReference}</p>
                                         <p className="text-xs text-slate-400 mt-1">
                                             {new Date(quote.timestamp).toLocaleDateString('es-ES')} - ID: {quote.id.replace(/quote_i_|quote_c_/g, '')}
                                         </p>
