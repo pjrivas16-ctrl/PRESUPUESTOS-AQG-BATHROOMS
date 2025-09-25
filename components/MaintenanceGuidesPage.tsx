@@ -84,6 +84,14 @@ const MaintenanceGuidesPage: React.FC = () => {
                     icon={<DownloadIcon />}
                     disabled={true}
                 />
+                <ResourceCard
+                    title="Promoción Conjunto Ducha"
+                    description="Descarga el folleto con la información y precios especiales para la promoción de plato de ducha más conjunto de grifería."
+                    onClick={() => {}}
+                    buttonText="Próximamente"
+                    icon={<DownloadIcon />}
+                    disabled={true}
+                />
             </div>
         </div>
     );

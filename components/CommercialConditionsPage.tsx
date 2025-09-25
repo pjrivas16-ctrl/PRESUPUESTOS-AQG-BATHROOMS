@@ -49,9 +49,9 @@ const CommercialConditionsPage: React.FC = () => {
 
                 {/* Card 3: Shower System Offer */}
                 <ToolCard
-                    title="Conjunto Ducha Completo"
-                    description="Incrementa el valor de tu venta ofreciendo un conjunto completo. Sugiere al cliente añadir un sistema de ducha (monomando o termostático) con un descuento especial."
-                    details="Argumento de venta: Ofrece un descuento adicional en el plato al añadir la grifería al pedido. Consulta con tu delegado los modelos compatibles."
+                    title="Promo Conjunto Monomando ó Termostático + Plato"
+                    description="Ofrece a tus clientes una solución de ducha completa y de diseño a un precio inmejorable. Esta promoción combina nuestros platos de ducha más vendidos (Classic, Flat o Softum) con un sistema de grifería de alta calidad."
+                    details="Argumento de venta: ¡Pack con precio sensacional! Informa a tu cliente que puede combinar un plato CLASSIC, FLAT o SOFTUM con una grifería monomando o termostática a un precio cerrado imbatible."
                      icon={
                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                          <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
