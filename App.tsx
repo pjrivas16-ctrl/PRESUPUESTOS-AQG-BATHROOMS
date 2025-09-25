@@ -683,7 +683,7 @@ const CustomQuoteModal: React.FC<CustomQuoteModalProps> = ({ isOpen, onClose }) 
 
 const App: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-    const [view, setView] = useState<'app' | 'my_quotes' | 'conditions' | 'guides'>('app');
+    const [view, setView] = useState<'app' | 'my_quotes' | 'tools' | 'guides'>('app');
 
     const INITIAL_QUOTE_STATE: QuoteState = {
         productLine: null,
@@ -1207,7 +1207,7 @@ const App: React.FC = () => {
         if (currentStep === 0) {
              if (view === 'app') return <WelcomePage userName={currentUser!.companyName} onNewQuote={() => handleStartNewQuote(true)} onViewQuotes={() => setView('my_quotes')} onResumeQuote={() => handleStartNewQuote(false)} hasActiveQuote={isQuoteActive} />;
              if (view === 'my_quotes') return <MyQuotesPage user={currentUser!} onDuplicateQuote={handleDuplicateQuote} onViewPdf={handleViewPdf} />;
-             if (view === 'conditions') return <CommercialConditionsPage user={currentUser!} />;
+             if (view === 'tools') return <CommercialConditionsPage />;
              if (view === 'guides') return <MaintenanceGuidesPage />;
         }
         
@@ -1367,11 +1367,11 @@ const App: React.FC = () => {
     const navItems = [
         { id: 'app', label: 'Inicio', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg> },
         { id: 'my_quotes', label: 'Mis Presupuestos', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" /></svg> },
-        { id: 'conditions', label: 'Condiciones', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5l.646.646a1 1 0 00.708.293h2.292a1 1 0 01.707.293L17 5h.5a.5.5 0 01.5.5v3.793zM15 6a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" /></svg> },
+        { id: 'tools', label: 'Herramientas Comerciales', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5l.646.646a1 1 0 00.708.293h2.292a1 1 0 01.707.293L17 5h.5a.5.5 0 01.5.5v3.793zM15 6a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" /></svg> },
         { id: 'guides', label: 'Guías', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M2 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3 1h6v1H5V6zm6 3H5v1h6V9zm-6 3h6v1H5v-1z" clipRule="evenodd" /></svg> }
     ];
 
-    const handleNavClick = (viewId: 'app' | 'my_quotes' | 'conditions' | 'guides') => {
+    const handleNavClick = (viewId: 'app' | 'my_quotes' | 'tools' | 'guides') => {
         if (isQuoteActive && viewId !== 'app') {
             if (window.confirm('Tienes un presupuesto en curso. Si sales, se descartará. ¿Quieres continuar?')) {
                 resetQuote();

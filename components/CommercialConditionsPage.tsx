@@ -1,45 +1,63 @@
 import React from 'react';
-import type { User } from '../types';
 
-interface CommercialConditionsPageProps {
-    user: User;
-}
+// Fix: Changed the type of the 'icon' prop from JSX.Element to React.ReactNode to resolve a TypeScript namespace error.
+const ToolCard: React.FC<{ title: string; description: string; details: string; icon: React.ReactNode; }> = ({ title, description, details, icon }) => (
+    <div className="bg-white p-8 rounded-2xl shadow-lg border border-slate-200/80 flex flex-col text-center">
+        <div className="w-16 h-16 bg-teal-100 text-teal-500 rounded-full flex items-center justify-center mx-auto mb-5">
+           {icon}
+        </div>
+        <h3 className="text-2xl font-bold text-slate-800 tracking-tight mb-3">{title}</h3>
+        <p className="flex-grow text-slate-500 mb-6 text-sm">{description}</p>
+        <div className="bg-slate-100 border border-slate-200 text-slate-700 p-4 rounded-lg text-center mt-auto">
+            <p className="font-semibold text-sm">{details}</p>
+        </div>
+    </div>
+);
 
-const CommercialConditionsPage: React.FC<CommercialConditionsPageProps> = ({ user }) => {
+
+const CommercialConditionsPage: React.FC = () => {
     
     return (
         <div className="animate-fade-in h-full">
-            <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">Condiciones Comerciales</h2>
-            <p className="text-slate-500 mb-8">Información sobre la política de precios y descuentos de la empresa.</p>
+            <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">Herramientas Comerciales</h2>
+            <p className="text-slate-500 mb-8">Aquí encontrarás las promociones y argumentos de venta activos que puedes ofrecer a tus clientes.</p>
             
-            <div className="bg-white p-8 rounded-2xl shadow-lg border border-slate-200/80">
-                <div className="flex items-center gap-4 mb-6 pb-4 border-b border-slate-200">
-                    <div className="w-12 h-12 bg-teal-100 text-teal-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                           <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {/* Card 1: Welcome Offer */}
+                <ToolCard
+                    title="Oferta de Bienvenida"
+                    description="Ofrece a tus nuevos clientes un descuento de bienvenida para conseguir tu primera venta y abrir nuevas cuentas. Es nuestra mejor herramienta para captación."
+                    details="Argumento de venta: Descuento equivalente a un 50% + 25%. Aplica un descuento similar en el resumen del presupuesto para reflejar esta oferta."
+                    icon={
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                         </svg>
-                    </div>
-                    <div>
-                        <h3 className="text-xl font-bold text-slate-800">Política de Descuentos Flexibles</h3>
-                        <p className="text-sm text-slate-500">Nuestra estrategia comercial está diseñada para darte el control.</p>
-                    </div>
-                </div>
+                    }
+                />
 
-                <div className="space-y-4 text-slate-600">
-                    <p>
-                        Como agente comercial de AQG, tienes la flexibilidad de <strong>aplicar los descuentos que consideres apropiados</strong> para cada presupuesto directamente en la pantalla de resumen.
-                    </p>
-                    <p>
-                        Los descuentos se aplican por <strong>familia de producto</strong> (ej: SOFTUM, CLASSIC, KITS) y se reflejarán inmediatamente en el precio final de la oferta.
-                    </p>
-                    <div className="mt-6 p-4 bg-teal-50 border border-teal-200 rounded-lg">
-                        <p className="font-semibold text-teal-800">¿Cómo funciona?</p>
-                        <p className="text-sm text-teal-700 mt-1">Al crear un presupuesto, en el paso final de "Resumen", encontrarás una nueva sección para introducir el porcentaje de descuento para cada línea de producto que hayas incluido.</p>
-                    </div>
-                    <p>
-                        Esta herramienta te permite adaptar cada oferta a las necesidades específicas del cliente y a las condiciones particulares de cada negociación, dándote un mayor poder de cierre.
-                    </p>
-                </div>
+                {/* Card 2: Display Stand Offer */}
+                <ToolCard
+                    title="Pack Expositor"
+                    description="Ayuda a tus clientes a visualizar nuestros productos en su tienda. Ofrece el pack de expositor de muestras junto con dos platos de ducha a un precio especial."
+                    details="Oferta especial: Expositor de ruedas + 2 platos por 250€ (+IVA). Contacta con tu delegado para tramitar este tipo de pedido."
+                     icon={
+                       <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                         <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                       </svg>
+                    }
+                />
+
+                {/* Card 3: Shower System Offer */}
+                <ToolCard
+                    title="Conjunto Ducha Completo"
+                    description="Incrementa el valor de tu venta ofreciendo un conjunto completo. Sugiere al cliente añadir un sistema de ducha (monomando o termostático) con un descuento especial."
+                    details="Argumento de venta: Ofrece un descuento adicional en el plato al añadir la grifería al pedido. Consulta con tu delegado los modelos compatibles."
+                     icon={
+                       <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                         <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                       </svg>
+                    }
+                />
             </div>
         </div>
     );
