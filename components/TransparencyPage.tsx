@@ -67,11 +67,21 @@ const TransparencyPage: React.FC = () => {
 
                 <InfoCard
                     title="Comisiones: Promociones Especiales"
-                    description="Comisiones aplicables a las promociones especiales ofrecidas para la captación y fidelización de clientes."
+                    description="Detalle de las comisiones para ofertas de captación. Estas comisiones se aplican sobre las ventas generadas a través de estas promociones."
                     icon={<PercentIcon />}
                 >
-                    <div className="flex justify-between text-sm"><span className="font-semibold text-slate-600">Promo Bienvenida (50%+25%)</span> <span className="font-bold text-teal-600">8% Comisión</span></div>
-                    <div className="flex justify-between text-sm"><span className="font-semibold text-slate-600">Promo Expositor + 2 Platos</span> <span className="font-bold text-teal-600">10% Comisión</span></div>
+                    <div className="flex justify-between text-sm">
+                        <span className="font-semibold text-slate-600">Promo Bienvenida (50%+25%)</span> 
+                        <span className="font-bold text-teal-600">8% Comisión</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                        <span className="font-semibold text-slate-600">Promo Expositor + 2 Platos</span> 
+                        <span className="font-bold text-teal-600">10% Comisión</span>
+                    </div>
+                    <div className="text-sm pt-2 mt-2 border-t border-slate-300">
+                        <p className="font-semibold text-slate-600">Nota sobre combinación:</p>
+                        <p className="text-xs text-slate-500">Si un cliente nuevo adquiere la <strong>Promo de Bienvenida y también la Promo Expositor</strong>, la comisión para ambas ventas será del <strong className="font-bold text-teal-600">10%</strong>.</p>
+                    </div>
                 </InfoCard>
             </div>
         </div>
