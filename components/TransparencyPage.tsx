@@ -44,7 +44,7 @@ const TransparencyPage: React.FC = () => {
                     <div className="flex justify-between text-sm"><span className="font-semibold text-slate-600">Dto. 0% a 30%</span> <span className="font-bold text-teal-600">10% Comisión</span></div>
                     <div className="flex justify-between text-sm"><span className="font-semibold text-slate-600">Dto. 31% a 40%</span> <span className="font-bold text-teal-600">8% Comisión</span></div>
                     <div className="flex justify-between text-sm"><span className="font-semibold text-slate-600">Dto. 41% a 50%</span> <span className="font-bold text-teal-600">5% Comisión</span></div>
-                    <div className="flex justify-between text-sm"><span className="font-semibold text-slate-600">Dto. > 50%</span> <span className="font-bold text-red-600">0% Comisión</span></div>
+                    <div className="flex justify-between text-sm"><span className="font-semibold text-slate-600">Dto. &gt; 50%</span> <span className="font-bold text-red-600">0% Comisión</span></div>
                 </InfoCard>
                 <InfoCard
                     title="Comisiones: Otros"
