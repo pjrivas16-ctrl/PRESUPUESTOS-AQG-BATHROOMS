@@ -1,3 +1,4 @@
+
 // Fix: Import useState, useEffect, useRef, useCallback, and useMemo from React to resolve multiple hook-related errors.
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 // Fix: Import PriceDetails from types.ts to use a shared type definition.
@@ -21,7 +22,6 @@ import NextPrevButtons from './components/NextPrevButtons';
 import AuthPage from './components/auth/AuthPage';
 import MyQuotesPage from './components/MyQuotesPage';
 import CommercialConditionsPage from './components/CommercialConditionsPage';
-import LivePreview from './components/LivePreview';
 import MaintenanceGuidesPage from './components/MaintenanceGuidesPage';
 import TransparencyPage from './components/TransparencyPage';
 
@@ -55,16 +55,16 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ userName, onNewQuote, onViewQ
     };
 
     return (
-        <div className="animate-fade-in text-center flex flex-col items-center justify-center h-full">
-            <h1 className="text-4xl font-extrabold text-slate-800 tracking-tight">Bienvenido, {userName}</h1>
-            <p className="mt-4 text-lg text-slate-600 max-w-2xl">
+        <div className="animate-fade-in text-center flex flex-col items-center justify-center h-full p-4">
+            <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Bienvenido, {userName}</h1>
+            <p className="mt-4 text-base text-slate-600 max-w-2xl">
                 Estás en la Herramienta Comercial de AQG. Desde aquí puedes crear nuevos presupuestos, gestionar los existentes y acceder a guías de producto.
             </p>
-            <div className="mt-10 flex flex-col sm:flex-row gap-4">
+            <div className="mt-8 flex flex-col w-full gap-4">
                 {hasActiveQuote && (
                      <button
                         onClick={onResumeQuote}
-                        className="px-8 py-4 font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center gap-2"
+                        className="px-6 py-4 font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center justify-center gap-2"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
@@ -74,7 +74,7 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ userName, onNewQuote, onViewQ
                 )}
                 <button
                     onClick={handleNewQuoteClick}
-                    className="px-8 py-4 font-semibold text-white bg-gradient-to-r from-teal-500 to-cyan-500 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 flex items-center gap-2"
+                    className="px-6 py-4 font-semibold text-white bg-gradient-to-r from-teal-500 to-cyan-500 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 flex items-center justify-center gap-2"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -83,7 +83,7 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ userName, onNewQuote, onViewQ
                 </button>
                 <button
                     onClick={onViewQuotes}
-                    className="px-8 py-4 font-semibold text-teal-600 bg-teal-100 rounded-lg hover:bg-teal-200 transition-colors flex items-center justify-center gap-2"
+                    className="px-6 py-4 font-semibold text-teal-600 bg-teal-100 rounded-lg hover:bg-teal-200 transition-colors flex items-center justify-center gap-2"
                 >
                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
@@ -129,15 +129,15 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
-            <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-start mb-6">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-teal-100 text-teal-600 rounded-lg flex items-center justify-center">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066 2.573c-.94-1.543.826 3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-slate-800">Ajustes de Comercial</h3>
-                            <p className="text-sm text-slate-500">Personaliza la información en tus presupuestos.</p>
+                            <h3 className="text-xl font-bold text-slate-800">Ajustes</h3>
+                            <p className="text-sm text-slate-500">Personaliza tus presupuestos.</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
@@ -146,7 +146,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
                 <div className="space-y-6">
                      <div>
                         <label htmlFor="fiscal-name" className="block text-sm font-medium text-slate-700 mb-2">
-                            Tu Nombre Fiscal (Remitente en PDF)
+                            Tu Nombre Fiscal
                         </label>
                         <input
                             id="fiscal-name"
@@ -195,27 +195,24 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
                         </div>
                         <div>
                             <h4 className="text-lg font-bold text-slate-800">Gestión de Datos</h4>
-                             <p className="text-sm text-slate-500">Guarda o restaura tus presupuestos y ajustes.</p>
+                             <p className="text-sm text-slate-500">Guarda o restaura tus datos.</p>
                         </div>
                     </div>
                     <div className="space-y-4">
-                        <p className="text-sm text-slate-600">
-                            Guarda una copia de seguridad de todos tus presupuestos, o restaura desde un archivo guardado.
-                        </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 gap-3">
                             <button 
                                 onClick={onExport} 
                                 className="w-full px-4 py-2.5 font-semibold text-indigo-600 bg-indigo-100 rounded-lg hover:bg-indigo-200 transition-colors flex items-center justify-center gap-2"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>
-                                Exportar Datos
+                                Exportar
                             </button>
                             <button 
                                 onClick={() => importInputRef.current?.click()} 
                                 className="w-full px-4 py-2.5 font-semibold text-indigo-600 bg-indigo-100 rounded-lg hover:bg-indigo-200 transition-colors flex items-center justify-center gap-2"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
-                                Importar Datos
+                                Importar
                             </button>
                             <input
                                 type="file"
@@ -236,7 +233,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
                         Cancelar
                     </button>
                     <button onClick={handleSave} className="px-8 py-2 font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500">
-                        Guardar Cambios
+                        Guardar
                     </button>
                 </div>
             </div>
@@ -468,9 +465,9 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quot
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
-            <div className="bg-white rounded-2xl shadow-2xl p-4 md:p-6 w-full max-w-4xl h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="bg-white rounded-2xl shadow-2xl p-4 w-full h-full flex flex-col" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center mb-4 flex-shrink-0">
-                    <h3 className="text-xl font-bold text-slate-800">Previsualización del Presupuesto</h3>
+                    <h3 className="text-xl font-bold text-slate-800">Previsualización</h3>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
                 </div>
                 <div className="flex-grow bg-slate-100 rounded-lg overflow-hidden">
@@ -491,7 +488,7 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quot
                         Cerrar
                     </button>
                     <button onClick={handleDownload} disabled={isGenerating || !pdfUrl} className="px-8 py-2 font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors disabled:bg-teal-300">
-                        Descargar PDF
+                        Descargar
                     </button>
                 </div>
             </div>
@@ -532,15 +529,15 @@ const SaveQuoteModal: React.FC<SaveQuoteModalProps> = ({ isOpen, onClose, onConf
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
-            <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-lg w-full" onClick={e => e.stopPropagation()}>
+            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-start mb-4">
                      <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-teal-100 text-teal-600 rounded-lg flex items-center justify-center">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z" /></svg>
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-slate-800">Guardar Presupuesto</h3>
-                            <p className="text-sm text-slate-500">Añade los detalles del cliente final.</p>
+                            <h3 className="text-xl font-bold text-slate-800">Guardar</h3>
+                            <p className="text-sm text-slate-500">Detalles del cliente final.</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
@@ -576,7 +573,7 @@ const SaveQuoteModal: React.FC<SaveQuoteModalProps> = ({ isOpen, onClose, onConf
                     </div>
                     <div>
                         <label htmlFor="sucursalCliente" className="block text-sm font-medium text-slate-700 mb-2">
-                            Población / Sucursal del Cliente (Opcional)
+                            Población / Sucursal (Opcional)
                         </label>
                         <input
                             id="sucursalCliente"
@@ -643,15 +640,15 @@ const CustomQuoteModal: React.FC<CustomQuoteModalProps> = ({ isOpen, onClose }) 
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
-            <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-lg w-full" onClick={e => e.stopPropagation()}>
+            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-start mb-4">
                      <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-teal-100 text-teal-600 rounded-lg flex items-center justify-center">
                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-slate-800">Colección CUSTOM</h3>
-                            <p className="text-sm text-slate-500">Información sobre presupuestos personalizados.</p>
+                            <h3 className="text-xl font-bold text-slate-800">CUSTOM</h3>
+                            <p className="text-sm text-slate-500">Presupuestos a medida.</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
@@ -659,10 +656,10 @@ const CustomQuoteModal: React.FC<CustomQuoteModalProps> = ({ isOpen, onClose }) 
 
                 <div className="space-y-4 text-slate-600">
                     <p>
-                        El modelo <strong>CUSTOM</strong> se diseña a medida para satisfacer necesidades específicas y requiere un presupuesto detallado.
+                        El modelo <strong>CUSTOM</strong> requiere un presupuesto detallado.
                     </p>
                     <p>
-                        Para solicitar un presupuesto para esta colección, por favor, envía los detalles de tu proyecto a:
+                        Para solicitarlo, envía los detalles de tu proyecto a:
                     </p>
                     <div className="text-center my-4">
                          <a href="mailto:sandra.martinez@aqgbathrooms.com" className="font-semibold text-teal-600 bg-teal-100 px-4 py-2 rounded-md hover:bg-teal-200 transition-colors">
@@ -1367,11 +1364,11 @@ const App: React.FC = () => {
     }
 
     const navItems = [
-        { id: 'app', label: 'Inicio', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg> },
-        { id: 'my_quotes', label: 'Mis Presupuestos', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" /></svg> },
-        { id: 'tools', label: 'Herramientas Comerciales', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.657a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM4.343 5.657a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM11 16a1 1 0 10-2 0v1a1 1 0 102 0v-1zM3.05 11.05a1 1 0 011.414 0l.707.707a1 1 0 01-1.414 1.414l-.707-.707a1 1 0 010-1.414zM15.657 14.343a1 1 0 011.414 0l.707.707a1 1 0 01-1.414 1.414l-.707-.707a1 1 0 010-1.414zM4.343 14.343a1 1 0 010-1.414l.707-.707a1 1 0 011.414 1.414l-.707.707a1 1 0 01-1.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zM3 11a1 1 0 100-2H2a1 1 0 100 2h1zM10 5a5 5 0 00-5 5h10a5 5 0 00-5-5zM8 16a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" /></svg> },
-        { id: 'transparency', label: 'Transparencia', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg> },
-        { id: 'guides', label: 'Descargas', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg> }
+        { id: 'app', label: 'Inicio', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg> },
+        { id: 'my_quotes', label: 'Presupuestos', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" /></svg> },
+        { id: 'tools', label: 'Comercial', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.657a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM4.343 5.657a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM11 16a1 1 0 10-2 0v1a1 1 0 102 0v-1zM3.05 11.05a1 1 0 011.414 0l.707.707a1 1 0 01-1.414 1.414l-.707-.707a1 1 0 010-1.414zM15.657 14.343a1 1 0 011.414 0l.707.707a1 1 0 01-1.414 1.414l-.707-.707a1 1 0 010-1.414zM4.343 14.343a1 1 0 010-1.414l.707-.707a1 1 0 011.414 1.414l-.707.707a1 1 0 01-1.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zM3 11a1 1 0 100-2H2a1 1 0 100 2h1zM10 5a5 5 0 00-5 5h10a5 5 0 00-5-5zM8 16a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" /></svg> },
+        { id: 'transparency', label: 'Transparencia', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg> },
+        { id: 'guides', label: 'Descargas', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg> }
     ];
 
     const handleNavClick = (viewId: 'app' | 'my_quotes' | 'tools' | 'transparency' | 'guides') => {
@@ -1386,11 +1383,11 @@ const App: React.FC = () => {
         }
     };
     
-    const isSummaryStep = currentStep === totalSteps;
+    const currentViewLabel = navItems.find(item => item.id === view)?.label || 'AQG Comercial';
 
 
     return (
-        <div className="bg-slate-50 min-h-screen font-sans text-slate-800 flex flex-col md:flex-row">
+        <div className="bg-slate-50 min-h-screen font-sans text-slate-800 flex flex-col h-[100svh]">
             <SettingsModal 
                 isOpen={isSettingsModalOpen}
                 onClose={() => setIsSettingsModalOpen(false)}
@@ -1416,109 +1413,93 @@ const App: React.FC = () => {
                 isOpen={isCustomQuoteModalOpen}
                 onClose={() => setIsCustomQuoteModalOpen(false)}
             />
-
-            {/* --- Sidebar --- */}
-            <aside className="w-full md:w-20 lg:w-64 bg-white border-r border-slate-200 p-4 md:p-2 lg:p-5 flex flex-col flex-shrink-0">
-                <div className="flex-grow">
-                     <div className="flex items-center gap-3 mb-10">
-                        <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-lg"></div>
-                        <span className="hidden lg:block font-bold text-xl text-slate-800">AQG Comercial</span>
-                    </div>
-                    <nav className="flex md:flex-col justify-around md:justify-start gap-1">
-                        {navItems.map(item => (
-                            <button key={item.id} onClick={() => handleNavClick(item.id as any)} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg w-full md:w-auto lg:w-full text-left transition-colors font-semibold
-                                ${view === item.id && currentStep === 0 ? 'bg-teal-50 text-teal-600' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'}`}>
-                                {item.icon}
-                                <span className="hidden lg:inline">{item.label}</span>
-                            </button>
-                        ))}
-                    </nav>
-                </div>
-                <div className="mt-auto pt-4 border-t border-slate-200">
-                    <div className="flex items-center gap-3">
-                         <div className="w-9 h-9 bg-slate-200 rounded-full flex items-center justify-center font-bold text-slate-500 uppercase">
-                            {currentUser.companyName.substring(0, 1)}
-                        </div>
-                        <div className="hidden lg:block flex-grow">
-                            <p className="font-semibold text-sm truncate">{currentUser.companyName}</p>
-                            <p className="text-xs text-slate-400 truncate">{currentUser.email}</p>
-                        </div>
-                    </div>
-                    <div className="mt-3 flex flex-col lg:flex-row gap-2">
-                         <button onClick={() => setIsSettingsModalOpen(true)} className="w-full text-xs text-slate-500 hover:text-teal-600 p-1.5 rounded-md hover:bg-slate-100 transition-colors">Ajustes</button>
-                         <button onClick={handleLogout} className="w-full text-xs text-slate-500 hover:text-red-600 p-1.5 rounded-md hover:bg-slate-100 transition-colors">Salir</button>
-                    </div>
-                </div>
-            </aside>
             
-            {/* --- Main Content --- */}
-            <main className="flex-grow p-6 md:p-10 lg:p-12 overflow-y-auto h-screen">
+            <main className="flex-grow overflow-y-auto pb-24">
                 {currentUser ? (
-                    <div className="max-w-7xl mx-auto h-full flex flex-col">
-                        <div className="flex-grow">
+                    <>
+                        <header className="sticky top-0 bg-slate-50/80 backdrop-blur-sm z-30 p-4 border-b border-slate-200">
+                             <div className="flex justify-between items-center">
+                                 <h1 className="text-lg font-bold text-slate-800">{currentStep > 0 ? 'Nuevo Presupuesto' : currentViewLabel}</h1>
+                                <div className="flex items-center gap-2">
+                                     <button onClick={() => setIsSettingsModalOpen(true)} className="text-slate-500 hover:text-teal-600 p-2 rounded-full hover:bg-slate-100">
+                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.96.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" /></svg>
+                                     </button>
+                                     <button onClick={handleLogout} className="text-slate-500 hover:text-red-600 p-2 rounded-full hover:bg-slate-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" /></svg>
+                                     </button>
+                                </div>
+                             </div>
+                        </header>
+                        <div className="p-4">
                              {currentStep > 0 ? (
-                                <div className={`grid ${isSummaryStep ? 'grid-cols-1' : 'md:grid-cols-3'} gap-12 h-full`}>
-                                     {/* Step Tracker & Preview */}
-                                    <div className={` ${isSummaryStep ? 'hidden' : 'md:col-span-1'} `}>
-                                        <div className="sticky top-10">
-                                            <StepTracker 
-                                                currentStep={currentStep} 
-                                                steps={steps}
-                                                onStepClick={handleStepClick}
-                                            />
-                                            <div className="mt-10">
-                                                <LivePreview item={currentItemConfig} price={currentItemPrice} />
-                                            </div>
-                                        </div>
+                                <div>
+                                    <div className="mb-8">
+                                        <StepTracker 
+                                            currentStep={currentStep} 
+                                            steps={steps}
+                                            onStepClick={handleStepClick}
+                                        />
                                     </div>
-                                    {/* Step Content */}
-                                    <div className={isSummaryStep ? 'col-span-1' : 'md:col-span-2'}>
-                                        <div className="flex flex-col h-full">
-                                            <div className="flex-grow">
-                                                 {showSummaryView ? (
-                                                    <Step5Summary
-                                                        items={quoteItems}
-                                                        totalPrice={totalQuotePrice}
-                                                        onReset={handleDiscard}
-                                                        onSaveRequest={() => setIsSaveModalOpen(true)}
-                                                        onGeneratePdfRequest={handlePreviewPdf}
-                                                        onPrintRequest={() => window.print()}
-                                                        onStartNew={handleStartNewItem}
-                                                        onEdit={handleEditItem}
-                                                        onDelete={handleDeleteItem}
-                                                        calculatePriceDetails={(item) => calculatePriceDetails(item, appliedDiscounts)}
-                                                        appliedDiscounts={appliedDiscounts}
-                                                        onUpdateDiscounts={setAppliedDiscounts}
-                                                    />
-                                                 ) : (
-                                                    renderCurrentStep()
-                                                 )}
-                                            </div>
-                                            {!showSummaryView && (
-                                                <NextPrevButtons 
-                                                    onNext={currentStep === totalSteps - 1 ? handleAddItemToQuote : handleNext} 
-                                                    onPrev={handlePrev} 
-                                                    currentStep={currentStep} 
-                                                    totalSteps={totalSteps} 
-                                                    isNextDisabled={isNextDisabled}
-                                                    isLastStep={currentStep === totalSteps - 1}
-                                                    onDiscard={handleDiscard}
+                                    <div className="flex flex-col h-full">
+                                        <div className="flex-grow">
+                                             {showSummaryView ? (
+                                                <Step5Summary
+                                                    items={quoteItems}
+                                                    totalPrice={totalQuotePrice}
+                                                    onReset={handleDiscard}
+                                                    onSaveRequest={() => setIsSaveModalOpen(true)}
+                                                    onGeneratePdfRequest={handlePreviewPdf}
+                                                    onPrintRequest={() => window.print()}
+                                                    onStartNew={handleStartNewItem}
+                                                    onEdit={handleEditItem}
+                                                    onDelete={handleDeleteItem}
+                                                    calculatePriceDetails={(item) => calculatePriceDetails(item, appliedDiscounts)}
+                                                    appliedDiscounts={appliedDiscounts}
+                                                    onUpdateDiscounts={setAppliedDiscounts}
                                                 />
-                                            )}
+                                             ) : (
+                                                renderCurrentStep()
+                                             )}
                                         </div>
+                                        {!showSummaryView && (
+                                            <NextPrevButtons 
+                                                onNext={currentStep === totalSteps - 1 ? handleAddItemToQuote : handleNext} 
+                                                onPrev={handlePrev} 
+                                                currentStep={currentStep} 
+                                                totalSteps={totalSteps} 
+                                                isNextDisabled={isNextDisabled}
+                                                isLastStep={currentStep === totalSteps - 1}
+                                                onDiscard={handleDiscard}
+                                            />
+                                        )}
                                     </div>
                                 </div>
                              ) : (
                                 renderCurrentStep()
                              )}
                         </div>
-                    </div>
+                    </>
                 ) : (
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-slate-500 p-4">
                         No tienes una sesión iniciada.
                     </p>
                 )}
             </main>
+
+             {/* --- Bottom Navigation --- */}
+            {currentUser && (
+                <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-slate-200 flex justify-around z-40">
+                    {navItems.map(item => (
+                        <button key={item.id} onClick={() => handleNavClick(item.id as any)} 
+                            className={`flex flex-col items-center justify-center gap-1 px-2 py-2 flex-grow transition-colors
+                                ${view === item.id && currentStep === 0 ? 'text-teal-600' : 'text-slate-500 hover:bg-slate-100'}`}>
+                            {item.icon}
+                            <span className="text-xs font-medium">{item.label}</span>
+                        </button>
+                    ))}
+                </nav>
+            )}
+
         </div>
     );
 };

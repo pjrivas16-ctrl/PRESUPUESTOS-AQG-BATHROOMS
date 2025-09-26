@@ -1,16 +1,16 @@
 import React from 'react';
 
 const InfoCard: React.FC<{ title: string; description: string; icon: React.ReactNode; children?: React.ReactNode; }> = ({ title, description, icon, children }) => (
-    <div className="bg-white p-8 rounded-2xl shadow-lg border border-slate-200/80 flex flex-col text-left">
-        <div className="flex items-center gap-4 mb-5">
-            <div className="w-16 h-16 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center flex-shrink-0">
+    <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200/80 flex flex-col text-left">
+        <div className="flex items-center gap-4 mb-4">
+            <div className="w-14 h-14 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center flex-shrink-0">
                {icon}
             </div>
             <div>
-                 <h3 className="text-2xl font-bold text-slate-800 tracking-tight">{title}</h3>
+                 <h3 className="text-xl font-bold text-slate-800 tracking-tight">{title}</h3>
             </div>
         </div>
-        <p className="flex-grow text-slate-500 mb-6 text-sm">{description}</p>
+        <p className="flex-grow text-slate-500 mb-4 text-sm">{description}</p>
         <div className="bg-slate-50 border border-slate-200 text-slate-700 p-4 rounded-lg mt-auto space-y-2">
             {children}
         </div>
@@ -19,12 +19,12 @@ const InfoCard: React.FC<{ title: string; description: string; icon: React.React
 
 // Icons
 const PercentIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M7 16l10-10m-10 0a2.5 2.5 0 115 0 2.5 2.5 0 01-5 0zm10 10a2.5 2.5 0 115 0 2.5 2.5 0 01-5 0z" />
     </svg>
 );
 const DocumentIcon = () => (
-     <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+     <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
     </svg>
 );
@@ -32,10 +32,10 @@ const DocumentIcon = () => (
 const TransparencyPage: React.FC = () => {
     return (
         <div className="animate-fade-in h-full">
-            <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">Transparencia</h2>
-            <p className="text-slate-500 mb-8">Información clara y directa sobre tus comisiones y las condiciones de nuestra colaboración.</p>
+            <h2 className="text-2xl font-extrabold text-slate-800 tracking-tight mb-2">Transparencia</h2>
+            <p className="text-slate-500 mb-6">Información clara y directa sobre tus comisiones y las condiciones de nuestra colaboración.</p>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="flex flex-col gap-6">
                 <InfoCard
                     title="Comisiones: Platos de Ducha"
                     description="Tabla de comisiones aplicable a las familias de platos de ducha según el descuento ofrecido al cliente final."
@@ -56,7 +56,7 @@ const TransparencyPage: React.FC = () => {
                 </InfoCard>
 
                 <InfoCard
-                    title="Condiciones de Colaboración Comercial"
+                    title="Condiciones de Colaboración"
                     description="Resumen de las condiciones comerciales clave que rigen nuestra colaboración profesional."
                     icon={<DocumentIcon />}
                 >
@@ -66,7 +66,7 @@ const TransparencyPage: React.FC = () => {
                 </InfoCard>
 
                 <InfoCard
-                    title="Comisiones: Promociones Especiales"
+                    title="Comisiones: Promociones"
                     description="Detalle de las comisiones para ofertas de captación. Estas comisiones se aplican sobre las ventas generadas a través de estas promociones."
                     icon={<PercentIcon />}
                 >
