@@ -56,13 +56,22 @@ const TransparencyPage: React.FC = () => {
                 </InfoCard>
 
                 <InfoCard
-                    title="Condiciones Contractuales"
+                    title="Condiciones de Colaboración Comercial"
                     description="Resumen de las condiciones comerciales clave que rigen nuestra colaboración profesional."
                     icon={<DocumentIcon />}
                 >
-                    <p className="text-sm"><span className="font-semibold text-slate-600">Liquidación:</span> Trimestral, sobre ventas cobradas.</p>
-                    <p className="text-sm"><span className="font-semibold text-slate-600">Forma de Pago:</span> Transferencia bancaria a 60 días.</p>
-                    <p className="text-sm"><span className="font-semibold text-slate-600">Objetivos y Rappels:</span> A consultar con dirección.</p>
+                    <p className="text-sm"><span className="font-semibold text-slate-600">Liquidación:</span> Mensual, sobre todas las ventas.</p>
+                    <p className="text-sm"><span className="font-semibold text-slate-600">Objetivos:</span> Deben cumplirse los marcados por la dirección comercial.</p>
+                    <p className="text-sm"><span className="font-semibold text-slate-600">Incompatibilidad:</span> La representación de AQG es incompatible con otras marcas que vendan producto homólogo.</p>
+                </InfoCard>
+
+                <InfoCard
+                    title="Comisiones: Promociones Especiales"
+                    description="Comisiones aplicables a las promociones especiales ofrecidas para la captación y fidelización de clientes."
+                    icon={<PercentIcon />}
+                >
+                    <div className="flex justify-between text-sm"><span className="font-semibold text-slate-600">Promo Bienvenida (50%+25%)</span> <span className="font-bold text-teal-600">8% Comisión</span></div>
+                    <div className="flex justify-between text-sm"><span className="font-semibold text-slate-600">Promo Expositor + 2 Platos</span> <span className="font-bold text-teal-600">10% Comisión</span></div>
                 </InfoCard>
             </div>
         </div>
