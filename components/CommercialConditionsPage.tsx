@@ -26,7 +26,7 @@ const CommercialConditionsPage: React.FC = () => {
                 {/* Card 1: Welcome Offer */}
                 <ToolCard
                     title="Oferta de Bienvenida"
-                    description="Ofrece a tus nuevos clientes un descuento de bienvenida para conseguir tu primera venta y abrir nuevas cuentas. Es nuestra mejor herramienta para captación."
+                    description="Dirigida a nuevos clientes o a la recuperación de clientes con más de un año de inactividad. Utiliza esta potente oferta para conseguir tu primera venta, abrir nuevas cuentas o reactivar clientes perdidos."
                     details="El argumento de venta es ofrecer en todos los productos un 50%+25% durante 2 meses ó hasta 5000 euros de compra, lo que antes ocurra."
                     icon={
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
