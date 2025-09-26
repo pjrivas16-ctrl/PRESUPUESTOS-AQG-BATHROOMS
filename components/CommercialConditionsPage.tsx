@@ -39,7 +39,7 @@ const CommercialConditionsPage: React.FC = () => {
                 <ToolCard
                     title="Pack Expositor"
                     description="Ayuda a tus clientes a visualizar nuestros productos en su tienda. Ofrece el pack de expositor de muestras junto con dos platos de ducha a un precio especial."
-                    details="Oferta especial: Expositor de ruedas + 2 platos por 250€ (+IVA). Contacta con tu delegado para tramitar este tipo de pedido."
+                    details="Coste neto: 300€. Incluye expositor de platos + 2 platos de 160x70cm (acabado a elegir). Contacta con tu delegado para tramitar el pedido."
                      icon={
                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
