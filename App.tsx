@@ -1,4 +1,5 @@
 
+
 // Fix: Import useState, useEffect, useRef, useCallback, and useMemo from React to resolve multiple hook-related errors.
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 // Fix: Import PriceDetails from types.ts to use a shared type definition.
@@ -1414,7 +1415,7 @@ const App: React.FC = () => {
                 onClose={() => setIsCustomQuoteModalOpen(false)}
             />
             
-            <main className="flex-grow overflow-y-auto pb-24">
+            <main className="flex-grow overflow-y-auto pb-40">
                 {currentUser ? (
                     <>
                         <header className="sticky top-0 bg-slate-50/80 backdrop-blur-sm z-30 p-4 border-b border-slate-200">
@@ -1488,7 +1489,7 @@ const App: React.FC = () => {
 
              {/* --- Bottom Navigation --- */}
             {currentUser && (
-                <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-slate-200 flex justify-around z-40">
+                <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-slate-200 flex justify-around z-40 h-16">
                     {navItems.map(item => (
                         <button key={item.id} onClick={() => handleNavClick(item.id as any)} 
                             className={`flex flex-col items-center justify-center gap-1 px-2 py-2 flex-grow transition-colors
