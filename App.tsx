@@ -23,6 +23,7 @@ import MyQuotesPage from './components/MyQuotesPage';
 import CommercialConditionsPage from './components/CommercialConditionsPage';
 import LivePreview from './components/LivePreview';
 import MaintenanceGuidesPage from './components/MaintenanceGuidesPage';
+import TransparencyPage from './components/TransparencyPage';
 
 // Declare jsPDF on window for TypeScript
 declare global {
@@ -683,7 +684,7 @@ const CustomQuoteModal: React.FC<CustomQuoteModalProps> = ({ isOpen, onClose }) 
 
 const App: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-    const [view, setView] = useState<'app' | 'my_quotes' | 'tools' | 'guides'>('app');
+    const [view, setView] = useState<'app' | 'my_quotes' | 'tools' | 'transparency' | 'guides'>('app');
 
     const INITIAL_QUOTE_STATE: QuoteState = {
         productLine: null,
@@ -1208,6 +1209,7 @@ const App: React.FC = () => {
              if (view === 'app') return <WelcomePage userName={currentUser!.companyName} onNewQuote={() => handleStartNewQuote(true)} onViewQuotes={() => setView('my_quotes')} onResumeQuote={() => handleStartNewQuote(false)} hasActiveQuote={isQuoteActive} />;
              if (view === 'my_quotes') return <MyQuotesPage user={currentUser!} onDuplicateQuote={handleDuplicateQuote} onViewPdf={handleViewPdf} />;
              if (view === 'tools') return <CommercialConditionsPage />;
+             if (view === 'transparency') return <TransparencyPage />;
              if (view === 'guides') return <MaintenanceGuidesPage />;
         }
         
@@ -1368,10 +1370,11 @@ const App: React.FC = () => {
         { id: 'app', label: 'Inicio', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg> },
         { id: 'my_quotes', label: 'Mis Presupuestos', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" /></svg> },
         { id: 'tools', label: 'Herramientas Comerciales', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5l.646.646a1 1 0 00.708.293h2.292a1 1 0 01.707.293L17 5h.5a.5.5 0 01.5.5v3.793zM15 6a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" /></svg> },
+        { id: 'transparency', label: 'Transparencia', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg> },
         { id: 'guides', label: 'Descargas', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg> }
     ];
 
-    const handleNavClick = (viewId: 'app' | 'my_quotes' | 'tools' | 'guides') => {
+    const handleNavClick = (viewId: 'app' | 'my_quotes' | 'tools' | 'transparency' | 'guides') => {
         if (isQuoteActive && viewId !== 'app') {
             if (window.confirm('Tienes un presupuesto en curso. Si sales, se descartará. ¿Quieres continuar?')) {
                 resetQuote();
