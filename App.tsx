@@ -333,7 +333,7 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quot
                 let description = '';
                 if (item.productLine === 'KITS') {
                     description = `${item.kitProduct?.name || ''}\n`;
-                    if (item.kitProduct?.id === 'kit-pintura') {
+                    if ((item.kitProduct?.id === 'kit-pintura' || item.kitProduct?.id === 'kit-reparacion') && (item.color || item.ralCode)) {
                         description += `Color: ${item.color?.name || `RAL ${item.ralCode}`}\n`;
                     }
                     if (item.invoiceReference) {
@@ -1486,47 +1486,50 @@ const App: React.FC = () => {
                                              )}
                                         </div>
                                         {!showSummaryView && (
-                                            <NextPrevButtons 
-                                                onNext={currentStep === totalSteps - 1 ? handleAddItemToQuote : handleNext} 
-                                                onPrev={handlePrev} 
-                                                currentStep={currentStep} 
-                                                totalSteps={totalSteps} 
-                                                isNextDisabled={isNextDisabled}
-                                                isLastStep={currentStep === totalSteps - 1}
-                                                onDiscard={handleDiscard}
-                                            />
+                                            <div className="mt-8">
+                                                <NextPrevButtons 
+                                                    onNext={currentStep === totalSteps - 1 ? handleAddItemToQuote : handleNext}
+                                                    onPrev={handlePrev}
+                                                    currentStep={currentStep}
+                                                    totalSteps={totalSteps}
+                                                    isNextDisabled={isNextDisabled}
+                                                    isLastStep={currentStep === totalSteps - 1}
+                                                    onDiscard={handleDiscard}
+                                                />
+                                            </div>
                                         )}
                                     </div>
                                 </div>
-                             ) : (
+                            ) : (
                                 renderCurrentStep()
-                             )}
+                            )}
                         </div>
                     </>
                 ) : (
-                    <p className="text-sm text-slate-500 p-4">
-                        No tienes una sesión iniciada.
-                    </p>
+                    <AuthPage onLogin={handleLogin} />
                 )}
             </main>
 
-             {/* --- Bottom Navigation --- */}
-            {currentUser && (
-                <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-slate-200 flex justify-around z-40 h-16">
-                    {navItems.map(item => (
-                        <button key={item.id} onClick={() => handleNavClick(item.id as any)} 
-                            className={`flex flex-col items-center justify-center gap-1 px-2 py-2 flex-grow transition-colors
-                                ${view === item.id && currentStep === 0 ? 'text-teal-600' : 'text-slate-500 hover:bg-slate-100'}`}>
-                            {item.icon}
-                            <span className="text-xs font-medium">{item.label}</span>
-                        </button>
-                    ))}
+            {currentUser && currentStep === 0 && (
+                 <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-40">
+                    <div className="flex justify-around">
+                        {navItems.map(item => (
+                            <button 
+                                key={item.id}
+                                onClick={() => handleNavClick(item.id as any)}
+                                className={`flex flex-col items-center justify-center text-center p-3 w-full transition-colors duration-200 ${view === item.id ? 'text-teal-600 bg-teal-50' : 'text-slate-500 hover:bg-slate-50'}`}
+                                aria-label={item.label}
+                            >
+                                {item.icon}
+                                <span className="text-[10px] font-semibold mt-1">{item.label}</span>
+                            </button>
+                        ))}
+                    </div>
                 </nav>
             )}
-
+            
         </div>
     );
 };
 
-// Fix: Export the App component to make it available for import in index.tsx.
 export default App;
