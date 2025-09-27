@@ -223,18 +223,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
                                 onChange={onImport}
                             />
                         </div>
-                        <p className="text-xs text-amber-800 bg-amber-100 p-3 rounded-md mt-2">
-                            <strong>Atención:</strong> Importar un archivo reemplazará todos los datos actuales de forma permanente.
-                        </p>
+                        <p className="text-xs text-slate-500 text-center">Exporta tus presupuestos y ajustes. Importa un archivo para restaurar tus datos en otro dispositivo.</p>
                     </div>
                 </div>
 
-                <div className="mt-8 pt-6 border-t border-slate-200 flex justify-end gap-3">
-                    <button onClick={onClose} className="px-6 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors">
-                        Cancelar
-                    </button>
-                    <button onClick={handleSave} className="px-8 py-2 font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500">
-                        Guardar
+                <div className="mt-8 flex justify-center">
+                    <button onClick={handleSave} className="w-full max-w-xs px-8 py-3 font-semibold text-white bg-teal-600 rounded-lg shadow-md hover:bg-teal-700 transition-colors">
+                        Guardar Cambios
                     </button>
                 </div>
             </div>
@@ -243,493 +238,28 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
 };
 
 
-// --- PDF Preview Modal ---
-interface PdfPreviewModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    quote: SavedQuote | null;
-    user: User;
-    calculatePriceDetails: (item: QuoteItem, discounts: { [key: string]: number }) => PriceDetails;
-}
-
-const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ isOpen, onClose, quote, user, calculatePriceDetails }) => {
-    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-    const [isGenerating, setIsGenerating] = useState(false);
-    const pdfDoc = useRef<any>(null); // To store the jsPDF instance
-
-    const generatePdf = useCallback(async () => {
-        if (!quote) return;
-        setIsGenerating(true);
-
-        try {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            pdfDoc.current = doc;
-
-            // --- Define Colors & Fonts ---
-            const primaryColor = '#0d9488'; // teal-600
-            const textColor = '#334155'; // slate-700
-            const textColorRgb = [51, 65, 85]; // slate-700
-            const lightTextColor = '#64748b'; // slate-500
-
-            // --- Header ---
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(12);
-            doc.setTextColor(textColor);
-            doc.text(user.fiscalName || user.companyName, 195, 20, { align: 'right' });
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(9);
-            doc.setTextColor(lightTextColor);
-            if (user.sucursal) doc.text(user.sucursal, 195, 25, { align: 'right' });
-            if (user.preparedBy) doc.text(`Att: ${user.preparedBy}`, 195, 30, { align: 'right' });
-            
-            // --- Quote Info ---
-            doc.setFontSize(18);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(primaryColor);
-            doc.text('PRESUPUESTO', 15, 50);
-
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(10);
-            doc.setTextColor(textColor);
-            doc.text(`Número:`, 140, 50);
-            doc.text(`Fecha:`, 140, 55);
-            doc.setFont('helvetica', 'bold');
-            doc.text(quote.id.replace('quote_i_', '').replace('quote_c_', '').replace(/preview_\d+/g, 'PREVIEW'), 160, 50);
-            doc.text(new Date(quote.timestamp).toLocaleDateString('es-ES'), 160, 55);
-
-            // --- Client Info Box ---
-            const hasDeliveryAddress = quote.deliveryAddress && quote.deliveryAddress.trim() !== '';
-            const boxHeight = hasDeliveryAddress ? 32 : 22;
-            doc.setDrawColor(226, 232, 240); // slate-200
-            doc.roundedRect(14, 62, 181, boxHeight, 2, 2, 'S');
-            doc.setFontSize(9);
-            doc.setTextColor(lightTextColor);
-            doc.text('PRESUPUESTO PARA:', 20, 68);
-            doc.setFontSize(11);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(textColor);
-            
-            let clientLine1 = quote.fiscalName || quote.customerName || 'Cliente sin especificar';
-            if (quote.sucursal) {
-                clientLine1 += ` (${quote.sucursal})`;
-            }
-            doc.text(clientLine1, 20, 74);
-            
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(9);
-            doc.setTextColor(lightTextColor);
-            if (quote.projectReference) doc.text(`Referencia: ${quote.projectReference}`, 20, 79);
-
-            if (hasDeliveryAddress) {
-                doc.setFont('helvetica', 'bold');
-                doc.text(`Dirección de Entrega:`, 20, 89);
-                doc.setFont('helvetica', 'normal');
-                doc.text(quote.deliveryAddress!, 58, 89);
-            }
-
-
-            // --- Table ---
-            const tableRows = quote.quoteItems.map(item => {
-                let description = '';
-                if (item.productLine === 'KITS') {
-                    description = `${item.kitProduct?.name || ''}\n`;
-                    if ((item.kitProduct?.id === 'kit-pintura' || item.kitProduct?.id === 'kit-reparacion') && (item.color || item.ralCode)) {
-                        description += `Color: ${item.color?.name || `RAL ${item.ralCode}`}\n`;
-                    }
-                    if (item.invoiceReference) {
-                        description += `Ref. Factura: ${item.invoiceReference}`;
-                    }
-                } else {
-                    description = `Plato de ducha ${item.productLine} - ${item.model?.name}\n`;
-                    description += `Dimensiones: ${item.width}x${item.length}cm\n`;
-                    if (item.cutWidth && item.cutLength) {
-                        description += `Corte a medida: ${item.cutWidth}x${item.cutLength}cm\n`;
-                    }
-                    description += `Color: ${item.color?.name || `RAL ${item.ralCode}`}\n`;
-                    if (item.extras.length > 0) {
-                        description += `Extras: ${item.extras.map(e => e.id === 'bitono' && item.bitonoColor ? `Tapa bitono: ${item.bitonoColor.name}` : e.name).join(', ')}`;
-                    }
-                     if (item.productLine === 'STRUCT DETAIL' && item.structFrames) {
-                        description += `\nMarcos: ${item.structFrames}`;
-                    }
-                }
-                
-                const effectiveDiscounts = quote.customerDiscounts || {};
-                const priceDetails = calculatePriceDetails(item, effectiveDiscounts);
-                const unitPVP = item.quantity > 0 ? priceDetails.basePrice / item.quantity : 0;
-            
-                return [
-                    item.quantity,
-                    description.trim(),
-                    unitPVP.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }),
-                    `${priceDetails.discountPercent.toFixed(2)}%`,
-                    priceDetails.discountedPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })
-                ];
-            });
-
-            // @ts-ignore
-            doc.autoTable({
-                startY: boxHeight + 68,
-                head: [['Cant.', 'Descripción', 'PVP Unit.', 'Dto. %', 'Subtotal']],
-                body: tableRows,
-                theme: 'striped',
-                headStyles: {
-                    fillColor: [241, 245, 249], // slate-100
-                    textColor: textColorRgb,
-                    fontStyle: 'bold',
-                },
-                styles: {
-                    cellPadding: 3,
-                    fontSize: 9,
-                    textColor: textColorRgb,
-                    valign: 'middle'
-                },
-                columnStyles: {
-                    0: { cellWidth: 15, halign: 'center' },
-                    1: { cellWidth: 'auto' },
-                    2: { cellWidth: 25, halign: 'right' },
-                    3: { cellWidth: 20, halign: 'right' },
-                    4: { cellWidth: 30, halign: 'right' },
-                }
-            });
-
-            // --- Totals ---
-            const finalY = (doc as any).autoTable.previous.finalY || 150;
-            const priceCalculations = quote.quoteItems.map(item => calculatePriceDetails(item, quote.customerDiscounts || {}));
-            
-            let currentY = finalY + 10;
-            doc.setFontSize(10);
-
-            const drawTotalLine = (label: string, value: string, isBold = false) => {
-                doc.setFont('helvetica', isBold ? 'bold' : 'normal');
-                doc.text(label, 140, currentY);
-                doc.text(value, 195, currentY, { align: 'right' });
-                currentY += 6;
-            };
-
-            const baseImponible = priceCalculations.reduce((sum, details) => sum + details.discountedPrice, 0);
-            
-            drawTotalLine('Base Imponible', baseImponible.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }));
-            
-            const ivaAmount = baseImponible * VAT_RATE;
-            const total = baseImponible + ivaAmount;
-
-            drawTotalLine(`IVA (${VAT_RATE * 100}%)`, ivaAmount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }));
-            
-            currentY += 2; // Add a small gap before the total line
-
-            doc.setFontSize(12);
-            drawTotalLine('TOTAL', total.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }), true);
-
-
-            // --- Footer ---
-            doc.setFontSize(8);
-            doc.setTextColor(lightTextColor);
-            const pageCount = doc.internal.getNumberOfPages();
-            for (let i = 1; i <= pageCount; i++) {
-                doc.setPage(i);
-                doc.text(`Página ${i} de ${pageCount}`, 195, 285, { align: 'right' });
-                doc.text('Presupuesto válido durante 30 días.', 15, 285);
-            }
-
-            setPdfUrl(doc.output('bloburl'));
-        } catch (error) {
-            console.error("Error generating PDF:", error);
-            // Handle error state if needed
-        } finally {
-            setIsGenerating(false);
-        }
-    }, [quote, user, calculatePriceDetails]);
-
-    useEffect(() => {
-        if (isOpen) {
-            generatePdf();
-        } else {
-            // Clean up blob URL when modal closes
-            if (pdfUrl) {
-                URL.revokeObjectURL(pdfUrl);
-                setPdfUrl(null);
-            }
-            pdfDoc.current = null;
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isOpen]); // generatePdf is stable due to useCallback
-
-    const handleDownload = () => {
-        if (pdfDoc.current && quote) {
-            pdfDoc.current.save(`Presupuesto_${quote.customerName || 'presupuesto'}_${quote.id.split('_').pop()}.pdf`);
-        }
-    };
-    
-    if (!isOpen) return null;
-
-    return (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
-            <div className="bg-white rounded-2xl shadow-2xl p-4 w-full h-full flex flex-col" onClick={e => e.stopPropagation()}>
-                <div className="flex justify-between items-center mb-4 flex-shrink-0">
-                    <h3 className="text-xl font-bold text-slate-800">Previsualización</h3>
-                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
-                </div>
-                <div className="flex-grow bg-slate-100 rounded-lg overflow-hidden">
-                    {isGenerating ? (
-                        <div className="flex items-center justify-center h-full">
-                            <p className="text-slate-500">Generando PDF...</p>
-                        </div>
-                    ) : pdfUrl ? (
-                        <iframe src={pdfUrl} className="w-full h-full border-0" title="PDF Preview"></iframe>
-                    ) : (
-                        <div className="flex items-center justify-center h-full">
-                            <p className="text-red-500">Error al generar el PDF.</p>
-                        </div>
-                    )}
-                </div>
-                <div className="mt-6 pt-4 border-t border-slate-200 flex justify-end gap-3 flex-shrink-0">
-                    <button onClick={onClose} className="px-6 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors">
-                        Cerrar
-                    </button>
-                    <button onClick={handleDownload} disabled={isGenerating || !pdfUrl} className="px-8 py-2 font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors disabled:bg-teal-300">
-                        Descargar
-                    </button>
-                </div>
+// PDF Preview Modal
+const PdfPreviewModal = ({ url, onClose }: { url: string, onClose: () => void }) => (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4 animate-fade-in" onClick={onClose}>
+        <div className="bg-white rounded-lg shadow-2xl p-4 w-full max-w-4xl h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-200">
+                <h3 className="text-lg font-bold text-slate-800">Vista Previa del PDF</h3>
+                <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
             </div>
+            <iframe src={url} className="w-full h-full border-0 rounded" title="PDF Preview"></iframe>
         </div>
-    );
-};
-
-
-// --- SaveQuoteModal Component Definition ---
-interface SaveQuoteModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    onConfirm: (details: { customerName: string; projectReference: string; fiscalName: string; sucursal: string; deliveryAddress: string; }) => void;
-    disabled: boolean;
-}
-
-const SaveQuoteModal: React.FC<SaveQuoteModalProps> = ({ isOpen, onClose, onConfirm, disabled }) => {
-    const [customerName, setCustomerName] = useState('');
-    const [projectReference, setProjectReference] = useState('');
-    const [fiscalName, setFiscalName] = useState('');
-    const [sucursal, setSucursal] = useState('');
-    const [deliveryAddress, setDeliveryAddress] = useState('');
-
-    if (!isOpen) return null;
-
-    const handleConfirm = () => {
-        if (customerName.trim() || fiscalName.trim()) {
-            onConfirm({ customerName, projectReference, fiscalName, sucursal, deliveryAddress });
-            onClose();
-            // Reset fields
-            setCustomerName('');
-            setProjectReference('');
-            setFiscalName('');
-            setSucursal('');
-            setDeliveryAddress('');
-        }
-    };
-
-    return (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
-            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
-                <div className="flex justify-between items-start mb-4">
-                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-teal-100 text-teal-600 rounded-lg flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z" /></svg>
-                        </div>
-                        <div>
-                            <h3 className="text-xl font-bold text-slate-800">Guardar</h3>
-                            <p className="text-sm text-slate-500">Detalles del cliente final.</p>
-                        </div>
-                    </div>
-                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
-                </div>
-
-                <div className="space-y-4">
-                    <div>
-                        <label htmlFor="fiscalName" className="block text-sm font-medium text-slate-700 mb-2">
-                            Nombre Fiscal del Cliente
-                        </label>
-                        <input
-                            id="fiscalName"
-                            type="text"
-                            value={fiscalName}
-                            onChange={(e) => setFiscalName(e.target.value)}
-                            placeholder="Ej: Proyectos Baño S.L."
-                            className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition"
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="customerName" className="block text-sm font-medium text-slate-700 mb-2">
-                            Nombre Comercial / Contacto <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                            id="customerName"
-                            type="text"
-                            value={customerName}
-                            onChange={(e) => setCustomerName(e.target.value)}
-                            placeholder="Ej: Juan Pérez"
-                            className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition"
-                        />
-                         <p className="text-xs text-slate-500 mt-1">Este o el Nombre Fiscal es obligatorio.</p>
-                    </div>
-                    <div>
-                        <label htmlFor="sucursalCliente" className="block text-sm font-medium text-slate-700 mb-2">
-                            Población / Sucursal (Opcional)
-                        </label>
-                        <input
-                            id="sucursalCliente"
-                            type="text"
-                            value={sucursal}
-                            onChange={(e) => setSucursal(e.target.value)}
-                            placeholder="Ej: Madrid Centro"
-                            className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition"
-                        />
-                    </div>
-                     <div>
-                        <label htmlFor="projectReference" className="block text-sm font-medium text-slate-700 mb-2">
-                            Referencia del Proyecto (Opcional)
-                        </label>
-                        <input
-                            id="projectReference"
-                            type="text"
-                            value={projectReference}
-                            onChange={(e) => setProjectReference(e.target.value)}
-                            placeholder="Ej: Obra Baño Principal"
-                            className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition"
-                        />
-                    </div>
-                     <div>
-                        <label htmlFor="deliveryAddress" className="block text-sm font-medium text-slate-700 mb-2">
-                            Dirección de Entrega (Si es diferente)
-                        </label>
-                        <textarea
-                            id="deliveryAddress"
-                            value={deliveryAddress}
-                            onChange={(e) => setDeliveryAddress(e.target.value)}
-                            placeholder="Dejar en blanco para usar la dirección principal del cliente."
-                            rows={3}
-                            className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition"
-                        />
-                    </div>
-                </div>
-                {disabled && (
-                    <p className="text-sm text-amber-700 bg-amber-100 p-3 rounded-md mt-4">
-                        Debes añadir al menos un artículo al presupuesto antes de guardarlo.
-                    </p>
-                )}
-                <div className="mt-8 pt-6 border-t border-slate-200 flex justify-end gap-3">
-                     <button onClick={onClose} className="px-6 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors">
-                        Cancelar
-                    </button>
-                    <button onClick={handleConfirm} disabled={disabled || (!customerName.trim() && !fiscalName.trim())} className="px-8 py-2 font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 disabled:bg-teal-300 transition-colors">
-                        Guardar
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// --- CustomQuoteModal Component Definition ---
-interface CustomQuoteModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-}
-
-const CustomQuoteModal: React.FC<CustomQuoteModalProps> = ({ isOpen, onClose }) => {
-    if (!isOpen) return null;
-
-    return (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
-            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
-                <div className="flex justify-between items-start mb-4">
-                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-teal-100 text-teal-600 rounded-lg flex items-center justify-center">
-                           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
-                        </div>
-                        <div>
-                            <h3 className="text-xl font-bold text-slate-800">CUSTOM</h3>
-                            <p className="text-sm text-slate-500">Presupuestos a medida.</p>
-                        </div>
-                    </div>
-                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
-                </div>
-
-                <div className="space-y-4 text-slate-600">
-                    <p>
-                        El modelo <strong>CUSTOM</strong> requiere un presupuesto detallado.
-                    </p>
-                    <p>
-                        Para solicitarlo, envía los detalles de tu proyecto a:
-                    </p>
-                    <div className="text-center my-4">
-                         <a href="mailto:sandra.martinez@aqgbathrooms.com" className="font-semibold text-teal-600 bg-teal-100 px-4 py-2 rounded-md hover:bg-teal-200 transition-colors">
-                            sandra.martinez@aqgbathrooms.com
-                        </a>
-                    </div>
-                </div>
-
-                <div className="mt-8 pt-6 border-t border-slate-200 flex justify-end">
-                    <button onClick={onClose} className="px-8 py-2 font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors">
-                        Entendido
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-
-// --- DrainerModal Component Definition ---
-interface DrainerModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-}
-
-const DrainerModal: React.FC<DrainerModalProps> = ({ isOpen, onClose }) => {
-    if (!isOpen) return null;
-
-    return (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
-            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
-                <div className="flex justify-between items-start mb-4">
-                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-teal-100 text-teal-600 rounded-lg flex items-center justify-center">
-                           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
-                        </div>
-                        <div>
-                            <h3 className="text-xl font-bold text-slate-800">Próximamente: DRAINER</h3>
-                            <p className="text-sm text-slate-500">Una nueva colección.</p>
-                        </div>
-                    </div>
-                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
-                </div>
-
-                <div className="space-y-4 text-slate-600">
-                    <p>
-                        La colección <strong>DRAINER</strong> es una novedad de nuestro próximo catálogo general.
-                    </p>
-                    <p>
-                        Próximamente estará disponible para que puedas incluirla en tus presupuestos.
-                    </p>
-                </div>
-
-                <div className="mt-8 pt-6 border-t border-slate-200 flex justify-end">
-                    <button onClick={onClose} className="px-8 py-2 font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors">
-                        Entendido
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
+    </div>
+);
 
 
 const App: React.FC = () => {
+    // --- STATE MANAGEMENT ---
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-    const [view, setView] = useState<'app' | 'my_quotes' | 'tools' | 'transparency' | 'guides'>('app');
+    const [view, setView] = useState<'auth' | 'welcome' | 'quote' | 'my-quotes' | 'conditions' | 'guides' | 'transparency'>('auth');
 
-    const INITIAL_QUOTE_STATE: QuoteState = {
+    // --- QUOTE STATE ---
+    const [currentStep, setCurrentStep] = useState<number>(1);
+    const [currentItemConfig, setCurrentItemConfig] = useState<QuoteState>({
         productLine: null,
         width: 70,
         length: 100,
@@ -737,870 +267,605 @@ const App: React.FC = () => {
         model: null,
         color: null,
         extras: [],
-        structFrames: 4,
-    };
-
-    const [currentStep, setCurrentStep] = useState(0);
-    const [currentItemConfig, setCurrentItemConfig] = useState<QuoteState>(INITIAL_QUOTE_STATE);
+    });
     const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([]);
     const [editingItemId, setEditingItemId] = useState<string | null>(null);
     const [appliedDiscounts, setAppliedDiscounts] = useState<{ [key: string]: number }>({});
-
-    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-    const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
-    const [isPdfPreviewModalOpen, setIsPdfPreviewModalOpen] = useState(false);
-    const [quoteForPdf, setQuoteForPdf] = useState<SavedQuote | null>(null);
-    const [isCustomQuoteModalOpen, setIsCustomQuoteModalOpen] = useState(false);
-    const [isDrainerModalOpen, setIsDrainerModalOpen] = useState(false);
     
-    // Tracks if there's a non-empty quote being built
-    const isQuoteActive = useMemo(() => {
-        return currentStep > 0 || quoteItems.length > 0;
-    }, [currentStep, quoteItems]);
+    // UI State
+    const [isSettingsModalOpen, setSettingsModalOpen] = useState(false);
+    const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
 
-    // --- Authentication & User Data ---
+    // Initial load from localStorage
     useEffect(() => {
-        try {
-            const storedUsersString = localStorage.getItem('users');
-            const storedUsers: StoredUser[] = storedUsersString ? JSON.parse(storedUsersString) : [];
-
-            // Use a map to handle user merging correctly. This ensures that the authorizedUsers list in the
-            // code is the source of truth for passwords and base data, while preserving user-specific settings.
-            const usersMap = new Map<string, StoredUser>();
-
-            // 1. Load all current users from storage.
-            for (const storedUser of storedUsers) {
-                usersMap.set(storedUser.email, storedUser);
+        const loggedInUserEmail = localStorage.getItem('loggedInUser');
+        if (loggedInUserEmail) {
+            const users = JSON.parse(localStorage.getItem('users') || '[]') as StoredUser[];
+            const user = users.find(u => u.email === loggedInUserEmail);
+            if (user) {
+                setCurrentUser(user);
+                setView('welcome');
             }
-
-            // 2. Iterate through the "source of truth" user list from the code.
-            //    This will add new users and update existing ones.
-            for (const authorizedUser of authorizedUsers) {
-                const storedVersion = usersMap.get(authorizedUser.email);
-                const updatedUser = {
-                    ...authorizedUser, // Start with the base data from code (name, password).
-                    // Preserve dynamic/user-editable fields from storage if they exist.
-                    promotion: storedVersion?.promotion,
-                    preparedBy: storedVersion?.preparedBy || authorizedUser.preparedBy,
-                    fiscalName: storedVersion?.fiscalName || authorizedUser.fiscalName,
-                    sucursal: storedVersion?.sucursal || authorizedUser.sucursal,
-                };
-                usersMap.set(authorizedUser.email, updatedUser as StoredUser);
-            }
-
-            const finalUsers = Array.from(usersMap.values());
-            localStorage.setItem('users', JSON.stringify(finalUsers));
-
-            const loggedInUserEmail = localStorage.getItem('currentUserEmail');
-            if (loggedInUserEmail) {
-                const user = finalUsers.find(u => u.email === loggedInUserEmail);
-                if (user) {
-                    setCurrentUser(user);
-                } else {
-                    // The user in storage doesn't exist in our authorized list anymore. Log them out.
-                    localStorage.removeItem('currentUserEmail');
-                }
-            }
-        } catch (error) {
-            console.error('Error managing user data:', error);
-            // Consider clearing storage if it's corrupted.
-            // localStorage.clear();
         }
     }, []);
 
-    const updateUser = (updatedUserData: Partial<User>) => {
-        if (!currentUser) return;
-
-        const updatedUser = { ...currentUser, ...updatedUserData };
-        setCurrentUser(updatedUser);
-
-        try {
-            const storedUsersString = localStorage.getItem('users');
-            const storedUsers: StoredUser[] = storedUsersString ? JSON.parse(storedUsersString) : [];
-            const updatedStoredUsers = storedUsers.map(u => u.email === updatedUser.email ? { ...u, ...updatedUserData } : u);
-            localStorage.setItem('users', JSON.stringify(updatedStoredUsers));
-        } catch (error) {
-            console.error("Failed to update user in localStorage", error);
+    // Seed users if none exist
+    useEffect(() => {
+        const users = localStorage.getItem('users');
+        if (!users) {
+            localStorage.setItem('users', JSON.stringify(authorizedUsers));
         }
-    };
+    }, []);
     
-    const handleLogin = async (email: string, password: string): Promise<void> => {
-        try {
-            const storedUsersString = localStorage.getItem('users');
-            const users: StoredUser[] = storedUsersString ? JSON.parse(storedUsersString) : [];
-            const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
 
-            if (user && user.password === password) {
-                localStorage.setItem('currentUserEmail', user.email);
-                setCurrentUser(user);
-                resetQuote();
-                setView('app');
-            } else {
-                throw new Error('El correo electrónico o la contraseña no son correctos.');
-            }
-        } catch (error) {
-            console.error('Login error:', error);
-            throw error; // Re-throw to be caught in the LoginPage component
-        }
-    };
+    // --- DERIVED STATE & MEMOS ---
 
-    const handleLogout = () => {
-        if (window.confirm('¿Estás seguro de que quieres cerrar la sesión?')) {
-            setCurrentUser(null);
-            localStorage.removeItem('currentUserEmail');
+    // Determine which steps to show based on product line
+    const STEPS = useMemo(() => {
+        if (currentItemConfig.productLine === 'KITS') {
+            return KITS_STEPS;
         }
-    };
+        return SHOWER_TRAY_STEPS;
+    }, [currentItemConfig.productLine]);
     
-    // --- Pricing Logic ---
+    const isNextStepDisabled = useMemo(() => {
+        switch (currentStep) {
+            case 1: // Collection
+                return !currentItemConfig.productLine;
+            case 2: // Dimensions or Kit Selection
+                if (currentItemConfig.productLine === 'KITS') {
+                    return !currentItemConfig.kitProduct;
+                }
+                return !currentItemConfig.width || !currentItemConfig.length;
+            case 3: // Texture or Kit Details
+                if (currentItemConfig.productLine === 'KITS') {
+                    if (currentItemConfig.kitProduct?.id === 'kit-pintura' || currentItemConfig.kitProduct?.id === 'kit-reparacion') {
+                        const isRalSelected = currentItemConfig.extras.some(e => e.id === 'ral');
+                        return !currentItemConfig.color && (!isRalSelected || !currentItemConfig.ralCode);
+                    }
+                    return false; // No extra validation for repair kit
+                }
+                return !currentItemConfig.model;
+            case 4: // Color
+                const isRalSelected = currentItemConfig.extras.some(e => e.id === 'ral');
+                return !currentItemConfig.color && (!isRalSelected || !currentItemConfig.ralCode);
+            case 5: // Cuts
+                const hasCut = currentItemConfig.extras.some(e => e.id.startsWith('corte'));
+                if (hasCut) {
+                    const { cutWidth, cutLength, width, length } = currentItemConfig;
+                    if (!cutWidth || !cutLength || cutWidth <= 0 || cutLength <= 0) return true;
+                     const baseSorted = [width, length].sort((a, b) => a - b);
+                    const cutSorted = [cutWidth, cutLength].sort((a, b) => a - b);
+                     if (cutSorted[0] > baseSorted[0] || cutSorted[1] > baseSorted[1]) return true;
+                }
+                return false;
+            case 6: // Accessories
+                const isBitonoSelected = currentItemConfig.extras.some(e => e.id === 'bitono');
+                return isBitonoSelected && !currentItemConfig.bitonoColor;
+            default:
+                return false;
+        }
+    }, [currentStep, currentItemConfig]);
+
+    
+    // --- PRICE CALCULATION ---
+
     const calculateItemPrice = useCallback((item: QuoteState): number => {
         if (item.productLine === 'KITS') {
-            // For KITS, the price is fixed and color selection does not add any extra cost.
-            const basePrice = item.kitProduct?.price || 0;
-            return basePrice * item.quantity;
+            return item.kitProduct?.price || 0;
         }
 
-        const { productLine, width, length, model, color, extras, quantity, structFrames } = item;
+        const { productLine, width, length, model, color, extras, structFrames } = item;
         if (!productLine || !width || !length) return 0;
+        
+        let basePrice = PRICE_LIST[productLine]?.[width]?.[length] || 0;
 
-        // Determine which price list to use for LUXE based on the 'tapeta' extra
-        let priceListKey = productLine;
-        if (productLine === 'LUXE' && extras.some(extra => extra.id === 'tapeta-mismo-material')) {
-            priceListKey = 'LUXE CON TAPETA';
-        }
-
-        let basePrice = PRICE_LIST[priceListKey]?.[width]?.[length] || 0;
-
-        if (model?.priceFactor) {
-            basePrice *= model.priceFactor;
-        }
-        if (color?.price) {
-            basePrice += color.price;
-        }
-
+        // Apply STRUCT DETAIL frames discount
         if (productLine === 'STRUCT DETAIL' && structFrames) {
-            const discountMap = { 4: 1.0, 3: 0.95, 2: 0.90, 1: 0.85 };
-            basePrice *= (discountMap[structFrames] || 1.0);
+            switch (structFrames) {
+                case 3: basePrice *= 0.95; break;
+                case 2: basePrice *= 0.90; break;
+                case 1: basePrice *= 0.85; break;
+                // case 4: no discount
+            }
         }
 
-        // Filter out the 'tapeta' extra from price calculation since it's handled by the price list switch
-        const extrasPrice = extras
-            .filter(extra => extra.id !== 'tapeta-mismo-material')
-            .reduce((sum, extra) => sum + (extra.price || 0), 0);
-            
-        const singleItemPrice = basePrice + extrasPrice;
-
-        return singleItemPrice * quantity;
+        let total = basePrice;
+        if (model?.priceFactor) total *= model.priceFactor;
+        if (color) total += color.price;
+        if (extras) {
+            extras.forEach(extra => {
+                total += extra.price;
+            });
+        }
+        return total;
     }, []);
 
-    const calculatePriceDetails = useCallback((item: QuoteItem, discounts: { [key: string]: number }): PriceDetails => {
-        const basePrice = calculateItemPrice(item); // PVP
-        const discountPercent = (item.productLine && discounts[item.productLine]) || 0;
-        const discountedPrice = basePrice * (1 - discountPercent / 100);
-        const finalPrice = discountedPrice * (1 + VAT_RATE);
+    // New, more detailed price calculation for displaying discounts
+    const calculatePriceDetails = useCallback((item: QuoteItem): PriceDetails => {
+        const baseItemPrice = calculateItemPrice(item);
+        const pvpPrice = baseItemPrice * item.quantity;
 
-        return {
-            basePrice,
-            discountedPrice,
-            finalPrice,
-            discountPercent
-        };
-    }, [calculateItemPrice]);
-
-
-    const currentItemPrice = useMemo(() => {
-        const pvp = calculateItemPrice(currentItemConfig);
-        const discountPercent = (currentItemConfig.productLine && appliedDiscounts[currentItemConfig.productLine]) || 0;
-        const discountedPVP = pvp * (1 - discountPercent / 100);
-        return discountedPVP * (1 + VAT_RATE);
-    }, [currentItemConfig, calculateItemPrice, appliedDiscounts]);
-
-
-    const totalQuotePrice = useMemo(() => {
-        const subtotal = quoteItems.reduce((sum, item) => {
-            const details = calculatePriceDetails(item, appliedDiscounts);
-            return sum + details.discountedPrice;
-        }, 0);
-        return subtotal * (1 + VAT_RATE);
-    }, [quoteItems, appliedDiscounts, calculatePriceDetails]);
-
-
-    // --- Step Navigation & State Management ---
-    const steps = currentItemConfig.productLine === 'KITS' ? KITS_STEPS : SHOWER_TRAY_STEPS;
-    const totalSteps = steps.length;
-
-    const resetItemConfig = (keepProductLine = false) => {
-        const newState: QuoteState = { ...INITIAL_QUOTE_STATE };
-        if (keepProductLine) {
-            newState.productLine = currentItemConfig.productLine;
-        }
-        setCurrentItemConfig(newState);
-        setEditingItemId(null);
-    };
-
-    const resetQuote = () => {
-        resetItemConfig();
-        setCurrentStep(0);
-        setQuoteItems([]);
-        setEditingItemId(null);
-        setAppliedDiscounts({});
-    };
-
-    const handleDiscard = () => {
-        if (window.confirm('¿Estás seguro de que quieres descartar este presupuesto y volver al inicio?')) {
-            resetQuote();
-        }
-    };
-    
-    const handleStartNewQuote = (fromWelcomePage: boolean = false) => {
-        // fromWelcomePage is true when the user explicitly clicks "New Quote"
-        // from the Welcome page, which implies discarding any active quote.
-        if (fromWelcomePage) {
-            resetQuote();
-        }
-        setCurrentStep(1);
-    };
-
-    const handleNext = () => {
-        if (currentStep < totalSteps) {
-            // Handle specific logic for product lines
-            if (currentStep === 1 && currentItemConfig.productLine === 'CUSTOM') {
-                setIsCustomQuoteModalOpen(true);
-                return; // Stop navigation
+        // Apply promo discount
+        let promoDiscountPercent = 0;
+        if (currentUser?.promotion?.id === PROMO_ID) {
+            const activationTime = currentUser.promotion.activationTimestamp;
+            const expiryTime = activationTime + (PROMO_DURATION_DAYS * 24 * 60 * 60 * 1000);
+            if (Date.now() < expiryTime) {
+                promoDiscountPercent = 0.625; // 50% + 25% -> (1 - 0.5) * (1 - 0.25) = 0.375 price factor
             }
-            if (currentStep === 1 && currentItemConfig.productLine === 'DRAINER') {
-                setIsDrainerModalOpen(true);
-                return; // Stop navigation
-            }
-            
-            // Automatic model selection logic for shower trays
-            if (currentItemConfig.productLine !== 'KITS' && currentStep === 2) {
-                const { productLine } = currentItemConfig;
-                const models = SHOWER_MODELS;
-                let autoSelectedModel: ProductOption | null = null;
-
-                if (productLine === 'SOFTUM') autoSelectedModel = models.find(m => m.id === 'sand') || null;
-                else if (productLine === 'LUXE' || productLine === 'CLASSIC') autoSelectedModel = models.find(m => m.id === 'pizarra') || null;
-                else if (productLine?.startsWith('FLAT') || productLine?.startsWith('RATIO')) autoSelectedModel = models.find(m => m.id === 'lisa') || null;
-                
-                if (autoSelectedModel && !currentItemConfig.model) {
-                    setCurrentItemConfig(prev => ({ ...prev, model: autoSelectedModel }));
-                }
-            }
-
-            setCurrentStep(currentStep + 1);
-        }
-    };
-
-    const handlePrev = () => {
-        if (currentStep > 1) {
-            setCurrentStep(currentStep - 1);
-        }
-    };
-    
-    const handleStepClick = (stepNumber: number) => {
-        if (stepNumber < currentStep) {
-            setCurrentStep(stepNumber);
-        }
-    };
-
-    const handleAddItemToQuote = () => {
-        const newItem: QuoteItem = {
-            ...currentItemConfig,
-            id: editingItemId || `item_${Date.now()}`
-        };
-
-        if (editingItemId) {
-            setQuoteItems(quoteItems.map(item => item.id === editingItemId ? newItem : item));
-        } else {
-            setQuoteItems([...quoteItems, newItem]);
         }
         
-        resetItemConfig(true);
-        setCurrentStep(totalSteps); // Go to summary
-    };
+        // Apply line-specific discount
+        const lineDiscountPercent = (appliedDiscounts[item.productLine] || 0) / 100;
+
+        // Combine discounts: P * (1 - D1) * (1 - D2)
+        const totalDiscountFactor = (1 - promoDiscountPercent) * (1 - lineDiscountPercent);
+        const discountedPrice = pvpPrice * totalDiscountFactor;
+
+        return {
+            basePrice: pvpPrice,
+            discountedPrice: discountedPrice,
+            finalPrice: discountedPrice * (1 + VAT_RATE),
+            discountPercent: (1 - totalDiscountFactor) * 100,
+        };
+    }, [calculateItemPrice, appliedDiscounts, currentUser]);
+
+    const { pvpTotalPrice, discountedTotalPrice } = useMemo(() => {
+        let pvpTotal = 0;
+        let discountedTotal = 0;
+        quoteItems.forEach(item => {
+            const details = calculatePriceDetails(item);
+            pvpTotal += details.basePrice;
+            discountedTotal += details.discountedPrice;
+        });
+        return { pvpTotalPrice: pvpTotal, discountedTotalPrice: discountedTotal };
+    }, [quoteItems, calculatePriceDetails]);
+
+    const finalTotalPrice = discountedTotalPrice * (1 + VAT_RATE);
+    
+    // --- AUTHENTICATION HANDLERS ---
+    
+    const handleLogin = useCallback(async (email: string, password: string): Promise<void> => {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                const users = JSON.parse(localStorage.getItem('users') || '[]') as StoredUser[];
+                const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+
+                if (user && user.password === password) {
+                    setCurrentUser(user);
+                    localStorage.setItem('loggedInUser', user.email);
+                    setView('welcome');
+                    resolve();
+                } else {
+                    reject(new Error('Email o contraseña incorrectos.'));
+                }
+            }, 500);
+        });
+    }, []);
+
+    const handleLogout = useCallback(() => {
+        if (window.confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+            setCurrentUser(null);
+            localStorage.removeItem('loggedInUser');
+            setView('auth');
+        }
+    }, []);
+
+    // --- NAVIGATION & VIEW HANDLERS ---
+    
+    const resetQuoteState = useCallback(() => {
+        setCurrentItemConfig({
+            productLine: null,
+            width: 70,
+            length: 100,
+            quantity: 1,
+            model: null,
+            color: STANDARD_COLORS[0],
+            extras: [],
+        });
+        setCurrentStep(1);
+        setEditingItemId(null);
+    }, []);
+
+    const handleNewQuote = useCallback(() => {
+        setQuoteItems([]);
+        setAppliedDiscounts({});
+        resetQuoteState();
+        setView('quote');
+    }, [resetQuoteState]);
+
+    const handleResumeQuote = useCallback(() => {
+        setView('quote');
+        // If there are items, jump to summary. Otherwise, start from step 1.
+        if (quoteItems.length > 0) {
+            setCurrentStep(STEPS.length);
+        } else {
+            setCurrentStep(1);
+        }
+    }, [quoteItems.length, STEPS.length]);
+
+    const handleNextStep = useCallback(() => {
+        if (currentStep < STEPS.length) {
+            setCurrentStep(prev => prev + 1);
+        } else {
+            // This is the "Add to Quote" action on the last step
+            const newItem: QuoteItem = {
+                ...currentItemConfig,
+                id: editingItemId || `item_${Date.now()}`,
+            };
+
+            if (editingItemId) {
+                setQuoteItems(quoteItems.map(item => item.id === editingItemId ? newItem : item));
+            } else {
+                setQuoteItems([...quoteItems, newItem]);
+            }
+            resetQuoteState();
+            setCurrentStep(STEPS.length); // Stay on summary
+        }
+    }, [currentStep, STEPS.length, currentItemConfig, quoteItems, editingItemId, resetQuoteState]);
+
+    const handlePrevStep = useCallback(() => {
+        if (currentStep > 1) {
+            setCurrentStep(prev => prev - 1);
+        }
+    }, [currentStep]);
+
+    const handleStepClick = useCallback((step: number) => {
+        if (step < currentStep) {
+            setCurrentStep(step);
+        }
+    }, [currentStep]);
+    
+    // --- QUOTE ITEM MANAGEMENT ---
+    
+    const handleUpdateQuoteItem = useCallback((updates: Partial<QuoteState>) => {
+        setCurrentItemConfig(prev => ({ ...prev, ...updates }));
+    }, []);
 
     const handleEditItem = (itemId: string) => {
         const itemToEdit = quoteItems.find(item => item.id === itemId);
         if (itemToEdit) {
             setCurrentItemConfig(itemToEdit);
             setEditingItemId(itemId);
-            const newSteps = itemToEdit.productLine === 'KITS' ? KITS_STEPS : SHOWER_TRAY_STEPS;
-            setCurrentStep(itemToEdit.productLine === 'KITS' ? newSteps.findIndex(s => s.title === 'Selección de Kit') + 1 : 1);
+            // Determine start step based on product line
+            const startStep = itemToEdit.productLine === 'KITS' ? KITS_STEPS[0].number : SHOWER_TRAY_STEPS[0].number;
+            setCurrentStep(startStep);
         }
     };
     
     const handleDeleteItem = (itemId: string) => {
-        if(window.confirm('¿Seguro que quieres eliminar este artículo?')) {
+        if (window.confirm('¿Estás seguro de que quieres eliminar este artículo?')) {
             setQuoteItems(quoteItems.filter(item => item.id !== itemId));
         }
     };
 
-    const handleStartNewItem = () => {
-        resetItemConfig();
-        setCurrentStep(1);
-    }
-    
-     // --- Quote Saving & Management ---
-    const handleSaveQuote = (details: { customerName: string; projectReference: string; fiscalName: string; sucursal: string; deliveryAddress: string; }) => {
-        if (!currentUser || quoteItems.length === 0) return;
-
-        try {
-            const allQuotes: SavedQuote[] = JSON.parse(localStorage.getItem('quotes') || '[]') as SavedQuote[];
-            const newQuoteIdNumber = (allQuotes.filter(q => q.userEmail === currentUser.email).length + 1).toString().padStart(4, '0');
-            
-            const pvpTotal = quoteItems.reduce((sum, item) => sum + calculateItemPrice(item), 0);
-            
-            const newQuote: SavedQuote = {
-                id: `quote_c_${newQuoteIdNumber}`,
-                timestamp: Date.now(),
-                userEmail: currentUser.email,
-                quoteItems: quoteItems,
-                totalPrice: totalQuotePrice,
-                customerName: details.customerName,
-                projectReference: details.projectReference,
-                fiscalName: details.fiscalName,
-                sucursal: details.sucursal,
-                deliveryAddress: details.deliveryAddress,
-                type: 'customer',
-                pvpTotalPrice: pvpTotal,
-                customerDiscounts: appliedDiscounts,
-            };
-            
-            allQuotes.push(newQuote);
-            localStorage.setItem('quotes', JSON.stringify(allQuotes));
-            alert(`Presupuesto guardado con éxito. ID: ${newQuoteIdNumber}`);
-            resetQuote();
-            setView('my_quotes');
-        } catch (error) {
-            console.error("Failed to save quote:", error);
-            alert("Error al guardar el presupuesto. Revisa la consola para más detalles.");
+    const handleResetQuote = () => {
+        if (window.confirm('¿Estás seguro de que quieres vaciar el presupuesto actual?')) {
+            setQuoteItems([]);
+            setAppliedDiscounts({});
         }
     };
     
-    const handleDuplicateQuote = (quoteToDuplicate: SavedQuote) => {
-        resetQuote();
-        setQuoteItems(JSON.parse(JSON.stringify(quoteToDuplicate.quoteItems)));
-        setAppliedDiscounts(quoteToDuplicate.customerDiscounts || {});
-        setCurrentStep(totalSteps); // Go straight to summary
-        setView('app');
+    // --- PDF & PRINTING ---
+    const generateCustomerPdf = async (quote: SavedQuote, user: User, forDownload: boolean) => {
+        // Dynamic import of PDF generation utilities
+        const { default: generatePdf } = await import('./utils/pdfGenerator');
+        const pdfBlob = await generatePdf(quote, user);
+        
+        if (forDownload) {
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(pdfBlob);
+            link.download = `Presupuesto_AQG_${quote.id.replace(/quote_c_/g, '')}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+        } else {
+            // For preview
+            const pdfUrl = URL.createObjectURL(pdfBlob);
+            setPdfPreviewUrl(pdfUrl);
+        }
     };
 
-    const handlePreviewPdf = () => {
-        if (!currentUser || quoteItems.length === 0) return;
+    const handleGeneratePdf = async (savedQuote?: SavedQuote) => {
+        if (!currentUser) return;
+        const quoteToProcess = savedQuote || createSavedQuoteObject();
+        if (!quoteToProcess || quoteToProcess.quoteItems.length === 0) {
+            alert("No hay artículos en el presupuesto para generar un PDF.");
+            return;
+        }
+        await generateCustomerPdf(quoteToProcess, currentUser, true);
+    };
 
-        // Create a temporary quote object for the PDF preview without saving it
-        const quoteForPreview: SavedQuote = {
-            id: `preview_${Date.now()}`,
+    const handleViewPdf = async (savedQuote: SavedQuote) => {
+        if (!currentUser) return;
+        await generateCustomerPdf(savedQuote, currentUser, false);
+    };
+
+    const handlePrint = () => {
+        window.print();
+    };
+
+
+    // --- SAVING & DATA MANAGEMENT ---
+    const createSavedQuoteObject = (): SavedQuote | null => {
+        if (!currentUser) return null;
+        return {
+            id: `quote_c_${Date.now()}`,
             timestamp: Date.now(),
             userEmail: currentUser.email,
-            quoteItems: quoteItems,
-            totalPrice: totalQuotePrice,
-            customerName: 'Cliente (Previsualización)',
-            projectReference: '',
-            type: 'customer',
-            pvpTotalPrice: quoteItems.reduce((sum, item) => sum + calculateItemPrice(item), 0),
+            quoteItems,
+            totalPrice: finalTotalPrice,
+            pvpTotalPrice: pvpTotalPrice,
             customerDiscounts: appliedDiscounts,
+            type: 'customer' // This is a customer-facing quote
         };
-
-        setQuoteForPdf(quoteForPreview);
-        setIsPdfPreviewModalOpen(true);
     };
 
-    const handleViewPdf = (quote: SavedQuote) => {
-        setQuoteForPdf(quote);
-        setIsPdfPreviewModalOpen(true);
+    const handleSaveQuote = (details: { customerName?: string, projectReference?: string, fiscalName?: string; sucursal?: string; deliveryAddress?: string; }) => {
+        const newQuote = createSavedQuoteObject();
+        if (newQuote) {
+            const quoteWithDetails = { ...newQuote, ...details };
+            try {
+                const existingQuotes = JSON.parse(localStorage.getItem('quotes') || '[]') as SavedQuote[];
+                localStorage.setItem('quotes', JSON.stringify([...existingQuotes, quoteWithDetails]));
+                alert('Presupuesto guardado con éxito.');
+                setView('my-quotes');
+                // Clear the current quote after saving
+                setQuoteItems([]);
+                setAppliedDiscounts({});
+            } catch (error) {
+                console.error("Error saving quote to localStorage:", error);
+                alert("Hubo un error al guardar el presupuesto.");
+            }
+        }
+    };
+    
+    // Duplicates a quote and sets it as the active quote for editing.
+    const handleDuplicateQuote = (quoteToDuplicate: SavedQuote) => {
+        if (window.confirm('Esto reemplazará tu presupuesto actual. ¿Quieres continuar?')) {
+            setQuoteItems(quoteToDuplicate.quoteItems.map(item => ({ ...item, id: `item_${Date.now()}_${Math.random()}` })));
+            setAppliedDiscounts(quoteToDuplicate.customerDiscounts || {});
+            setView('quote');
+            setCurrentStep(STEPS.length); // Go to summary
+        }
     };
 
-    // --- Data Export/Import ---
     const handleExportData = () => {
-        if (!currentUser) return;
         try {
-            const allQuotes: SavedQuote[] = JSON.parse(localStorage.getItem('quotes') || '[]') as SavedQuote[];
-            const userQuotes = allQuotes.filter(q => q.userEmail === currentUser.email);
-            
+            const quotes = localStorage.getItem('quotes') || '[]';
             const dataToExport = {
-                userSettings: {
-                    preparedBy: currentUser.preparedBy,
-                    fiscalName: currentUser.fiscalName,
-                    sucursal: currentUser.sucursal,
-                },
-                quotes: userQuotes,
+                quotes: JSON.parse(quotes).filter((q: SavedQuote) => q.userEmail === currentUser?.email),
             };
-
             const dataStr = JSON.stringify(dataToExport, null, 2);
             const blob = new Blob([dataStr], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
+            link.download = `aqg_backup_${currentUser?.companyName.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.json`;
             link.href = url;
-            link.download = `aqg_backup_${currentUser.companyName.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(link);
             link.click();
-            document.body.removeChild(link);
             URL.revokeObjectURL(url);
-            
-        } catch (error) {
-            console.error("Error exporting data:", error);
-            alert("Hubo un error al exportar los datos.");
+        } catch (e) {
+            console.error('Error exporting data:', e);
+            alert('No se pudo exportar los datos.');
         }
     };
-    
+
     const handleImportData = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
-        if (!file || !currentUser) return;
-
-        if (!window.confirm("Atención: Esto reemplazará todos tus presupuestos y ajustes actuales con el contenido del archivo. ¿Deseas continuar?")) {
-            return;
-        }
+        if (!file) return;
 
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
                 const text = e.target?.result;
-                if (typeof text !== 'string') throw new Error("File could not be read.");
+                if (typeof text !== 'string') throw new Error('Invalid file content');
                 
-                const importedData = JSON.parse(text);
+                const data = JSON.parse(text);
+                const importedQuotes = data.quotes as SavedQuote[];
 
-                // Basic validation
-                if (!importedData.quotes || !Array.isArray(importedData.quotes)) {
-                    throw new Error("El archivo de importación no tiene el formato correcto (falta la lista de presupuestos).");
+                if (!Array.isArray(importedQuotes)) throw new Error('Invalid quotes format');
+
+                if (window.confirm(`Se encontraron ${importedQuotes.length} presupuestos. ¿Quieres importarlos? Esto se añadirá a tus presupuestos existentes.`)) {
+                    const allQuotes = JSON.parse(localStorage.getItem('quotes') || '[]') as SavedQuote[];
+                    
+                    // Filter out duplicates based on ID
+                    const existingIds = new Set(allQuotes.map(q => q.id));
+                    const newQuotes = importedQuotes.filter(q => !existingIds.has(q.id));
+
+                    localStorage.setItem('quotes', JSON.stringify([...allQuotes, ...newQuotes]));
+                    alert(`${newQuotes.length} nuevos presupuestos importados con éxito.`);
+                    // Refresh view if on MyQuotes page
+                    if(view === 'my-quotes') {
+                        setView('welcome');
+                        setTimeout(() => setView('my-quotes'), 0);
+                    }
                 }
-
-                // Update user settings from import
-                if (importedData.userSettings) {
-                    updateUser({
-                        preparedBy: importedData.userSettings.preparedBy,
-                        fiscalName: importedData.userSettings.fiscalName,
-                        sucursal: importedData.userSettings.sucursal,
-                    });
-                }
-
-                // Replace quotes
-                const allQuotes: SavedQuote[] = JSON.parse(localStorage.getItem('quotes') || '[]') as SavedQuote[];
-                // Remove existing quotes for this user
-                const otherUserQuotes = allQuotes.filter(q => q.userEmail !== currentUser.email);
-                // Add imported quotes, ensuring userEmail is correct
-                const userQuotesToImport = importedData.quotes.map((q: SavedQuote) => ({ ...q, userEmail: currentUser.email }));
-                const newQuotes = [...otherUserQuotes, ...userQuotesToImport];
-                
-                localStorage.setItem('quotes', JSON.stringify(newQuotes));
-                
-                alert("Datos importados con éxito. La página se recargará.");
-                window.location.reload();
-
             } catch (error) {
-                console.error("Error importing data:", error);
-                alert(`Error al importar: ${error instanceof Error ? error.message : 'Error desconocido.'}`);
-            } finally {
-                setIsSettingsModalOpen(false);
+                console.error('Error importing data:', error);
+                alert('El archivo de importación no es válido o está corrupto.');
             }
         };
         reader.readAsText(file);
     };
 
 
-    // --- UI Logic & Render State ---
-
-    const isNextDisabled = useMemo(() => {
-        if (currentStep === 1) {
-            return !currentItemConfig.productLine;
-        }
-        if (currentItemConfig.productLine === 'KITS') {
-            if (currentStep === 2) return !currentItemConfig.kitProduct;
-            if (currentStep === 3) {
-                const kitId = currentItemConfig.kitProduct?.id;
-                if (kitId === 'kit-pintura' || kitId === 'kit-reparacion') {
-                    const isRal = currentItemConfig.extras.some(e => e.id === 'ral');
-                    const isColorSelected = !!currentItemConfig.color;
-                    const isRalCompleted = isRal && !!currentItemConfig.ralCode?.trim();
-                    return !(isColorSelected || isRalCompleted);
-                }
-                return false;
-            }
-        } else { // Shower Trays logic
-            if (currentStep === 2) { // Step 2: Dimensions
-                return !currentItemConfig.width || !currentItemConfig.length;
-            }
-            if (currentStep === 3) { // Step 3: Model/Texture
-                return !currentItemConfig.model;
-            }
-            if (currentStep === 4) { // Step 4: Color
-                 const isRal = currentItemConfig.extras.some(e => e.id === 'ral');
-                 return !currentItemConfig.color && !(isRal && currentItemConfig.ralCode);
-            }
-            if (currentStep === 5) { // Step 5: Cuts
-                const hasCut = currentItemConfig.extras.some(e => e.id.startsWith('corte'));
-                if (hasCut) {
-                    const { cutWidth, cutLength, width, length } = currentItemConfig;
-                    if (!cutWidth || cutWidth <= 0 || !cutLength || cutLength <= 0) {
-                        return true; // Must provide positive dimensions
-                    }
-                    if (width && length) {
-                        const baseSorted = [width, length].sort((a, b) => a - b);
-                        const cutSorted = [cutWidth, cutLength].sort((a, b) => a - b);
-                        if (cutSorted[0] > baseSorted[0] || cutSorted[1] > baseSorted[1]) {
-                            return true; // Cut dimensions (even if rotated) are larger than base dimensions
-                        }
-                    }
-                }
-                return false;
-            }
-            if (currentStep === 6) { // Step 6: Accessories
-                 const isBitono = currentItemConfig.extras.some(e => e.id === 'bitono');
-                 if (isBitono && !currentItemConfig.bitonoColor) return true;
-                 return false;
-            }
-        }
-        return false;
-    }, [currentStep, currentItemConfig]);
-
-    const handleProductLineUpdate = (line: string) => {
-        const baseState = { ...INITIAL_QUOTE_STATE, productLine: line, quantity: currentItemConfig.quantity };
-        if (line === 'KITS') {
-            // For KITS, we don't need dimensions or model.
-            const { width, length, model, structFrames, ...kitState } = baseState;
-            setCurrentItemConfig(kitState as QuoteState);
-        } else {
-            setCurrentItemConfig(baseState);
-        }
-    }
+    // --- RENDER LOGIC ---
 
     const renderCurrentStep = () => {
-        if (currentStep === 0) {
-             if (view === 'app') return <WelcomePage userName={currentUser!.companyName} onNewQuote={() => handleStartNewQuote(true)} onViewQuotes={() => setView('my_quotes')} onResumeQuote={() => handleStartNewQuote(false)} hasActiveQuote={isQuoteActive} />;
-             if (view === 'my_quotes') return <MyQuotesPage user={currentUser!} onDuplicateQuote={handleDuplicateQuote} onViewPdf={handleViewPdf} />;
-             if (view === 'tools') return <CommercialConditionsPage />;
-             if (view === 'transparency') return <TransparencyPage />;
-             if (view === 'guides') return <MaintenanceGuidesPage />;
-        }
+        // Common props for update handlers
+        const updateProps = {
+            onUpdate: handleUpdateQuoteItem,
+            quote: currentItemConfig,
+        };
         
-        // --- KITS Flow ---
+        const updateColorProps = {
+            selectedColor: currentItemConfig.color,
+            onSelectColor: (color: ColorOption) => handleUpdateQuoteItem({ color, extras: currentItemConfig.extras.filter(e => e.id !== 'ral'), ralCode: '' }),
+            isRalSelected: currentItemConfig.extras.some(e => e.id === 'ral'),
+            onToggleRal: () => {
+                const ralExtra = ACCESSORY_EXTRAS.find(e => e.id === 'ral');
+                if (!ralExtra) return;
+                const isRal = currentItemConfig.extras.some(e => e.id === 'ral');
+                if (isRal) {
+                    handleUpdateQuoteItem({ extras: currentItemConfig.extras.filter(e => e.id !== 'ral'), ralCode: '', color: STANDARD_COLORS[0] });
+                } else {
+                    handleUpdateQuoteItem({ extras: [...currentItemConfig.extras, ralExtra], color: null, ralCode: '' });
+                }
+            },
+            ralCode: currentItemConfig.ralCode || '',
+            onRalCodeChange: (code: string) => handleUpdateQuoteItem({ ralCode: code }),
+        };
+
         if (currentItemConfig.productLine === 'KITS') {
-             switch (currentStep) {
-                case 1:
-                    return (
-                        <Step1ModelSelection
-                            selectedProductLine={currentItemConfig.productLine}
-                            onUpdate={handleProductLineUpdate}
-                            quantity={currentItemConfig.quantity}
-                            onUpdateQuantity={(q) => setCurrentItemConfig(prev => ({...prev, quantity: q}))}
-                        />
-                    );
-                case 2:
-                    return (
-                        <Step2KitSelection 
-                            onSelect={(kit) => setCurrentItemConfig(prev => ({ ...prev, kitProduct: kit, extras: [] }))}
-                            selectedKit={currentItemConfig.kitProduct || null}
-                        />
-                    );
-                case 3:
-                    return (
-                         <Step3KitDetails
-                            currentItemConfig={currentItemConfig}
-                            onSelectColor={(color) => setCurrentItemConfig(prev => ({...prev, color, ralCode: '', extras: prev.extras.filter(e => e.id !== 'ral')}))}
-                            onToggleRal={() => setCurrentItemConfig(prev => {
-                                const hasRal = prev.extras.some(e => e.id === 'ral');
-                                // For kits, RAL color option has no extra cost.
-                                const ralExtraForKit: ProductOption = { id: 'ral', name: 'Color personalizado (RAL)', price: 0, description: '' };
-                                const newExtras = hasRal 
-                                    ? prev.extras.filter(e => e.id !== 'ral') 
-                                    : [...prev.extras, ralExtraForKit];
-                                return { ...prev, extras: newExtras, color: null };
-                            })}
-                            onRalCodeChange={(code) => setCurrentItemConfig(prev => ({...prev, ralCode: code}))}
-                            onInvoiceRefChange={(ref) => setCurrentItemConfig(prev => ({...prev, invoiceReference: ref}))}
-                        />
-                    );
-                case 4: // Summary step for KITS
-                    return null; // Handled by showSummaryView
-                default:
-                    return <div>Paso desconocido</div>;
+            switch (currentStep) {
+                case 1: return <Step1ModelSelection selectedProductLine={currentItemConfig.productLine} onUpdate={(val) => handleUpdateQuoteItem({ productLine: val, quantity: 1, model: null, color: STANDARD_COLORS[0], extras: [] })} quantity={currentItemConfig.quantity} onUpdateQuantity={(q) => handleUpdateQuoteItem({ quantity: q })} />;
+                case 2: return <Step2KitSelection selectedKit={currentItemConfig.kitProduct} onSelect={(kit) => handleUpdateQuoteItem({ kitProduct: kit })} />;
+                case 3: return <Step3KitDetails currentItemConfig={currentItemConfig} onSelectColor={updateColorProps.onSelectColor} onToggleRal={updateColorProps.onToggleRal} onRalCodeChange={updateColorProps.onRalCodeChange} onInvoiceRefChange={(ref) => handleUpdateQuoteItem({ invoiceReference: ref })} />;
+                case 4: return <Step5Summary items={quoteItems} totalPrice={finalTotalPrice} onReset={handleResetQuote} onSaveRequest={() => {}} onGeneratePdfRequest={() => handleGeneratePdf()} onPrintRequest={handlePrint} onStartNew={resetQuoteState} onEdit={handleEditItem} onDelete={handleDeleteItem} calculatePriceDetails={calculatePriceDetails} appliedDiscounts={appliedDiscounts} onUpdateDiscounts={setAppliedDiscounts} />;
+                default: return null;
             }
         }
-        
-        // --- Shower Tray Flow ---
+
         switch (currentStep) {
-            case 1:
-                return (
-                     <Step1ModelSelection
-                        selectedProductLine={currentItemConfig.productLine}
-                        onUpdate={handleProductLineUpdate}
-                        quantity={currentItemConfig.quantity}
-                        onUpdateQuantity={(q) => setCurrentItemConfig(prev => ({...prev, quantity: q}))}
-                     />
-                );
-            case 2:
-                return (
-                    <Step1Dimensions
-                        quote={currentItemConfig}
-                        onUpdate={(width, length) => setCurrentItemConfig(prev => ({ ...prev, width, length }))}
-                    />
-                );
-            case 3:
-                return (
-                    <Step2Model
-                        onSelect={(model) => setCurrentItemConfig(prev => ({ ...prev, model }))}
-                        selectedModel={currentItemConfig.model}
-                        productLine={currentItemConfig.productLine}
-                    />
-                );
-            case 4:
-                return (
-                    <Step3Color
-                        onSelectColor={(color) => setCurrentItemConfig(prev => ({ ...prev, color, ralCode: undefined, extras: prev.extras.filter(e => e.id !== 'ral') }))}
-                        selectedColor={currentItemConfig.color}
-                        onToggleRal={() => setCurrentItemConfig(prev => {
-                            const hasRal = prev.extras.some(e => e.id === 'ral');
-                            const ralExtra = ACCESSORY_EXTRAS.find(e => e.id === 'ral');
-                            if (!ralExtra) return prev; // Should not happen
-                            const newExtras = hasRal ? prev.extras.filter(e => e.id !== 'ral') : [...prev.extras, ralExtra];
-                            return { ...prev, extras: newExtras, color: null };
-                        })}
-                        isRalSelected={currentItemConfig.extras.some(e => e.id === 'ral')}
-                        ralCode={currentItemConfig.ralCode || ''}
-                        onRalCodeChange={(code) => setCurrentItemConfig(prev => ({ ...prev, ralCode: code }))}
-                    />
-                );
-            case 5:
-                return (
-                     <Step5Cuts
-                        onToggle={(extra) => setCurrentItemConfig(prev => {
-                            const isSelected = prev.extras.some(e => e.id === extra.id);
-                            let newExtras = isSelected ? prev.extras.filter(e => e.id !== extra.id) : [...prev.extras, extra];
-                            const hasCut = newExtras.some(e => e.id.startsWith('corte'));
-                            
-                            return { 
-                                ...prev, 
-                                extras: newExtras, 
-                                cutWidth: hasCut ? prev.cutWidth : undefined,
-                                cutLength: hasCut ? prev.cutLength : undefined,
-                            };
-                        })}
-                        selectedExtras={currentItemConfig.extras}
-                        productLine={currentItemConfig.productLine}
-                        baseWidth={currentItemConfig.width}
-                        baseLength={currentItemConfig.length}
-                        cutWidth={currentItemConfig.cutWidth}
-                        cutLength={currentItemConfig.cutLength}
-                        onUpdateCutDimensions={(dims) => setCurrentItemConfig(prev => ({...prev, ...dims}))}
-                        structFrames={currentItemConfig.structFrames}
-                        onUpdateStructFrames={(frames) => setCurrentItemConfig(prev => ({...prev, structFrames: frames}))}
-                    />
-                );
-            case 6:
-                return (
-                    <Step6Accessories
-                        onToggle={(extra) => setCurrentItemConfig(prev => {
-                            const isSelected = prev.extras.some(e => e.id === extra.id);
-                             let newExtras = isSelected ? prev.extras.filter(e => e.id !== extra.id) : [...prev.extras, extra];
-                            
-                            let newBitonoColor = prev.bitonoColor;
-                            if (extra.id === 'bitono' && isSelected) { // Untoggling bitono
-                                newBitonoColor = undefined;
-                            }
-                            return { ...prev, extras: newExtras, bitonoColor: newBitonoColor };
-                        })}
-                        selectedExtras={currentItemConfig.extras}
-                        productLine={currentItemConfig.productLine}
-                        mainColor={currentItemConfig.color}
-                        bitonoColor={currentItemConfig.bitonoColor}
-                        onSelectBitonoColor={(color) => setCurrentItemConfig(prev => ({ ...prev, bitonoColor: color }))}
-                    />
-                );
-            case 7: // Summary step for shower trays
-                 return (
-                     <Step5Summary
-                        items={quoteItems}
-                        totalPrice={totalQuotePrice}
-                        onReset={resetQuote}
-                        onSaveRequest={() => setIsSaveModalOpen(true)}
-                        onGeneratePdfRequest={handlePreviewPdf}
-                        onPrintRequest={() => window.print()}
-                        onStartNew={handleStartNewItem}
-                        onEdit={handleEditItem}
-                        onDelete={handleDeleteItem}
-                        calculatePriceDetails={(item) => calculatePriceDetails(item, appliedDiscounts)}
-                        appliedDiscounts={appliedDiscounts}
-                        onUpdateDiscounts={setAppliedDiscounts}
-                    />
-                 );
-            default:
-                return <div>Paso desconocido</div>;
+            case 1: return <Step1ModelSelection selectedProductLine={currentItemConfig.productLine} onUpdate={(val) => handleUpdateQuoteItem({ productLine: val, quantity: 1, model: null, color: STANDARD_COLORS[0], extras: [] })} quantity={currentItemConfig.quantity} onUpdateQuantity={(q) => handleUpdateQuoteItem({ quantity: q })} />;
+            case 2: return <Step1Dimensions quote={currentItemConfig} onUpdate={(width, length) => handleUpdateQuoteItem({ width, length })} />;
+            case 3: return <Step2Model selectedModel={currentItemConfig.model} productLine={currentItemConfig.productLine} onSelect={(model) => handleUpdateQuoteItem({ model })} />;
+            case 4: return <Step3Color {...updateColorProps} />;
+            case 5: return <Step5Cuts selectedExtras={currentItemConfig.extras} productLine={currentItemConfig.productLine} baseWidth={currentItemConfig.width} baseLength={currentItemConfig.length} cutWidth={currentItemConfig.cutWidth} cutLength={currentItemConfig.cutLength} onUpdateCutDimensions={(dims) => handleUpdateQuoteItem(dims)} structFrames={currentItemConfig.structFrames} onUpdateStructFrames={(frames) => handleUpdateQuoteItem({ structFrames: frames })} onToggle={(extra) => { const isSelected = currentItemConfig.extras.some(e => e.id === extra.id); const otherCuts = currentItemConfig.extras.filter(e => e.id !== extra.id && !e.id.startsWith('corte')); handleUpdateQuoteItem({ extras: isSelected ? otherCuts : [...otherCuts, extra] }); }} />;
+            case 6: return <Step6Accessories selectedExtras={currentItemConfig.extras} productLine={currentItemConfig.productLine} mainColor={currentItemConfig.color} bitonoColor={currentItemConfig.bitonoColor} onSelectBitonoColor={(color) => handleUpdateQuoteItem({ bitonoColor: color })} onToggle={(extra) => { const isSelected = currentItemConfig.extras.some(e => e.id === extra.id); const otherExtras = currentItemConfig.extras.filter(e => e.id !== extra.id); handleUpdateQuoteItem({ extras: isSelected ? otherExtras : [...otherExtras, extra], bitonoColor: isSelected ? null : currentItemConfig.bitonoColor }); }} />;
+            case 7: return <Step5Summary items={quoteItems} totalPrice={finalTotalPrice} onReset={handleResetQuote} onSaveRequest={() => {}} onGeneratePdfRequest={() => handleGeneratePdf()} onPrintRequest={handlePrint} onStartNew={resetQuoteState} onEdit={handleEditItem} onDelete={handleDeleteItem} calculatePriceDetails={calculatePriceDetails} appliedDiscounts={appliedDiscounts} onUpdateDiscounts={setAppliedDiscounts} />;
+            default: return null;
         }
     };
     
-    const showSummaryView = currentStep === totalSteps;
-    const showPreviewBar = currentStep > 0 && !showSummaryView;
-
-    // Bottom padding needs to account for the nav bar (h-16), and conditionally the preview bar + next/prev buttons
-    const mainContentPaddingBottom = useMemo(() => {
-        if (showPreviewBar) {
-            return 'pb-[200px]'; // Approximate height for preview bar + next/prev buttons
+    const renderView = () => {
+        if (!currentUser) {
+            return (
+                <div className="flex items-center justify-center min-h-screen bg-slate-100 p-4">
+                    <AuthPage onLogin={handleLogin} />
+                </div>
+            );
         }
-        if (currentStep === 0) {
-            return 'pb-24'; // Space for the bottom nav bar
-        }
-        return 'pb-24'; // Default padding
-    }, [showPreviewBar, currentStep]);
 
-    if (!currentUser) {
+        const mainContent = () => {
+            switch (view) {
+                case 'welcome': return <WelcomePage userName={currentUser.preparedBy || currentUser.companyName} onNewQuote={handleNewQuote} onViewQuotes={() => setView('my-quotes')} onResumeQuote={handleResumeQuote} hasActiveQuote={quoteItems.length > 0} />;
+                case 'my-quotes': return <MyQuotesPage user={currentUser} onDuplicateQuote={handleDuplicateQuote} onViewPdf={handleViewPdf} />;
+                case 'conditions': return <CommercialConditionsPage />;
+                case 'guides': return <MaintenanceGuidesPage />;
+                case 'transparency': return <TransparencyPage />;
+                case 'quote': return (
+                     <>
+                        <div className="flex-grow p-4 md:p-6 lg:p-8 overflow-y-auto">
+                           {renderCurrentStep()}
+                        </div>
+                        <CurrentItemPreview config={currentItemConfig} price={calculateItemPrice(currentItemConfig) * currentItemConfig.quantity * (1 + VAT_RATE)} />
+                        <NextPrevButtons 
+                            onNext={handleNextStep}
+                            onPrev={handlePrevStep}
+                            currentStep={currentStep}
+                            totalSteps={STEPS.length}
+                            isNextDisabled={isNextStepDisabled}
+                            isLastStep={currentStep === STEPS.length}
+                            onDiscard={() => {
+                                if (window.confirm('¿Descartar cambios en este artículo y volver al resumen?')) {
+                                    resetQuoteState();
+                                    setCurrentStep(STEPS.length);
+                                }
+                            }}
+                        />
+                     </>
+                );
+                default: return null;
+            }
+        };
+
+        const SidebarLink: React.FC<{
+            onClick: () => void;
+            label: string;
+            icon: React.ReactNode;
+            isActive: boolean;
+        }> = ({ onClick, label, icon, isActive }) => (
+            <button
+                onClick={onClick}
+                className={`flex items-center w-full px-4 py-3 text-sm font-semibold rounded-lg transition-colors ${isActive ? 'bg-teal-500 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
+            >
+                <span className="mr-3">{icon}</span>
+                {label}
+            </button>
+        );
+
         return (
-            <div className="bg-slate-100 min-h-screen flex items-center justify-center p-4">
-                <AuthPage onLogin={handleLogin} />
+            <div className="flex flex-col md:flex-row h-screen font-sans bg-slate-50">
+                <aside className="sidebar w-full md:w-64 bg-white border-r border-slate-200 p-4 flex-shrink-0 flex flex-col">
+                    <div className="text-center mb-6">
+                        <h2 className="text-xl font-bold text-teal-600">AQG Comercial</h2>
+                    </div>
+                    <nav className="flex-grow space-y-2">
+                        <SidebarLink label="Inicio" onClick={() => setView('welcome')} isActive={view === 'welcome'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>} />
+                        <SidebarLink label="Nuevo Presupuesto" onClick={handleResumeQuote} isActive={view === 'quote'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>} />
+                        <SidebarLink label="Mis Presupuestos" onClick={() => setView('my-quotes')} isActive={view === 'my-quotes'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" /></svg>} />
+                         <div className="pt-4 mt-4 border-t border-slate-200 space-y-2">
+                            <SidebarLink label="Argumentos Venta" onClick={() => setView('conditions')} isActive={view === 'conditions'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>} />
+                            <SidebarLink label="Descargas" onClick={() => setView('guides')} isActive={view === 'guides'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg>} />
+                            <SidebarLink label="Transparencia" onClick={() => setView('transparency')} isActive={view === 'transparency'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2h4v4a2 2 0 002 2h4a2 2 0 002-2v-4a2 2 0 00-2-2h-4V6a2 2 0 00-2-2H4zm2 6a2 2 0 100-4 2 2 0 000 4zm6 0a2 2 0 100-4 2 2 0 000 4zm-6 6a2 2 0 100-4 2 2 0 000 4zm6 0a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" /></svg>} />
+                        </div>
+                    </nav>
+
+                    <div className="mt-6 pt-6 border-t border-slate-200">
+                         <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-slate-200 text-slate-600 rounded-full flex items-center justify-center font-bold">
+                                {currentUser.companyName.charAt(0)}
+                            </div>
+                            <div className="flex-grow">
+                                <p className="font-bold text-sm text-slate-800">{currentUser.companyName}</p>
+                                <p className="text-xs text-slate-500">{currentUser.email}</p>
+                            </div>
+                            <button onClick={() => setSettingsModalOpen(true)} className="text-slate-500 hover:text-teal-600" aria-label="Ajustes">
+                               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01-.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" /></svg>
+                            </button>
+                        </div>
+                        <button onClick={handleLogout} className="w-full mt-4 px-4 py-2 text-sm font-semibold text-red-600 bg-red-100 hover:bg-red-200 rounded-lg transition-colors">
+                            Cerrar Sesión
+                        </button>
+                    </div>
+                </aside>
+                
+                <main className="main-content flex-grow flex flex-col md:w-[calc(100%-16rem)] h-full overflow-hidden">
+                    {view === 'quote' && (
+                        <div className="sidebar w-full md:w-72 bg-white border-r border-slate-200 p-4 md:p-6 flex-shrink-0 order-first md:order-last">
+                            <StepTracker currentStep={currentStep} steps={STEPS} onStepClick={handleStepClick} />
+                        </div>
+                    )}
+                    <div className={`flex-grow flex flex-col ${view !== 'quote' ? 'p-4 md:p-6 lg:p-8' : ''} overflow-y-auto`}>
+                        {mainContent()}
+                    </div>
+                </main>
+
+                {isSettingsModalOpen && currentUser && (
+                    <SettingsModal 
+                        isOpen={isSettingsModalOpen}
+                        onClose={() => setSettingsModalOpen(false)}
+                        user={currentUser}
+                        onSave={(settings) => {
+                            const updatedUser = { ...currentUser, ...settings };
+                            setCurrentUser(updatedUser);
+                            const users = JSON.parse(localStorage.getItem('users') || '[]') as StoredUser[];
+                            const updatedUsers = users.map(u => u.email === updatedUser.email ? { ...u, ...settings } : u);
+                            localStorage.setItem('users', JSON.stringify(updatedUsers));
+                        }}
+                        onExport={handleExportData}
+                        onImport={handleImportData}
+                    />
+                )}
+                 {pdfPreviewUrl && <PdfPreviewModal url={pdfPreviewUrl} onClose={() => setPdfPreviewUrl(null)} />}
             </div>
         );
-    }
-
-    const navItems = [
-        { id: 'app', label: 'Inicio', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg> },
-        { id: 'my_quotes', label: 'Presupuestos', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" /></svg> },
-        { id: 'tools', label: 'Comercial', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.657a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM4.343 5.657a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM11 16a1 1 0 10-2 0v1a1 1 0 102 0v-1zM3.05 11.05a1 1 0 011.414 0l.707.707a1 1 0 01-1.414 1.414l-.707-.707a1 1 0 010-1.414zM15.657 14.343a1 1 0 011.414 0l.707.707a1 1 0 01-1.414 1.414l-.707-.707a1 1 0 010-1.414zM4.343 14.343a1 1 0 010-1.414l.707-.707a1 1 0 011.414 1.414l-.707.707a1 1 0 01-1.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zM3 11a1 1 0 100-2H2a1 1 0 100 2h1zM10 5a5 5 0 00-5 5h10a5 5 0 00-5-5zM8 16a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" /></svg> },
-        { id: 'transparency', label: 'Transparencia', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg> },
-        { id: 'guides', label: 'Descargas', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg> }
-    ];
-
-    const handleNavClick = (viewId: 'app' | 'my_quotes' | 'tools' | 'transparency' | 'guides') => {
-        if (isQuoteActive && viewId !== 'app') {
-            if (window.confirm('Tienes un presupuesto en curso. Si sales, se descartará. ¿Quieres continuar?')) {
-                resetQuote();
-                setView(viewId);
-            }
-        } else {
-            resetQuote();
-            setView(viewId);
-        }
     };
-    
-    const currentViewLabel = navItems.find(item => item.id === view)?.label || 'AQG Comercial';
 
-    return (
-        <div className="bg-slate-50 min-h-screen font-sans text-slate-800 flex flex-col h-[100svh]">
-            <SettingsModal 
-                isOpen={isSettingsModalOpen}
-                onClose={() => setIsSettingsModalOpen(false)}
-                onSave={({fiscalName, preparedBy, sucursal}) => updateUser({fiscalName, preparedBy, sucursal})}
-                user={currentUser}
-                onExport={handleExportData}
-                onImport={handleImportData}
-            />
-             <SaveQuoteModal 
-                isOpen={isSaveModalOpen}
-                onClose={() => setIsSaveModalOpen(false)}
-                onConfirm={handleSaveQuote}
-                disabled={quoteItems.length === 0}
-            />
-            <PdfPreviewModal 
-                isOpen={isPdfPreviewModalOpen}
-                onClose={() => setIsPdfPreviewModalOpen(false)}
-                quote={quoteForPdf}
-                user={currentUser}
-                calculatePriceDetails={calculatePriceDetails}
-            />
-            <CustomQuoteModal 
-                isOpen={isCustomQuoteModalOpen}
-                onClose={() => setIsCustomQuoteModalOpen(false)}
-            />
-            <DrainerModal 
-                isOpen={isDrainerModalOpen}
-                onClose={() => setIsDrainerModalOpen(false)}
-            />
-            
-            <main className={`flex-grow overflow-y-auto ${mainContentPaddingBottom}`}>
-                {currentUser ? (
-                    <>
-                        <header className="sticky top-0 bg-slate-50/80 backdrop-blur-sm z-30 p-4 border-b border-slate-200">
-                             <div className="flex justify-between items-center">
-                                 <h1 className="text-lg font-bold text-slate-800">{currentStep > 0 ? 'Nuevo Presupuesto' : currentViewLabel}</h1>
-                                <div className="flex items-center gap-2">
-                                     <button onClick={() => setIsSettingsModalOpen(true)} className="text-slate-500 hover:text-teal-600 p-2 rounded-full hover:bg-slate-100">
-                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.96.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" /></svg>
-                                     </button>
-                                     <button onClick={handleLogout} className="text-slate-500 hover:text-red-600 p-2 rounded-full hover:bg-slate-100">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" /></svg>
-                                     </button>
-                                </div>
-                             </div>
-                        </header>
-                        <div className="p-4">
-                             {currentStep > 0 ? (
-                                <div>
-                                    <div className="mb-8">
-                                        <StepTracker 
-                                            currentStep={currentStep} 
-                                            steps={steps}
-                                            onStepClick={handleStepClick}
-                                        />
-                                    </div>
-                                    <div className="flex flex-col h-full">
-                                        <div className="flex-grow">
-                                             {showSummaryView ? (
-                                                <Step5Summary
-                                                    items={quoteItems}
-                                                    totalPrice={totalQuotePrice}
-                                                    onReset={handleDiscard}
-                                                    onSaveRequest={() => setIsSaveModalOpen(true)}
-                                                    onGeneratePdfRequest={handlePreviewPdf}
-                                                    onPrintRequest={() => window.print()}
-                                                    onStartNew={handleStartNewItem}
-                                                    onEdit={handleEditItem}
-                                                    onDelete={handleDeleteItem}
-                                                    calculatePriceDetails={(item) => calculatePriceDetails(item, appliedDiscounts)}
-                                                    appliedDiscounts={appliedDiscounts}
-                                                    onUpdateDiscounts={setAppliedDiscounts}
-                                                />
-                                             ) : (
-                                                renderCurrentStep()
-                                             )}
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                renderCurrentStep()
-                            )}
-                        </div>
-                    </>
-                ) : (
-                    <AuthPage onLogin={handleLogin} />
-                )}
-            </main>
-
-            {currentUser && currentStep === 0 && (
-                 <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-40">
-                    <div className="flex justify-around">
-                        {navItems.map(item => (
-                            <button 
-                                key={item.id}
-                                onClick={() => handleNavClick(item.id as any)}
-                                className={`flex flex-col items-center justify-center text-center p-3 w-full transition-colors duration-200 h-16 ${view === item.id ? 'text-teal-600 bg-teal-50' : 'text-slate-500 hover:bg-slate-50'}`}
-                                aria-label={item.label}
-                            >
-                                {item.icon}
-                                <span className="text-[10px] font-semibold mt-1">{item.label}</span>
-                            </button>
-                        ))}
-                    </div>
-                </nav>
-            )}
-
-            {showPreviewBar && (
-                 <div className="fixed bottom-0 left-0 right-0 z-20 flex flex-col">
-                    <CurrentItemPreview 
-                        config={currentItemConfig}
-                        price={currentItemPrice}
-                    />
-                    <NextPrevButtons 
-                        onNext={currentStep === totalSteps - 1 ? handleAddItemToQuote : handleNext}
-                        onPrev={handlePrev}
-                        currentStep={currentStep}
-                        totalSteps={totalSteps}
-                        isNextDisabled={isNextDisabled}
-                        isLastStep={currentStep === totalSteps - 1}
-                        onDiscard={handleDiscard}
-                    />
-                </div>
-            )}
-            
-        </div>
-    );
+    return renderView();
 };
 
 export default App;
