@@ -25,7 +25,7 @@ const ContactCard: React.FC<{
 const CommunicationsPage: React.FC = () => {
     
     const handleBizumClick = () => {
-        alert("Que buena gente eres, pero que haces en este apartado, ponte a trabajar por Dios bendito");
+        alert("Pero que buena gente eres, pero qué haces en esta sección?...Ponte a trabajar por La Virgen del Amor hermoso.");
     };
 
     return (
