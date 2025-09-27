@@ -816,7 +816,13 @@ const App: React.FC = () => {
         const { productLine, width, length, model, color, extras, quantity, structFrames } = item;
         if (!productLine || !width || !length) return 0;
 
-        let basePrice = PRICE_LIST[productLine]?.[width]?.[length] || 0;
+        // Determine which price list to use for LUXE based on the 'tapeta' extra
+        let priceListKey = productLine;
+        if (productLine === 'LUXE' && extras.some(extra => extra.id === 'tapeta-mismo-material')) {
+            priceListKey = 'LUXE CON TAPETA';
+        }
+
+        let basePrice = PRICE_LIST[priceListKey]?.[width]?.[length] || 0;
 
         if (model?.priceFactor) {
             basePrice *= model.priceFactor;
@@ -830,7 +836,11 @@ const App: React.FC = () => {
             basePrice *= (discountMap[structFrames] || 1.0);
         }
 
-        const extrasPrice = extras.reduce((sum, extra) => sum + (extra.price || 0), 0);
+        // Filter out the 'tapeta' extra from price calculation since it's handled by the price list switch
+        const extrasPrice = extras
+            .filter(extra => extra.id !== 'tapeta-mismo-material')
+            .reduce((sum, extra) => sum + (extra.price || 0), 0);
+            
         const singleItemPrice = basePrice + extrasPrice;
 
         return singleItemPrice * quantity;
@@ -919,7 +929,7 @@ const App: React.FC = () => {
                 let autoSelectedModel: ProductOption | null = null;
 
                 if (productLine === 'SOFTUM') autoSelectedModel = models.find(m => m.id === 'sand') || null;
-                else if (productLine === 'LUXE' || productLine === 'CLASSIC' || productLine === 'LUXE CON TAPETA') autoSelectedModel = models.find(m => m.id === 'pizarra') || null;
+                else if (productLine === 'LUXE' || productLine === 'CLASSIC') autoSelectedModel = models.find(m => m.id === 'pizarra') || null;
                 else if (productLine?.startsWith('FLAT') || productLine?.startsWith('RATIO')) autoSelectedModel = models.find(m => m.id === 'lisa') || null;
                 
                 if (autoSelectedModel && !currentItemConfig.model) {

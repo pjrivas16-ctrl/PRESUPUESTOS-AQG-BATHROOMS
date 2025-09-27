@@ -51,9 +51,12 @@ const Step4Extras: React.FC<Step4ExtrasProps> = ({
             case 'SOFTUM':
                 return [...SOFTUM_EXTRAS, ...generalExtras];
             case 'LUXE':
-            case 'LUXE CON TAPETA':
                 const luxeGrille = SHOWER_EXTRAS.find(e => e.id === 'rejilla-lacada-luxe');
-                return luxeGrille ? [luxeGrille, ...generalExtras] : generalExtras;
+                const tapetaExtra = SHOWER_EXTRAS.find(e => e.id === 'tapeta-mismo-material');
+                const luxeExtras = [];
+                if (luxeGrille) luxeExtras.push(luxeGrille);
+                if (tapetaExtra) luxeExtras.push(tapetaExtra);
+                return [...luxeExtras, ...generalExtras];
             case 'FLAT':
             case 'CLASSIC':
             case 'STRUCT':

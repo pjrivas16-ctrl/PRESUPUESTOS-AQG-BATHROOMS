@@ -93,7 +93,6 @@ export const PRICE_LIST: { [productLine: string]: { [width: number]: { [length: 
 export const PRODUCT_LINES = [
     'SOFTUM',
     'LUXE',
-    'LUXE CON TAPETA',
     'FLAT',
     'CLASSIC',
     'CLASSIC TECH',
@@ -171,6 +170,12 @@ export const SHOWER_EXTRAS: ProductOption[] = [
         name: 'Rejilla Lacada (Color RAL)',
         description: 'Rejilla lacada en un color RAL del catálogo para el modelo LUXE.',
         price: 33.60,
+    },
+    {
+        id: 'tapeta-mismo-material',
+        name: 'Tapeta Mismo Material y Color',
+        description: 'Sustituye la rejilla INOX por una tapa del mismo material y color que el plato.',
+        price: 0,
     },
     {
         id: 'rejilla-lacada-standard',
