@@ -7,6 +7,8 @@ import {
     PRICE_LIST, SHOWER_TRAY_STEPS, KITS_STEPS, SHOWER_MODELS, KIT_PRODUCTS, ACCESSORY_EXTRAS, STANDARD_COLORS, VAT_RATE, PROMO_DURATION_DAYS, PROMO_ID
 } from './constants';
 import { authorizedUsers } from './authorizedUsers';
+import { calculateItemPrice as calculateItemPriceUtil, calculatePriceDetails as calculatePriceDetailsUtil } from './utils/priceUtils';
+
 
 import StepTracker from './components/StepTracker';
 import Step1ModelSelection from './components/steps/Step1ModelSelection';
@@ -351,67 +353,16 @@ const App: React.FC = () => {
     
     // --- PRICE CALCULATION ---
 
-    const calculateItemPrice = useCallback((item: QuoteState): number => {
-        if (item.productLine === 'KITS') {
-            return item.kitProduct?.price || 0;
-        }
+    // Get the base price for the current item being configured (for the preview)
+    const currentItemBasePrice = useMemo(() => calculateItemPriceUtil(currentItemConfig), [currentItemConfig]);
 
-        const { productLine, width, length, model, color, extras, structFrames } = item;
-        if (!productLine || !width || !length) return 0;
-        
-        let basePrice = PRICE_LIST[productLine]?.[width]?.[length] || 0;
-
-        // Apply STRUCT DETAIL frames discount
-        if (productLine === 'STRUCT DETAIL' && structFrames) {
-            switch (structFrames) {
-                case 3: basePrice *= 0.95; break;
-                case 2: basePrice *= 0.90; break;
-                case 1: basePrice *= 0.85; break;
-                // case 4: no discount
-            }
-        }
-
-        let total = basePrice;
-        if (model?.priceFactor) total *= model.priceFactor;
-        if (color) total += color.price;
-        if (extras) {
-            extras.forEach(extra => {
-                total += extra.price;
-            });
-        }
-        return total;
-    }, []);
-
-    // New, more detailed price calculation for displaying discounts
+    // Create a memoized version of calculatePriceDetails that can be passed down
+    // to child components without causing re-renders, as it's wrapped in useCallback.
     const calculatePriceDetails = useCallback((item: QuoteItem): PriceDetails => {
-        const baseItemPrice = calculateItemPrice(item);
-        const pvpPrice = baseItemPrice * item.quantity;
+        return calculatePriceDetailsUtil(item, appliedDiscounts, currentUser);
+    }, [appliedDiscounts, currentUser]);
 
-        // Apply promo discount
-        let promoDiscountPercent = 0;
-        if (currentUser?.promotion?.id === PROMO_ID) {
-            const activationTime = currentUser.promotion.activationTimestamp;
-            const expiryTime = activationTime + (PROMO_DURATION_DAYS * 24 * 60 * 60 * 1000);
-            if (Date.now() < expiryTime) {
-                promoDiscountPercent = 0.625; // 50% + 25% -> (1 - 0.5) * (1 - 0.25) = 0.375 price factor
-            }
-        }
-        
-        // Apply line-specific discount
-        const lineDiscountPercent = (appliedDiscounts[item.productLine] || 0) / 100;
-
-        // Combine discounts: P * (1 - D1) * (1 - D2)
-        const totalDiscountFactor = (1 - promoDiscountPercent) * (1 - lineDiscountPercent);
-        const discountedPrice = pvpPrice * totalDiscountFactor;
-
-        return {
-            basePrice: pvpPrice,
-            discountedPrice: discountedPrice,
-            finalPrice: discountedPrice * (1 + VAT_RATE),
-            discountPercent: (1 - totalDiscountFactor) * 100,
-        };
-    }, [calculateItemPrice, appliedDiscounts, currentUser]);
-
+    // Calculate total prices for the entire quote
     const { pvpTotalPrice, discountedTotalPrice } = useMemo(() => {
         let pvpTotal = 0;
         let discountedTotal = 0;
@@ -552,7 +503,7 @@ const App: React.FC = () => {
     const generateCustomerPdf = async (quote: SavedQuote, user: User, forDownload: boolean) => {
         // Dynamic import of PDF generation utilities
         const { default: generatePdf } = await import('./utils/pdfGenerator');
-        const pdfBlob = await generatePdf(quote, user);
+        const pdfBlob = await generatePdf(quote, user, appliedDiscounts);
         
         if (forDownload) {
             const link = document.createElement('a');
@@ -763,7 +714,7 @@ const App: React.FC = () => {
                         <div className="flex-grow p-4 md:p-6 lg:p-8 overflow-y-auto">
                            {renderCurrentStep()}
                         </div>
-                        <CurrentItemPreview config={currentItemConfig} price={calculateItemPrice(currentItemConfig) * currentItemConfig.quantity * (1 + VAT_RATE)} />
+                        <CurrentItemPreview config={currentItemConfig} price={currentItemBasePrice * currentItemConfig.quantity * (1 + VAT_RATE)} />
                         <NextPrevButtons 
                             onNext={handleNextStep}
                             onPrev={handlePrevStep}
