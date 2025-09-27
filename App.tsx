@@ -255,6 +255,75 @@ const PdfPreviewModal = ({ url, onClose }: { url: string, onClose: () => void })
 );
 
 
+// Save Quote Modal
+const SaveQuoteModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    onSave: (details: { customerName?: string, projectReference?: string, fiscalName?: string, sucursal?: string, deliveryAddress?: string }) => void;
+    currentUser: User;
+}> = ({ isOpen, onClose, onSave, currentUser }) => {
+    const [customerName, setCustomerName] = useState('');
+    const [projectReference, setProjectReference] = useState('');
+    const [fiscalName, setFiscalName] = useState(currentUser.fiscalName || '');
+    const [sucursal, setSucursal] = useState(currentUser.sucursal || '');
+    const [deliveryAddress, setDeliveryAddress] = useState('');
+
+    if (!isOpen) return null;
+
+    const handleSaveClick = () => {
+        onSave({ customerName, projectReference, fiscalName, sucursal, deliveryAddress });
+        onClose();
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
+            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                <div className="flex justify-between items-start mb-6">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-teal-100 text-teal-600 rounded-lg flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold text-slate-800">Guardar Presupuesto</h3>
+                            <p className="text-sm text-slate-500">Añade los detalles del cliente para finalizar.</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
+                </div>
+
+                <div className="space-y-4">
+                    <div>
+                        <label htmlFor="save-fiscal-name" className="block text-sm font-medium text-slate-700 mb-2">Nombre Fiscal Cliente</label>
+                        <input id="save-fiscal-name" type="text" value={fiscalName} onChange={(e) => setFiscalName(e.target.value)} placeholder="Nombre fiscal del cliente final" className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition" />
+                    </div>
+                     <div>
+                        <label htmlFor="save-customer-name" className="block text-sm font-medium text-slate-700 mb-2">Nombre Comercial (Opcional)</label>
+                        <input id="save-customer-name" type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Ej: Baños Elegantes S.L." className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition" />
+                    </div>
+                     <div>
+                        <label htmlFor="save-sucursal" className="block text-sm font-medium text-slate-700 mb-2">Población / Sucursal Cliente (Opcional)</label>
+                        <input id="save-sucursal" type="text" value={sucursal} onChange={(e) => setSucursal(e.target.value)} placeholder="Ej: Tienda Valencia" className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition" />
+                    </div>
+                    <div>
+                        <label htmlFor="save-project-ref" className="block text-sm font-medium text-slate-700 mb-2">Referencia del Proyecto (Opcional)</label>
+                        <input id="save-project-ref" type="text" value={projectReference} onChange={(e) => setProjectReference(e.target.value)} placeholder="Ej: Reforma Baño Principal" className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition" />
+                    </div>
+                    <div>
+                        <label htmlFor="save-delivery-address" className="block text-sm font-medium text-slate-700 mb-2">Dirección de Entrega (Opcional)</label>
+                        <textarea id="save-delivery-address" value={deliveryAddress} onChange={(e) => setDeliveryAddress(e.target.value)} placeholder="Si es diferente a la habitual del cliente" rows={3} className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition"></textarea>
+                    </div>
+                </div>
+
+                <div className="mt-8 flex justify-end gap-3">
+                    <button onClick={onClose} className="px-6 py-2 font-semibold text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">Cancelar</button>
+                    <button onClick={handleSaveClick} className="px-6 py-2 font-semibold text-white bg-teal-600 rounded-lg shadow-md hover:bg-teal-700 transition-colors">Guardar Presupuesto</button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
 const App: React.FC = () => {
     // --- STATE MANAGEMENT ---
     const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -277,6 +346,7 @@ const App: React.FC = () => {
     
     // UI State
     const [isSettingsModalOpen, setSettingsModalOpen] = useState(false);
+    const [isSaveModalOpen, setSaveModalOpen] = useState(false);
     const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -451,10 +521,8 @@ const App: React.FC = () => {
 
 
     const handleNextStep = useCallback(() => {
-        if (currentStep < STEPS.length) {
-            setCurrentStep(prev => prev + 1);
-        } else {
-            // This is the "Add to Quote" action on the last step
+        // If we are on the last configuration step, add item and move to summary
+        if (currentStep === STEPS.length - 1) {
             const newItem: QuoteItem = {
                 ...currentItemConfig,
                 id: editingItemId || `item_${Date.now()}`,
@@ -463,10 +531,15 @@ const App: React.FC = () => {
             if (editingItemId) {
                 setQuoteItems(quoteItems.map(item => item.id === editingItemId ? newItem : item));
             } else {
-                setQuoteItems([...quoteItems, newItem]);
+                setQuoteItems(prevItems => [...prevItems, newItem]);
             }
+            
             resetQuoteState();
-            setCurrentStep(STEPS.length); // Stay on summary
+            setCurrentStep(STEPS.length); // Go to summary
+        } 
+        // For all other steps, just increment
+        else if (currentStep < STEPS.length) {
+            setCurrentStep(prev => prev + 1);
         }
     }, [currentStep, STEPS.length, currentItemConfig, quoteItems, editingItemId, resetQuoteState]);
 
@@ -688,7 +761,7 @@ const App: React.FC = () => {
                 case 1: return <Step1ModelSelection selectedProductLine={currentItemConfig.productLine} onUpdate={(val) => handleUpdateQuoteItem({ productLine: val, quantity: 1, model: null, color: STANDARD_COLORS[0], extras: [] })} quantity={currentItemConfig.quantity} onUpdateQuantity={(q) => handleUpdateQuoteItem({ quantity: q })} />;
                 case 2: return <Step2KitSelection selectedKit={currentItemConfig.kitProduct} onSelect={(kit) => handleUpdateQuoteItem({ kitProduct: kit })} />;
                 case 3: return <Step3KitDetails currentItemConfig={currentItemConfig} onSelectColor={updateColorProps.onSelectColor} onToggleRal={updateColorProps.onToggleRal} onRalCodeChange={updateColorProps.onRalCodeChange} onInvoiceRefChange={(ref) => handleUpdateQuoteItem({ invoiceReference: ref })} />;
-                case 4: return <Step5Summary items={quoteItems} totalPrice={finalTotalPrice} onReset={handleResetQuote} onSaveRequest={() => {}} onGeneratePdfRequest={() => handleGeneratePdf()} onPrintRequest={handlePrint} onStartNew={resetQuoteState} onEdit={handleEditItem} onDelete={handleDeleteItem} calculatePriceDetails={calculatePriceDetails} appliedDiscounts={appliedDiscounts} onUpdateDiscounts={setAppliedDiscounts} />;
+                case 4: return <Step5Summary items={quoteItems} totalPrice={finalTotalPrice} onReset={handleResetQuote} onSaveRequest={() => setSaveModalOpen(true)} onGeneratePdfRequest={() => handleGeneratePdf()} onPrintRequest={handlePrint} onStartNew={() => { resetQuoteState(); setCurrentStep(1); }} onEdit={handleEditItem} onDelete={handleDeleteItem} calculatePriceDetails={calculatePriceDetails} appliedDiscounts={appliedDiscounts} onUpdateDiscounts={setAppliedDiscounts} />;
                 default: return null;
             }
         }
@@ -700,7 +773,7 @@ const App: React.FC = () => {
             case 4: return <Step3Color {...updateColorProps} />;
             case 5: return <Step5Cuts selectedExtras={currentItemConfig.extras} productLine={currentItemConfig.productLine} baseWidth={currentItemConfig.width} baseLength={currentItemConfig.length} cutWidth={currentItemConfig.cutWidth} cutLength={currentItemConfig.cutLength} onUpdateCutDimensions={(dims) => handleUpdateQuoteItem(dims)} structFrames={currentItemConfig.structFrames} onUpdateStructFrames={(frames) => handleUpdateQuoteItem({ structFrames: frames })} onToggle={(extra) => { const isSelected = currentItemConfig.extras.some(e => e.id === extra.id); const otherCuts = currentItemConfig.extras.filter(e => e.id !== extra.id && !e.id.startsWith('corte')); handleUpdateQuoteItem({ extras: isSelected ? otherCuts : [...otherCuts, extra] }); }} />;
             case 6: return <Step6Accessories selectedExtras={currentItemConfig.extras} productLine={currentItemConfig.productLine} mainColor={currentItemConfig.color} bitonoColor={currentItemConfig.bitonoColor} onSelectBitonoColor={(color) => handleUpdateQuoteItem({ bitonoColor: color })} onToggle={(extra) => { const isSelected = currentItemConfig.extras.some(e => e.id === extra.id); const otherExtras = currentItemConfig.extras.filter(e => e.id !== extra.id); handleUpdateQuoteItem({ extras: isSelected ? otherExtras : [...otherExtras, extra], bitonoColor: isSelected ? null : currentItemConfig.bitonoColor }); }} />;
-            case 7: return <Step5Summary items={quoteItems} totalPrice={finalTotalPrice} onReset={handleResetQuote} onSaveRequest={() => {}} onGeneratePdfRequest={() => handleGeneratePdf()} onPrintRequest={handlePrint} onStartNew={resetQuoteState} onEdit={handleEditItem} onDelete={handleDeleteItem} calculatePriceDetails={calculatePriceDetails} appliedDiscounts={appliedDiscounts} onUpdateDiscounts={setAppliedDiscounts} />;
+            case 7: return <Step5Summary items={quoteItems} totalPrice={finalTotalPrice} onReset={handleResetQuote} onSaveRequest={() => setSaveModalOpen(true)} onGeneratePdfRequest={() => handleGeneratePdf()} onPrintRequest={handlePrint} onStartNew={() => { resetQuoteState(); setCurrentStep(1); }} onEdit={handleEditItem} onDelete={handleDeleteItem} calculatePriceDetails={calculatePriceDetails} appliedDiscounts={appliedDiscounts} onUpdateDiscounts={setAppliedDiscounts} />;
             default: return null;
         }
     };
@@ -741,7 +814,7 @@ const App: React.FC = () => {
                                     currentStep={currentStep}
                                     totalSteps={STEPS.length}
                                     isNextDisabled={isNextStepDisabled}
-                                    isLastStep={currentStep === STEPS.length}
+                                    isLastStep={currentStep === STEPS.length - 1}
                                     onDiscard={() => {
                                         if (window.confirm('¿Descartar cambios en este artículo y volver al resumen?')) {
                                             resetQuoteState();
@@ -866,6 +939,14 @@ const App: React.FC = () => {
                     />
                 )}
                  {pdfPreviewUrl && <PdfPreviewModal url={pdfPreviewUrl} onClose={() => setPdfPreviewUrl(null)} />}
+                 {isSaveModalOpen && currentUser && (
+                    <SaveQuoteModal 
+                        isOpen={isSaveModalOpen}
+                        onClose={() => setSaveModalOpen(false)}
+                        onSave={handleSaveQuote}
+                        currentUser={currentUser}
+                    />
+                 )}
             </div>
         );
     };
