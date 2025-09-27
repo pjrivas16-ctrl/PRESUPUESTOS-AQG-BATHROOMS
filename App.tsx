@@ -24,6 +24,7 @@ import MyQuotesPage from './components/MyQuotesPage';
 import CommercialConditionsPage from './components/CommercialConditionsPage';
 import MaintenanceGuidesPage from './components/MaintenanceGuidesPage';
 import TransparencyPage from './components/TransparencyPage';
+import CurrentItemPreview from './components/CurrentItemPreview';
 
 // Declare jsPDF on window for TypeScript
 declare global {
@@ -1428,6 +1429,7 @@ const App: React.FC = () => {
     };
     
     const showSummaryView = currentStep === totalSteps;
+    const showPreviewBar = currentStep > 0 && !showSummaryView;
 
     if (!currentUser) {
         return (
@@ -1458,6 +1460,17 @@ const App: React.FC = () => {
     };
     
     const currentViewLabel = navItems.find(item => item.id === view)?.label || 'AQG Comercial';
+
+    // Bottom padding needs to account for the nav bar (h-16), and conditionally the preview bar + next/prev buttons
+    const mainContentPaddingBottom = useMemo(() => {
+        if (showPreviewBar) {
+            return 'pb-[200px]'; // Approximate height for preview bar + next/prev buttons
+        }
+        if (currentStep === 0) {
+            return 'pb-24'; // Space for the bottom nav bar
+        }
+        return 'pb-24'; // Default padding
+    }, [showPreviewBar, currentStep]);
 
 
     return (
@@ -1492,7 +1505,7 @@ const App: React.FC = () => {
                 onClose={() => setIsDrainerModalOpen(false)}
             />
             
-            <main className="flex-grow overflow-y-auto pb-40">
+            <main className={`flex-grow overflow-y-auto ${mainContentPaddingBottom}`}>
                 {currentUser ? (
                     <>
                         <header className="sticky top-0 bg-slate-50/80 backdrop-blur-sm z-30 p-4 border-b border-slate-200">
@@ -1539,19 +1552,6 @@ const App: React.FC = () => {
                                                 renderCurrentStep()
                                              )}
                                         </div>
-                                        {!showSummaryView && (
-                                            <div className="mt-8">
-                                                <NextPrevButtons 
-                                                    onNext={currentStep === totalSteps - 1 ? handleAddItemToQuote : handleNext}
-                                                    onPrev={handlePrev}
-                                                    currentStep={currentStep}
-                                                    totalSteps={totalSteps}
-                                                    isNextDisabled={isNextDisabled}
-                                                    isLastStep={currentStep === totalSteps - 1}
-                                                    onDiscard={handleDiscard}
-                                                />
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             ) : (
@@ -1571,7 +1571,7 @@ const App: React.FC = () => {
                             <button 
                                 key={item.id}
                                 onClick={() => handleNavClick(item.id as any)}
-                                className={`flex flex-col items-center justify-center text-center p-3 w-full transition-colors duration-200 ${view === item.id ? 'text-teal-600 bg-teal-50' : 'text-slate-500 hover:bg-slate-50'}`}
+                                className={`flex flex-col items-center justify-center text-center p-3 w-full transition-colors duration-200 h-16 ${view === item.id ? 'text-teal-600 bg-teal-50' : 'text-slate-500 hover:bg-slate-50'}`}
                                 aria-label={item.label}
                             >
                                 {item.icon}
@@ -1580,6 +1580,24 @@ const App: React.FC = () => {
                         ))}
                     </div>
                 </nav>
+            )}
+
+            {showPreviewBar && (
+                 <div className="fixed bottom-0 left-0 right-0 z-20 flex flex-col">
+                    <CurrentItemPreview 
+                        config={currentItemConfig}
+                        price={currentItemPrice}
+                    />
+                    <NextPrevButtons 
+                        onNext={currentStep === totalSteps - 1 ? handleAddItemToQuote : handleNext}
+                        onPrev={handlePrev}
+                        currentStep={currentStep}
+                        totalSteps={totalSteps}
+                        isNextDisabled={isNextDisabled}
+                        isLastStep={currentStep === totalSteps - 1}
+                        onDiscard={handleDiscard}
+                    />
+                </div>
             )}
             
         </div>
