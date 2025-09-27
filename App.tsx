@@ -1431,6 +1431,17 @@ const App: React.FC = () => {
     const showSummaryView = currentStep === totalSteps;
     const showPreviewBar = currentStep > 0 && !showSummaryView;
 
+    // Bottom padding needs to account for the nav bar (h-16), and conditionally the preview bar + next/prev buttons
+    const mainContentPaddingBottom = useMemo(() => {
+        if (showPreviewBar) {
+            return 'pb-[200px]'; // Approximate height for preview bar + next/prev buttons
+        }
+        if (currentStep === 0) {
+            return 'pb-24'; // Space for the bottom nav bar
+        }
+        return 'pb-24'; // Default padding
+    }, [showPreviewBar, currentStep]);
+
     if (!currentUser) {
         return (
             <div className="bg-slate-100 min-h-screen flex items-center justify-center p-4">
@@ -1460,18 +1471,6 @@ const App: React.FC = () => {
     };
     
     const currentViewLabel = navItems.find(item => item.id === view)?.label || 'AQG Comercial';
-
-    // Bottom padding needs to account for the nav bar (h-16), and conditionally the preview bar + next/prev buttons
-    const mainContentPaddingBottom = useMemo(() => {
-        if (showPreviewBar) {
-            return 'pb-[200px]'; // Approximate height for preview bar + next/prev buttons
-        }
-        if (currentStep === 0) {
-            return 'pb-24'; // Space for the bottom nav bar
-        }
-        return 'pb-24'; // Default padding
-    }, [showPreviewBar, currentStep]);
-
 
     return (
         <div className="bg-slate-50 min-h-screen font-sans text-slate-800 flex flex-col h-[100svh]">
