@@ -24,6 +24,7 @@ import MyQuotesPage from './components/MyQuotesPage';
 import CommercialConditionsPage from './components/CommercialConditionsPage';
 import MaintenanceGuidesPage from './components/MaintenanceGuidesPage';
 import TransparencyPage from './components/TransparencyPage';
+import CommunicationsPage from './components/CommunicationsPage';
 import CurrentItemPreview from './components/CurrentItemPreview';
 
 // Declare jsPDF on window for TypeScript
@@ -255,7 +256,7 @@ const PdfPreviewModal = ({ url, onClose }: { url: string, onClose: () => void })
 const App: React.FC = () => {
     // --- STATE MANAGEMENT ---
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-    const [view, setView] = useState<'auth' | 'welcome' | 'quote' | 'my-quotes' | 'conditions' | 'guides' | 'transparency'>('auth');
+    const [view, setView] = useState<'auth' | 'welcome' | 'quote' | 'my-quotes' | 'conditions' | 'guides' | 'transparency' | 'communications'>('auth');
 
     // --- QUOTE STATE ---
     const [currentStep, setCurrentStep] = useState<number>(1);
@@ -756,6 +757,7 @@ const App: React.FC = () => {
                 case 'conditions': return <CommercialConditionsPage />;
                 case 'guides': return <MaintenanceGuidesPage />;
                 case 'transparency': return <TransparencyPage />;
+                case 'communications': return <CommunicationsPage />;
                 case 'quote': return (
                      <>
                         <div className="flex-grow p-4 md:p-6 lg:p-8 overflow-y-auto">
@@ -808,8 +810,9 @@ const App: React.FC = () => {
                         <SidebarLink label="Nuevo Presupuesto" onClick={handleResumeQuote} isActive={view === 'quote'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>} />
                         <SidebarLink label="Mis Presupuestos" onClick={() => setView('my-quotes')} isActive={view === 'my-quotes'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" /></svg>} />
                          <div className="pt-4 mt-4 border-t border-slate-200 space-y-2">
-                            <SidebarLink label="Herramientas Comerciales" onClick={() => setView('conditions')} isActive={view === 'conditions'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>} />
+                            <SidebarLink label="Promociones" onClick={() => setView('conditions')} isActive={view === 'conditions'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>} />
                             <SidebarLink label="Descargas" onClick={() => setView('guides')} isActive={view === 'guides'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg>} />
+                            <SidebarLink label="Comunicaciones" onClick={() => setView('communications')} isActive={view === 'communications'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.083-3.083A6.983 6.983 0 012 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM4.417 11.583A5.012 5.012 0 004 10c0-2.209 2.239-4 5-4s5 1.791 5 4-2.239 4-5 4a5.012 5.012 0 00-1.583-.417z" clipRule="evenodd" /></svg>} />
                             <SidebarLink label="Transparencia" onClick={() => setView('transparency')} isActive={view === 'transparency'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2h4v4a2 2 0 002 2h4a2 2 0 002-2v-4a2 2 0 00-2-2h-4V6a2 2 0 00-2-2H4zm2 6a2 2 0 100-4 2 2 0 000 4zm6 0a2 2 0 100-4 2 2 0 000 4zm-6 6a2 2 0 100-4 2 2 0 000 4zm6 0a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" /></svg>} />
                         </div>
                     </nav>
