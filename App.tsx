@@ -1,12 +1,10 @@
-
-
 // Fix: Import useState, useEffect, useRef, useCallback, and useMemo from React to resolve multiple hook-related errors.
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 // Fix: Import PriceDetails from types.ts to use a shared type definition.
 import type { QuoteState, ProductOption, ColorOption, User, SavedQuote, StoredUser, QuoteItem, PriceDetails } from './types';
 // Fix: Added STANDARD_COLORS to the import to resolve an undefined variable error.
 import { 
-    PRICE_LIST, SHOWER_TRAY_STEPS, KITS_STEPS, SHOWER_MODELS, KIT_PRODUCTS, SHOWER_EXTRAS, STANDARD_COLORS, VAT_RATE, PROMO_DURATION_DAYS, PROMO_ID
+    PRICE_LIST, SHOWER_TRAY_STEPS, KITS_STEPS, SHOWER_MODELS, KIT_PRODUCTS, ACCESSORY_EXTRAS, STANDARD_COLORS, VAT_RATE, PROMO_DURATION_DAYS, PROMO_ID
 } from './constants';
 import { authorizedUsers } from './authorizedUsers';
 
@@ -15,7 +13,8 @@ import Step1ModelSelection from './components/steps/Step1ModelSelection';
 import Step1Dimensions from './components/steps/Step1Dimensions';
 import Step2Model from './components/steps/Step2Model';
 import Step3Color from './components/steps/Step3Color';
-import Step4Extras from './components/steps/Step4Extras';
+import Step5Cuts from './components/steps/Step5Cuts';
+import Step6Accessories from './components/steps/Step6Accessories';
 import Step5Summary from './components/steps/Step5Summary';
 import Step2KitSelection from './components/steps/kits/Step2KitSelection';
 import Step3KitDetails from './components/steps/kits/Step3KitDetails';
@@ -1177,10 +1176,7 @@ const App: React.FC = () => {
                  const isRal = currentItemConfig.extras.some(e => e.id === 'ral');
                  return !currentItemConfig.color && !(isRal && currentItemConfig.ralCode);
             }
-            if (currentStep === 5) { // Step 5: Extras
-                const isBitono = currentItemConfig.extras.some(e => e.id === 'bitono');
-                if (isBitono && !currentItemConfig.bitonoColor) return true;
-
+            if (currentStep === 5) { // Step 5: Cuts
                 const hasCut = currentItemConfig.extras.some(e => e.id.startsWith('corte'));
                 if (hasCut) {
                     const { cutWidth, cutLength, width, length } = currentItemConfig;
@@ -1196,6 +1192,11 @@ const App: React.FC = () => {
                     }
                 }
                 return false;
+            }
+            if (currentStep === 6) { // Step 6: Accessories
+                 const isBitono = currentItemConfig.extras.some(e => e.id === 'bitono');
+                 if (isBitono && !currentItemConfig.bitonoColor) return true;
+                 return false;
             }
         }
         return false;
@@ -1296,10 +1297,11 @@ const App: React.FC = () => {
                     <Step3Color
                         onSelectColor={(color) => setCurrentItemConfig(prev => ({ ...prev, color, ralCode: undefined, extras: prev.extras.filter(e => e.id !== 'ral') }))}
                         selectedColor={currentItemConfig.color}
-                        productLine={currentItemConfig.productLine}
                         onToggleRal={() => setCurrentItemConfig(prev => {
                             const hasRal = prev.extras.some(e => e.id === 'ral');
-                            const newExtras = hasRal ? prev.extras.filter(e => e.id !== 'ral') : [...prev.extras, SHOWER_EXTRAS.find(e => e.id === 'ral')!];
+                            const ralExtra = ACCESSORY_EXTRAS.find(e => e.id === 'ral');
+                            if (!ralExtra) return prev; // Should not happen
+                            const newExtras = hasRal ? prev.extras.filter(e => e.id !== 'ral') : [...prev.extras, ralExtra];
                             return { ...prev, extras: newExtras, color: null };
                         })}
                         isRalSelected={currentItemConfig.extras.some(e => e.id === 'ral')}
@@ -1309,40 +1311,51 @@ const App: React.FC = () => {
                 );
             case 5:
                 return (
-                     <Step4Extras
+                     <Step5Cuts
                         onToggle={(extra) => setCurrentItemConfig(prev => {
                             const isSelected = prev.extras.some(e => e.id === extra.id);
                             let newExtras = isSelected ? prev.extras.filter(e => e.id !== extra.id) : [...prev.extras, extra];
-                            
                             const hasCut = newExtras.some(e => e.id.startsWith('corte'));
                             
-                            let newBitonoColor = prev.bitonoColor;
-                            if (extra.id === 'bitono' && isSelected) { // Untoggling bitono
-                                newBitonoColor = undefined;
-                            }
                             return { 
                                 ...prev, 
                                 extras: newExtras, 
-                                bitonoColor: newBitonoColor,
                                 cutWidth: hasCut ? prev.cutWidth : undefined,
                                 cutLength: hasCut ? prev.cutLength : undefined,
                             };
                         })}
                         selectedExtras={currentItemConfig.extras}
                         productLine={currentItemConfig.productLine}
-                        mainColor={currentItemConfig.color}
-                        bitonoColor={currentItemConfig.bitonoColor}
-                        onSelectBitonoColor={(color) => setCurrentItemConfig(prev => ({ ...prev, bitonoColor: color }))}
-                        structFrames={currentItemConfig.structFrames}
-                        onUpdateStructFrames={(frames) => setCurrentItemConfig(prev => ({...prev, structFrames: frames}))}
                         baseWidth={currentItemConfig.width}
                         baseLength={currentItemConfig.length}
                         cutWidth={currentItemConfig.cutWidth}
                         cutLength={currentItemConfig.cutLength}
                         onUpdateCutDimensions={(dims) => setCurrentItemConfig(prev => ({...prev, ...dims}))}
+                        structFrames={currentItemConfig.structFrames}
+                        onUpdateStructFrames={(frames) => setCurrentItemConfig(prev => ({...prev, structFrames: frames}))}
                     />
                 );
-            case 6: // Summary step for shower trays
+            case 6:
+                return (
+                    <Step6Accessories
+                        onToggle={(extra) => setCurrentItemConfig(prev => {
+                            const isSelected = prev.extras.some(e => e.id === extra.id);
+                             let newExtras = isSelected ? prev.extras.filter(e => e.id !== extra.id) : [...prev.extras, extra];
+                            
+                            let newBitonoColor = prev.bitonoColor;
+                            if (extra.id === 'bitono' && isSelected) { // Untoggling bitono
+                                newBitonoColor = undefined;
+                            }
+                            return { ...prev, extras: newExtras, bitonoColor: newBitonoColor };
+                        })}
+                        selectedExtras={currentItemConfig.extras}
+                        productLine={currentItemConfig.productLine}
+                        mainColor={currentItemConfig.color}
+                        bitonoColor={currentItemConfig.bitonoColor}
+                        onSelectBitonoColor={(color) => setCurrentItemConfig(prev => ({ ...prev, bitonoColor: color }))}
+                    />
+                );
+            case 7: // Summary step for shower trays
                  return (
                      <Step5Summary
                         items={quoteItems}

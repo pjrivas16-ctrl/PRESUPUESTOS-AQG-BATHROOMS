@@ -1,11 +1,10 @@
 import React from 'react';
-import { STANDARD_COLORS } from '../../constants';
+import { STANDARD_COLORS, ACCESSORY_EXTRAS } from '../../constants';
 import type { ColorOption } from '../../types';
 
 interface Step3ColorProps {
     onSelectColor: (color: ColorOption) => void;
     selectedColor: ColorOption | null;
-    productLine: string | null;
     onToggleRal: () => void;
     isRalSelected: boolean;
     ralCode: string;
@@ -15,7 +14,6 @@ interface Step3ColorProps {
 const Step3Color: React.FC<Step3ColorProps> = ({ 
     onSelectColor, 
     selectedColor, 
-    productLine,
     onToggleRal,
     isRalSelected,
     ralCode,
@@ -23,6 +21,7 @@ const Step3Color: React.FC<Step3ColorProps> = ({
 }) => {
     
     const availableColors = STANDARD_COLORS;
+    const ralExtra = ACCESSORY_EXTRAS.find(e => e.id === 'ral');
 
     return (
         <div className="animate-fade-in">
@@ -75,11 +74,11 @@ const Step3Color: React.FC<Step3ColorProps> = ({
                        )}
                     </div>
                     <div className="ml-4 flex-grow">
-                        <h4 className="font-bold text-slate-800">Color personalizado RAL</h4>
-                        <p className="text-sm text-slate-500">Personaliza tu plato con cualquier color de la carta RAL.</p>
+                        <h4 className="font-bold text-slate-800">{ralExtra?.name || 'Color personalizado RAL'}</h4>
+                        <p className="text-sm text-slate-500">{ralExtra?.description || 'Personaliza tu plato con cualquier color de la carta RAL.'}</p>
                     </div>
                     <div className="font-bold text-slate-800 text-lg">
-                        + 65€
+                        + {ralExtra?.price || 0}€
                     </div>
                 </div>
                 {isRalSelected && (

@@ -158,32 +158,8 @@ export const STANDARD_COLORS: ColorOption[] = [
     { id: 'jade', name: 'Jade', hex: '#B2D8B5', price: 0 },
 ];
 
-export const SHOWER_EXTRAS: ProductOption[] = [
-    {
-        id: 'ral',
-        name: 'Color personalizado (no en catálogo)',
-        description: 'Personaliza tu plato de ducha con cualquier color de la carta RAL o NCS.',
-        price: 65,
-    },
-    {
-        id: 'rejilla-lacada-luxe',
-        name: 'Rejilla Lacada (Color RAL)',
-        description: 'Rejilla lacada en un color RAL del catálogo para el modelo LUXE.',
-        price: 33.60,
-    },
-    {
-        id: 'tapeta-mismo-material',
-        name: 'Tapeta Mismo Material y Color',
-        description: 'Sustituye la rejilla INOX por una tapa del mismo material y color que el plato.',
-        price: 0,
-    },
-    {
-        id: 'rejilla-lacada-standard',
-        name: 'Rejilla Lacada (Mismo color)',
-        description: 'Rejilla lacada en el mismo color que el plato de ducha.',
-        price: 9.10,
-    },
-    {
+export const CUT_EXTRAS: ProductOption[] = [
+     {
         id: 'corte-simple-acabado',
         name: 'Corte simple con acabado',
         description: 'Corte simple a medida, enmasillado y pintado.',
@@ -209,6 +185,34 @@ export const SHOWER_EXTRAS: ProductOption[] = [
     },
 ];
 
+export const ACCESSORY_EXTRAS: ProductOption[] = [
+     {
+        id: 'ral',
+        name: 'Color personalizado (no en catálogo)',
+        description: 'Personaliza tu plato de ducha con cualquier color de la carta RAL o NCS.',
+        price: 65,
+    },
+    {
+        id: 'rejilla-lacada-luxe',
+        name: 'Rejilla Lacada (Color RAL)',
+        description: 'Rejilla lacada en un color RAL del catálogo para el modelo LUXE.',
+        price: 33.60,
+    },
+    {
+        id: 'tapeta-mismo-material',
+        name: 'Tapeta Mismo Material y Color',
+        description: 'Sustituye la rejilla INOX por una tapa del mismo material y color que el plato.',
+        price: 0,
+    },
+    {
+        id: 'rejilla-lacada-standard',
+        name: 'Rejilla Lacada (Mismo color)',
+        description: 'Rejilla lacada en el mismo color que el plato de ducha.',
+        price: 9.10,
+    },
+];
+
+
 export const SOFTUM_EXTRAS: ProductOption[] = [
     {
         id: 'bitono',
@@ -229,8 +233,9 @@ export const SHOWER_TRAY_STEPS = [
     { number: 2, title: 'Dimensiones' },
     { number: 3, title: 'Textura' },
     { number: 4, title: 'Color' },
-    { number: 5, title: 'Extras' },
-    { number: 6, title: 'Resumen' },
+    { number: 5, title: 'Cortes' },
+    { number: 6, title: 'Accesorios' },
+    { number: 7, title: 'Resumen' },
 ];
 
 export const KITS_STEPS = [
