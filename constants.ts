@@ -200,6 +200,24 @@ export const ACCESSORY_EXTRAS: ProductOption[] = [
         price: 33.60,
     },
     {
+        id: 'rejilla-oro-cepillado-pvd',
+        name: 'Rejilla Oro Cepillado PVD',
+        description: 'Rejilla con acabado PVD en Oro Cepillado para el modelo LUXE.',
+        price: 150,
+    },
+    {
+        id: 'rejilla-oro-rosa-cepillado-pvd',
+        name: 'Rejilla Oro Rosa Cepillado PVD',
+        description: 'Rejilla con acabado PVD en Oro Rosa Cepillado para el modelo LUXE.',
+        price: 150,
+    },
+    {
+        id: 'rejilla-gun-metal-pvd',
+        name: 'Rejilla Gun Metal PVD',
+        description: 'Rejilla con acabado PVD en Gun Metal para el modelo LUXE.',
+        price: 150,
+    },
+    {
         id: 'tapeta-mismo-material',
         name: 'Tapeta Mismo Material y Color',
         description: 'Sustituye la rejilla INOX por una tapa del mismo material y color que el plato.',

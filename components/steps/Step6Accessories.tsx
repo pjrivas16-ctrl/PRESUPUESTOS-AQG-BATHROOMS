@@ -35,7 +35,13 @@ const Step6Accessories: React.FC<Step6AccessoriesProps> = ({
             case 'SOFTUM':
                 return [...SOFTUM_EXTRAS];
             case 'LUXE':
-                return generalExtras.filter(e => e.id === 'rejilla-lacada-luxe' || e.id === 'tapeta-mismo-material');
+                return generalExtras.filter(e => 
+                    e.id === 'rejilla-lacada-luxe' || 
+                    e.id === 'tapeta-mismo-material' ||
+                    e.id === 'rejilla-oro-cepillado-pvd' ||
+                    e.id === 'rejilla-oro-rosa-cepillado-pvd' ||
+                    e.id === 'rejilla-gun-metal-pvd'
+                );
             case 'FLAT':
             case 'CLASSIC':
             case 'STRUCT':
