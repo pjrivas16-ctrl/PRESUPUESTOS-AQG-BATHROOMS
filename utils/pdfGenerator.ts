@@ -67,11 +67,16 @@ export default async function generatePdf(
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
 
-    // AQG Info
-    doc.text('AQG Bathrooms S.L.', margin, cursorY);
-    doc.text('B54972528', margin, cursorY + 5);
-    doc.text('C/ La Yesera, 18, P.I. La Yesera', margin, cursorY + 10);
-    doc.text('03680 Aspe (Alicante)', margin, cursorY + 15);
+    // Salesperson Info from Settings
+    doc.setFont(undefined, 'bold');
+    doc.text(user.fiscalName || user.companyName, margin, cursorY);
+    doc.setFont(undefined, 'normal');
+    if (user.preparedBy) {
+         doc.text(`Comercial: ${user.preparedBy}`, margin, cursorY + 5);
+    }
+    if (user.sucursal) {
+         doc.text(`Sucursal: ${user.sucursal}`, margin, cursorY + 10);
+    }
     
     // Quote & Client Info
     const quoteId = quote.id.replace(/quote_c_/g, '');
@@ -178,7 +183,7 @@ export default async function generatePdf(
     // --- 5. FOOTER ---
     doc.setFontSize(8);
     doc.setTextColor(150);
-    const footerText = `Presupuesto preparado por ${user.preparedBy || user.companyName}. Precios sin IVA.`;
+    const footerText = `Presupuesto preparado por ${user.preparedBy || user.companyName}.`;
     doc.text(footerText, margin, pageHeight - 10);
     
     return doc.output('blob');
