@@ -2,7 +2,7 @@ import React from 'react';
 
 const ContactCard: React.FC<{
     title: string;
-    description: string;
+    description: React.ReactNode;
     icon: React.ReactNode;
     actions: React.ReactNode;
 }> = ({ title, description, icon, actions }) => (
@@ -15,7 +15,7 @@ const ContactCard: React.FC<{
                 <h3 className="text-xl font-bold text-slate-800 tracking-tight">{title}</h3>
             </div>
         </div>
-        <p className="flex-grow text-slate-500 mb-6 text-sm">{description}</p>
+        <div className="flex-grow text-slate-500 mb-6 text-sm">{description}</div>
         <div className="mt-auto flex flex-wrap justify-end gap-3">
             {actions}
         </div>
@@ -56,7 +56,16 @@ const CommunicationsPage: React.FC = () => {
 
                 <ContactCard
                     title="Atención al Cliente (Incidencias)"
-                    description="Para reportar cualquier incidencia con un producto (roturas, defectos, etc.), contacta exclusivamente por email con Juanvi para asegurar un correcto registro y seguimiento."
+                    description={
+                        <>
+                            <p>Para reportar cualquier incidencia (roturas, defectos, etc.), contacta exclusivamente por email con Juanvi para asegurar un correcto registro y seguimiento.</p>
+                            <p className="font-semibold mt-2">Por favor, sé explícito al reportar: adjunta fotografías, número de albarán y cualquier otro dato relevante.</p>
+                            <div className="mt-4 p-3 bg-amber-50 border-l-4 border-amber-400 text-amber-800 text-xs">
+                                <p className="font-bold">¡MUY IMPORTANTE!</p>
+                                <p>Recuerda a tus clientes que deben indicar claramente <strong className="underline">"PRODUCTO DETERIORADO"</strong> en el albarán de la agencia de transporte al momento de la entrega. La reclamación debe realizarse <strong className="underline">antes de 24 horas</strong>, de lo contrario, el seguro no se hará cargo de la incidencia.</p>
+                            </div>
+                        </>
+                    }
                     icon={
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
