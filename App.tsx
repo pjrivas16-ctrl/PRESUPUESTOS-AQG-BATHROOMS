@@ -705,6 +705,64 @@ const App: React.FC = () => {
         }
     };
     
+    const mainContent = () => {
+        switch (view) {
+            case 'welcome': return <WelcomePage userName={currentUser.preparedBy || currentUser.companyName} onNewQuote={handleNewQuote} onViewQuotes={() => handleNavigate('my-quotes')} onResumeQuote={handleNavigateToQuote} hasActiveQuote={quoteItems.length > 0} />;
+            case 'my-quotes': return <MyQuotesPage user={currentUser} onDuplicateQuote={handleDuplicateQuote} onViewPdf={handleViewPdf} />;
+            case 'conditions': return <CommercialConditionsPage />;
+            case 'guides': return <MaintenanceGuidesPage />;
+            case 'transparency': return <TransparencyPage />;
+            case 'communications': return <CommunicationsPage />;
+            case 'quote': return (
+                <div className="flex flex-col md:flex-row h-full">
+                    {/* Main content area (steps, preview, buttons) */}
+                    <div className="flex-1 flex flex-col bg-slate-50 overflow-y-auto">
+                         {/* Mobile Header with Step Info */}
+                         <div className="md:hidden flex-shrink-0 p-4 border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+                            <p className="text-sm font-bold text-slate-700 text-center">
+                                Paso {currentStep} de {STEPS.length}: {STEPS[currentStep - 1]?.title}
+                            </p>
+                            <div className="w-full bg-slate-200 rounded-full h-1.5 mt-2">
+                                <div className="bg-teal-500 h-1.5 rounded-full transition-all duration-300" style={{ width: `${(currentStep / STEPS.length) * 100}%` }}></div>
+                            </div>
+                        </div>
+                        
+                        <div className="p-4 md:p-6 lg:p-8 flex-grow">
+                            {renderCurrentStep()}
+                        </div>
+
+                        {/* Conditional rendering solves the bug and UX issue */}
+                        {currentStep < STEPS.length && (
+                            <div className="flex-shrink-0">
+                                <CurrentItemPreview config={currentItemConfig} price={currentItemBasePrice * currentItemConfig.quantity * (1 + VAT_RATE)} />
+                                <NextPrevButtons 
+                                    onNext={handleNextStep}
+                                    onPrev={handlePrevStep}
+                                    currentStep={currentStep}
+                                    totalSteps={STEPS.length}
+                                    isNextDisabled={isNextStepDisabled}
+                                    isLastStep={currentStep === STEPS.length}
+                                    onDiscard={() => {
+                                        if (window.confirm('¿Descartar cambios en este artículo y volver al resumen?')) {
+                                            resetQuoteState();
+                                            setCurrentStep(STEPS.length);
+                                        }
+                                    }}
+                                />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Desktop Sidebar */}
+                    <div className="hidden md:block w-72 bg-white border-l border-slate-200 p-4 md:p-6 overflow-y-auto">
+                        <StepTracker currentStep={currentStep} steps={STEPS} onStepClick={handleStepClick} />
+                    </div>
+                </div>
+            );
+            default: return null;
+        }
+    };
+
     const renderView = () => {
         if (!currentUser) {
             return (
@@ -713,40 +771,6 @@ const App: React.FC = () => {
                 </div>
             );
         }
-
-        const mainContent = () => {
-            switch (view) {
-                case 'welcome': return <WelcomePage userName={currentUser.preparedBy || currentUser.companyName} onNewQuote={handleNewQuote} onViewQuotes={() => handleNavigate('my-quotes')} onResumeQuote={handleNavigateToQuote} hasActiveQuote={quoteItems.length > 0} />;
-                case 'my-quotes': return <MyQuotesPage user={currentUser} onDuplicateQuote={handleDuplicateQuote} onViewPdf={handleViewPdf} />;
-                case 'conditions': return <CommercialConditionsPage />;
-                case 'guides': return <MaintenanceGuidesPage />;
-                case 'transparency': return <TransparencyPage />;
-                case 'communications': return <CommunicationsPage />;
-                case 'quote': return (
-                     <>
-                        <div className="flex-grow p-4 md:p-6 lg:p-8">
-                           {renderCurrentStep()}
-                        </div>
-                        <CurrentItemPreview config={currentItemConfig} price={currentItemBasePrice * currentItemConfig.quantity * (1 + VAT_RATE)} />
-                        <NextPrevButtons 
-                            onNext={handleNextStep}
-                            onPrev={handlePrevStep}
-                            currentStep={currentStep}
-                            totalSteps={STEPS.length}
-                            isNextDisabled={isNextStepDisabled}
-                            isLastStep={currentStep === STEPS.length}
-                            onDiscard={() => {
-                                if (window.confirm('¿Descartar cambios en este artículo y volver al resumen?')) {
-                                    resetQuoteState();
-                                    setCurrentStep(STEPS.length);
-                                }
-                            }}
-                        />
-                     </>
-                );
-                default: return null;
-            }
-        };
 
         const SidebarLink: React.FC<{
             onClick: () => void;
@@ -814,16 +838,14 @@ const App: React.FC = () => {
                             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
                         </button>
                     </header>
-
-                    <main className="main-content flex-grow flex flex-col md:flex-row overflow-hidden">
-                        {view === 'quote' && (
-                            <div className="sidebar w-full md:w-72 bg-white border-r border-slate-200 p-4 md:p-6 flex-shrink-0 order-first md:order-last overflow-y-auto">
-                                <StepTracker currentStep={currentStep} steps={STEPS} onStepClick={handleStepClick} />
+                    
+                    <main className="main-content flex-grow overflow-y-auto">
+                        {view !== 'quote' && (
+                            <div className="p-4 md:p-6 lg:p-8 h-full">
+                                {mainContent()}
                             </div>
                         )}
-                        <div className={`flex-grow flex flex-col ${view !== 'quote' ? 'p-4 md:p-6 lg:p-8' : ''} overflow-y-auto`}>
-                            {mainContent()}
-                        </div>
+                        {view === 'quote' && mainContent()}
                     </main>
                 </div>
 
