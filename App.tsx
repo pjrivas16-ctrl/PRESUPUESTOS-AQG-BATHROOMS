@@ -90,7 +90,7 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ userName, onNewQuote, onViewQ
                     className="px-6 py-4 font-semibold text-teal-600 bg-teal-100 rounded-lg hover:bg-teal-200 transition-colors flex items-center justify-center gap-2"
                 >
                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
+                        <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 011-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
                     </svg>
                     Ver Mis Presupuestos
                 </button>
@@ -278,6 +278,7 @@ const App: React.FC = () => {
     // UI State
     const [isSettingsModalOpen, setSettingsModalOpen] = useState(false);
     const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     // Initial load from localStorage
     useEffect(() => {
@@ -401,6 +402,7 @@ const App: React.FC = () => {
             setCurrentUser(null);
             localStorage.removeItem('loggedInUser');
             setView('auth');
+            setIsSidebarOpen(false);
         }
     }, []);
 
@@ -436,6 +438,17 @@ const App: React.FC = () => {
             setCurrentStep(1);
         }
     }, [quoteItems.length, STEPS.length]);
+
+    const handleNavigate = (targetView: typeof view) => {
+        setView(targetView);
+        setIsSidebarOpen(false);
+    };
+
+    const handleNavigateToQuote = () => {
+        handleResumeQuote();
+        setIsSidebarOpen(false);
+    };
+
 
     const handleNextStep = useCallback(() => {
         if (currentStep < STEPS.length) {
@@ -703,7 +716,7 @@ const App: React.FC = () => {
 
         const mainContent = () => {
             switch (view) {
-                case 'welcome': return <WelcomePage userName={currentUser.preparedBy || currentUser.companyName} onNewQuote={handleNewQuote} onViewQuotes={() => setView('my-quotes')} onResumeQuote={handleResumeQuote} hasActiveQuote={quoteItems.length > 0} />;
+                case 'welcome': return <WelcomePage userName={currentUser.preparedBy || currentUser.companyName} onNewQuote={handleNewQuote} onViewQuotes={() => handleNavigate('my-quotes')} onResumeQuote={handleNavigateToQuote} hasActiveQuote={quoteItems.length > 0} />;
                 case 'my-quotes': return <MyQuotesPage user={currentUser} onDuplicateQuote={handleDuplicateQuote} onViewPdf={handleViewPdf} />;
                 case 'conditions': return <CommercialConditionsPage />;
                 case 'guides': return <MaintenanceGuidesPage />;
@@ -711,7 +724,7 @@ const App: React.FC = () => {
                 case 'communications': return <CommunicationsPage />;
                 case 'quote': return (
                      <>
-                        <div className="flex-grow p-4 md:p-6 lg:p-8 overflow-y-auto">
+                        <div className="flex-grow p-4 md:p-6 lg:p-8">
                            {renderCurrentStep()}
                         </div>
                         <CurrentItemPreview config={currentItemConfig} price={currentItemBasePrice * currentItemConfig.quantity * (1 + VAT_RATE)} />
@@ -751,20 +764,27 @@ const App: React.FC = () => {
         );
 
         return (
-            <div className="flex flex-col md:flex-row h-screen font-sans bg-slate-50">
-                <aside className="sidebar w-full md:w-64 bg-white border-r border-slate-200 p-4 flex-shrink-0 flex flex-col">
-                    <div className="text-center mb-6">
+            <div className="flex h-screen font-sans bg-slate-50 overflow-hidden">
+                {isSidebarOpen && (
+                    <div
+                        className="fixed inset-0 bg-black/60 z-20 md:hidden"
+                        onClick={() => setIsSidebarOpen(false)}
+                        aria-hidden="true"
+                    />
+                )}
+                <aside className={`absolute md:relative z-30 w-64 bg-white border-r border-slate-200 p-4 flex-shrink-0 flex flex-col h-full transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+                    <div className="text-center mb-6 hidden md:block">
                         <h2 className="text-xl font-bold text-teal-600">AQG Comercial</h2>
                     </div>
                     <nav className="flex-grow space-y-2">
-                        <SidebarLink label="Inicio" onClick={() => setView('welcome')} isActive={view === 'welcome'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>} />
-                        <SidebarLink label="Nuevo Presupuesto" onClick={handleResumeQuote} isActive={view === 'quote'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>} />
-                        <SidebarLink label="Mis Presupuestos" onClick={() => setView('my-quotes')} isActive={view === 'my-quotes'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" /></svg>} />
+                        <SidebarLink label="Inicio" onClick={() => handleNavigate('welcome')} isActive={view === 'welcome'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>} />
+                        <SidebarLink label="Nuevo Presupuesto" onClick={handleNavigateToQuote} isActive={view === 'quote'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>} />
+                        <SidebarLink label="Mis Presupuestos" onClick={() => handleNavigate('my-quotes')} isActive={view === 'my-quotes'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 011-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" /></svg>} />
                          <div className="pt-4 mt-4 border-t border-slate-200 space-y-2">
-                            <SidebarLink label="Promociones" onClick={() => setView('conditions')} isActive={view === 'conditions'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>} />
-                            <SidebarLink label="Descargas" onClick={() => setView('guides')} isActive={view === 'guides'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg>} />
-                            <SidebarLink label="Comunicaciones" onClick={() => setView('communications')} isActive={view === 'communications'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.083-3.083A6.983 6.983 0 012 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM4.417 11.583A5.012 5.012 0 004 10c0-2.209 2.239-4 5-4s5 1.791 5 4-2.239 4-5 4a5.012 5.012 0 00-1.583-.417z" clipRule="evenodd" /></svg>} />
-                            <SidebarLink label="Transparencia" onClick={() => setView('transparency')} isActive={view === 'transparency'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2h4v4a2 2 0 002 2h4a2 2 0 002-2v-4a2 2 0 00-2-2h-4V6a2 2 0 00-2-2H4zm2 6a2 2 0 100-4 2 2 0 000 4zm6 0a2 2 0 100-4 2 2 0 000 4zm-6 6a2 2 0 100-4 2 2 0 000 4zm6 0a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" /></svg>} />
+                            <SidebarLink label="Promociones" onClick={() => handleNavigate('conditions')} isActive={view === 'conditions'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>} />
+                            <SidebarLink label="Descargas" onClick={() => handleNavigate('guides')} isActive={view === 'guides'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg>} />
+                            <SidebarLink label="Comunicaciones" onClick={() => handleNavigate('communications')} isActive={view === 'communications'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.083-3.083A6.983 6.983 0 012 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM4.417 11.583A5.012 5.012 0 004 10c0-2.209 2.239-4 5-4s5 1.791 5 4-2.239 4-5 4a5.012 5.012 0 00-1.583-.417z" clipRule="evenodd" /></svg>} />
+                            <SidebarLink label="Transparencia" onClick={() => handleNavigate('transparency')} isActive={view === 'transparency'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2h4v4a2 2 0 002 2h4a2 2 0 002-2v-4a2 2 0 00-2-2h-4V6a2 2 0 00-2-2H4zm2 6a2 2 0 100-4 2 2 0 000 4zm6 0a2 2 0 100-4 2 2 0 000 4zm-6 6a2 2 0 100-4 2 2 0 000 4zm6 0a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" /></svg>} />
                         </div>
                     </nav>
 
@@ -787,16 +807,25 @@ const App: React.FC = () => {
                     </div>
                 </aside>
                 
-                <main className="main-content flex-grow flex flex-col md:w-[calc(100%-16rem)] h-full overflow-hidden">
-                    {view === 'quote' && (
-                        <div className="sidebar w-full md:w-72 bg-white border-r border-slate-200 p-4 md:p-6 flex-shrink-0 order-first md:order-last">
-                            <StepTracker currentStep={currentStep} steps={STEPS} onStepClick={handleStepClick} />
+                <div className="flex-1 flex flex-col overflow-hidden">
+                    <header className="md:hidden flex-shrink-0 flex items-center justify-between p-4 bg-white/80 backdrop-blur-sm border-b border-slate-200 z-10">
+                        <h2 className="text-xl font-bold text-teal-600">AQG Comercial</h2>
+                        <button onClick={() => setIsSidebarOpen(true)} className="text-slate-600 p-1" aria-label="Abrir menú">
+                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+                        </button>
+                    </header>
+
+                    <main className="main-content flex-grow flex flex-col md:flex-row overflow-hidden">
+                        {view === 'quote' && (
+                            <div className="sidebar w-full md:w-72 bg-white border-r border-slate-200 p-4 md:p-6 flex-shrink-0 order-first md:order-last overflow-y-auto">
+                                <StepTracker currentStep={currentStep} steps={STEPS} onStepClick={handleStepClick} />
+                            </div>
+                        )}
+                        <div className={`flex-grow flex flex-col ${view !== 'quote' ? 'p-4 md:p-6 lg:p-8' : ''} overflow-y-auto`}>
+                            {mainContent()}
                         </div>
-                    )}
-                    <div className={`flex-grow flex flex-col ${view !== 'quote' ? 'p-4 md:p-6 lg:p-8' : ''} overflow-y-auto`}>
-                        {mainContent()}
-                    </div>
-                </main>
+                    </main>
+                </div>
 
                 {isSettingsModalOpen && currentUser && (
                     <SettingsModal 
