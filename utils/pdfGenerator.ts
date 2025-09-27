@@ -1,6 +1,6 @@
 import type { SavedQuote, User, QuoteItem, PriceDetails } from '../types';
 import { VAT_RATE } from '../constants';
-import { aqgLogoB64 } from '../assets';
+// import { aqgLogoB64 } from '../assets'; // Logo removed
 import { calculatePriceDetails as calculatePriceDetailsUtil } from './priceUtils';
 
 // Helper to format the description of a quote item for the PDF table
@@ -51,7 +51,11 @@ export default async function generatePdf(
     let cursorY = 20;
 
     // --- 1. HEADER ---
-    doc.addImage(aqgLogoB64, 'SVG', margin, 15, 50, 12.5);
+    doc.setFontSize(22);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(13, 148, 136); // Teal-600
+    doc.text('AQG Bathrooms', margin, 25);
+    doc.setTextColor(0, 0, 0); // Reset color
 
     doc.setFontSize(18);
     doc.setFont(undefined, 'bold');

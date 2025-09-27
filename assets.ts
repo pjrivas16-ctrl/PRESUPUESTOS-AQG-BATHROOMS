@@ -1,4 +1,1 @@
-// The base64 image for the live preview has been removed to improve performance.
-
-// Placeholder for the AQG logo to prevent loading errors from a corrupted base64 string.
-export const aqgLogoB64 = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjUwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxzdHlsZT4uaGVhdnkgeyBmb250OiBib2xkIDMwcHggc2Fucy1zZXJpZjsgZmlsbDogIzBkOTQ4ODsgfSAubGlnaHQgeyBmb250OiAyMHB4IHNhbnMtc2VyaWY7IGZpbGw6ICMzMzM7IH08L3N0eWxlPgogIDx0ZXh0IHg9IjAiIHk9IjM1IiBjbGFzcz0iaGVhdnkiPkFRRzwvdGV4dD4KICA8dGV4dCB4PSI4MCIgeT0iMzUiIGNsYXNzPSJsaWdodCI+QmF0aHJvb21zPC90ZXh0Pgo8L3N2Zz4=';
+// All image assets have been removed from the application as per user request.
