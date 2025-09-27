@@ -102,6 +102,7 @@ export const PRODUCT_LINES = [
     'CENTRAL TECH',
     'RATIO',
     'RATIO TECH',
+    'DRAINER',
     'CUSTOM',
     'KITS',
 ];

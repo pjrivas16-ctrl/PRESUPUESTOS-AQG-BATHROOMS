@@ -679,6 +679,51 @@ const CustomQuoteModal: React.FC<CustomQuoteModalProps> = ({ isOpen, onClose }) 
 };
 
 
+// --- DrainerModal Component Definition ---
+interface DrainerModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+}
+
+const DrainerModal: React.FC<DrainerModalProps> = ({ isOpen, onClose }) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
+            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+                <div className="flex justify-between items-start mb-4">
+                     <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-teal-100 text-teal-600 rounded-lg flex items-center justify-center">
+                           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold text-slate-800">Próximamente: DRAINER</h3>
+                            <p className="text-sm text-slate-500">Una nueva colección.</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
+                </div>
+
+                <div className="space-y-4 text-slate-600">
+                    <p>
+                        La colección <strong>DRAINER</strong> es una novedad de nuestro próximo catálogo general.
+                    </p>
+                    <p>
+                        Próximamente estará disponible para que puedas incluirla en tus presupuestos.
+                    </p>
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-slate-200 flex justify-end">
+                    <button onClick={onClose} className="px-8 py-2 font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors">
+                        Entendido
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
 const App: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [view, setView] = useState<'app' | 'my_quotes' | 'tools' | 'transparency' | 'guides'>('app');
@@ -705,6 +750,7 @@ const App: React.FC = () => {
     const [isPdfPreviewModalOpen, setIsPdfPreviewModalOpen] = useState(false);
     const [quoteForPdf, setQuoteForPdf] = useState<SavedQuote | null>(null);
     const [isCustomQuoteModalOpen, setIsCustomQuoteModalOpen] = useState(false);
+    const [isDrainerModalOpen, setIsDrainerModalOpen] = useState(false);
     
     // Tracks if there's a non-empty quote being built
     const isQuoteActive = useMemo(() => {
@@ -918,6 +964,10 @@ const App: React.FC = () => {
             // Handle specific logic for product lines
             if (currentStep === 1 && currentItemConfig.productLine === 'CUSTOM') {
                 setIsCustomQuoteModalOpen(true);
+                return; // Stop navigation
+            }
+            if (currentStep === 1 && currentItemConfig.productLine === 'DRAINER') {
+                setIsDrainerModalOpen(true);
                 return; // Stop navigation
             }
             
@@ -1436,6 +1486,10 @@ const App: React.FC = () => {
             <CustomQuoteModal 
                 isOpen={isCustomQuoteModalOpen}
                 onClose={() => setIsCustomQuoteModalOpen(false)}
+            />
+            <DrainerModal 
+                isOpen={isDrainerModalOpen}
+                onClose={() => setIsDrainerModalOpen(false)}
             />
             
             <main className="flex-grow overflow-y-auto pb-40">
