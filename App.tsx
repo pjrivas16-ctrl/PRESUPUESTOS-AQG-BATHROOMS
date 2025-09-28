@@ -62,7 +62,7 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ userName, onNewQuote, onViewQ
         <div className="animate-fade-in text-center flex flex-col items-center justify-center h-full p-4">
             <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Bienvenido, {userName}</h1>
             <p className="mt-4 text-base text-slate-600 max-w-2xl">
-                Estás en la Herramienta Comercial de AQG. Desde aquí puedes crear nuevos presupuestos, gestionar los existentes y acceder a guías de producto.
+                Estás en la herramienta comercial de tu equipo AQG. Gestiona presupuestos y accede a información esencial para desarrollar tu actividad de representación.
             </p>
             <div className="mt-8 flex flex-col w-full gap-4">
                 {hasActiveQuote && (
@@ -1038,8 +1038,8 @@ const CustomModal = ({ onClose }: { onClose: () => void }) => (
                 </div>
             </div>
             <p className="text-slate-600 mb-6 text-sm">
-                Ha seleccionado una fabricación especial. Este tipo de plato requiere un croquis detallado con las medidas y formas específicas.
-                Por favor, envíe el croquis a Sandra para poder procesar su solicitud y proporcionarle un presupuesto.
+                Has seleccionado una fabricación especial. Este tipo de plato requiere un croquis detallado con las medidas y formas específicas.
+                Por favor, envía el croquis a Sandra para poder procesar tu solicitud y proporcionarte un presupuesto.
             </p>
             <div className="flex flex-wrap justify-end gap-3">
                 <button onClick={onClose} className="px-6 py-2 font-semibold text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">Cerrar</button>
@@ -1069,7 +1069,7 @@ const DrainerModal = ({ onClose }: { onClose: () => void }) => (
             <h3 className="text-2xl font-bold text-slate-800 tracking-tight mb-3">Colección DRAINER</h3>
             <p className="text-slate-600 mb-6">
                 Este modelo pertenece a nuestro próximo catálogo y estará disponible para presupuestar muy pronto.
-                Gracias por su interés.
+                Gracias por tu interés.
             </p>
             <div className="flex justify-center">
                 <button onClick={onClose} className="px-10 py-3 font-semibold text-white bg-teal-600 rounded-lg shadow-md hover:bg-teal-700 transition-colors">Entendido</button>
