@@ -23,7 +23,7 @@ const Step2Model: React.FC<Step2ModelProps> = ({ onSelect, selectedModel, produc
             return SHOWER_MODELS.filter(m => m.id === 'sand');
         }
         if (productLine === 'FLAT TERRAZO') {
-            return SHOWER_MODELS.filter(m => m.id === 'terrazo');
+            return SHOWER_MODELS.filter(m => m.id.startsWith('terrazo-'));
         }
         if (productLine === 'LUXE' || productLine === 'LUXE CON TAPETA' || productLine === 'CLASSIC') {
             return SHOWER_MODELS.filter(m => m.id === 'pizarra');
@@ -31,7 +31,7 @@ const Step2Model: React.FC<Step2ModelProps> = ({ onSelect, selectedModel, produc
         if (productLine?.startsWith('FLAT') || productLine?.startsWith('RATIO')) {
              return SHOWER_MODELS.filter(m => m.id === 'lisa');
         }
-        return SHOWER_MODELS.filter(m => m.id !== 'sand' && m.id !== 'terrazo');
+        return SHOWER_MODELS.filter(m => m.id !== 'sand' && !m.id.startsWith('terrazo'));
     }, [productLine]);
 
     useEffect(() => {
@@ -52,7 +52,7 @@ const Step2Model: React.FC<Step2ModelProps> = ({ onSelect, selectedModel, produc
             <div className="grid grid-cols-1 gap-4">
                 {modelsToShow.map((model) => {
                     const isSelected = selectedModel?.id === model.id;
-                    const isDisabled = modelsToShow.length === 1;
+                    const isDisabled = modelsToShow.length === 1 && productLine !== 'FLAT TERRAZO';
                     
                     return (
                         <button

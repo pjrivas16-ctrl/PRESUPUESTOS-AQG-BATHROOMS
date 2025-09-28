@@ -607,7 +607,19 @@ const App: React.FC = () => {
     // --- QUOTE ITEM MANAGEMENT ---
     
     const handleUpdateQuoteItem = useCallback((updates: Partial<QuoteState>) => {
-        setCurrentItemConfig(prev => ({ ...prev, ...updates }));
+        setCurrentItemConfig(prev => {
+            const newConfig = { ...prev, ...updates };
+    
+            // Auto-select color when a Terrazo model is chosen
+            if (newConfig.productLine === 'FLAT TERRAZO' && newConfig.model?.id.startsWith('terrazo-')) {
+                const colorId = newConfig.model.id.replace('terrazo-', '');
+                const correspondingColor = STANDARD_COLORS.find(c => c.id === colorId);
+                if (correspondingColor && prev.model?.id !== newConfig.model.id) {
+                    newConfig.color = correspondingColor;
+                }
+            }
+            return newConfig;
+        });
     }, []);
 
     const handleProductLineSelect = (val: string) => {
@@ -835,7 +847,7 @@ const App: React.FC = () => {
             case 1: return <Step1ModelSelection selectedProductLine={currentItemConfig.productLine} onUpdate={handleProductLineSelect} quantity={currentItemConfig.quantity} onUpdateQuantity={(q) => handleUpdateQuoteItem({ quantity: q })} />;
             case 2: return <Step1Dimensions quote={currentItemConfig} onUpdate={(width, length) => handleUpdateQuoteItem({ width, length })} />;
             case 3: return <Step2Model selectedModel={currentItemConfig.model} productLine={currentItemConfig.productLine} onSelect={(model) => handleUpdateQuoteItem({ model })} />;
-            case 4: return <Step3Color {...updateColorProps} />;
+            case 4: return <Step3Color {...updateColorProps} productLine={currentItemConfig.productLine} />;
             case 5: return <Step5Cuts selectedExtras={currentItemConfig.extras} productLine={currentItemConfig.productLine} baseWidth={currentItemConfig.width} baseLength={currentItemConfig.length} cutWidth={currentItemConfig.cutWidth} cutLength={currentItemConfig.cutLength} onUpdateCutDimensions={(dims) => handleUpdateQuoteItem(dims)} structFrames={currentItemConfig.structFrames} onUpdateStructFrames={(frames) => handleUpdateQuoteItem({ structFrames: frames })} onToggle={(extra) => { const isSelected = currentItemConfig.extras.some(e => e.id === extra.id); const otherCuts = currentItemConfig.extras.filter(e => e.id !== extra.id && !e.id.startsWith('corte')); handleUpdateQuoteItem({ extras: isSelected ? otherCuts : [...otherCuts, extra] }); }} />;
             case 6: return <Step6Accessories selectedExtras={currentItemConfig.extras} productLine={currentItemConfig.productLine} mainColor={currentItemConfig.color} bitonoColor={currentItemConfig.bitonoColor} onSelectBitonoColor={(color) => handleUpdateQuoteItem({ bitonoColor: color })} onToggle={(extra) => { const isSelected = currentItemConfig.extras.some(e => e.id === extra.id); const otherExtras = currentItemConfig.extras.filter(e => e.id !== extra.id); handleUpdateQuoteItem({ extras: isSelected ? otherExtras : [...otherExtras, extra], bitonoColor: isSelected ? null : currentItemConfig.bitonoColor }); }} />;
             case 7: return <Step5Summary items={quoteItems} totalPrice={finalTotalPrice} onReset={handleResetQuote} onSaveRequest={() => setSaveModalOpen(true)} onGeneratePdfRequest={() => handleGeneratePdf()} onPrintRequest={handlePrint} onStartNew={() => { resetQuoteState(); setCurrentStep(1); }} onEdit={handleEditItem} onDelete={handleDeleteItem} calculatePriceDetails={calculatePriceDetails} appliedDiscounts={appliedDiscounts} onUpdateDiscounts={setAppliedDiscounts} />;

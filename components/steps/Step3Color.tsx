@@ -9,6 +9,7 @@ interface Step3ColorProps {
     isRalSelected: boolean;
     ralCode: string;
     onRalCodeChange: (code: string) => void;
+    productLine: string | null;
 }
 
 const Step3Color: React.FC<Step3ColorProps> = ({ 
@@ -17,19 +18,28 @@ const Step3Color: React.FC<Step3ColorProps> = ({
     onToggleRal,
     isRalSelected,
     ralCode,
-    onRalCodeChange
+    onRalCodeChange,
+    productLine
 }) => {
     
     const availableColors = STANDARD_COLORS;
     const ralExtra = ACCESSORY_EXTRAS.find(e => e.id === 'ral');
+    const isTerrazoLocked = productLine === 'FLAT TERRAZO';
 
     return (
         <div className="animate-fade-in">
             <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">Elige un color</h2>
             <p className="text-slate-500 mb-6">Selecciona un color de nuestra paleta estándar o personalízalo con un código RAL.</p>
-            <div className="text-xs text-slate-500 bg-slate-100 p-3 rounded-lg mb-8">
-                <p><strong>Nota:</strong> Los colores expuestos son orientativos y no representan el acabado final del producto.</p>
-            </div>
+            {isTerrazoLocked ? (
+                 <div className="text-sm text-slate-600 bg-slate-100 p-4 rounded-lg mb-8 border border-slate-200">
+                    <p>Para la colección <strong>FLAT TERRAZO</strong>, el color base viene determinado por la textura seleccionada en el paso anterior y no se puede modificar.</p>
+                </div>
+            ) : (
+                <div className="text-xs text-slate-500 bg-slate-100 p-3 rounded-lg mb-8">
+                    <p><strong>Nota:</strong> Los colores expuestos son orientativos y no representan el acabado final del producto.</p>
+                </div>
+            )}
+            
 
             <h3 className="text-lg font-semibold text-slate-700 mb-4">Colores Estándar</h3>
             <div className="flex flex-wrap gap-x-4 gap-y-5">
@@ -40,18 +50,18 @@ const Step3Color: React.FC<Step3ColorProps> = ({
                         className="flex flex-col items-center justify-center space-y-2 group focus:outline-none"
                         aria-label={`Seleccionar color ${color.name}`}
                         aria-pressed={selectedColor?.id === color.id}
-                        disabled={isRalSelected}
+                        disabled={isRalSelected || isTerrazoLocked}
                     >
                         <div
                             style={{ backgroundColor: color.hex }}
                             className={`w-16 h-16 rounded-full border transition-all duration-200 group-focus-visible:ring-2 group-focus-visible:ring-offset-2 group-focus-visible:ring-teal-500
                                 ${selectedColor?.id === color.id ? 'ring-2 ring-offset-2 ring-teal-500 border-teal-500' : 'border-slate-300 group-hover:border-teal-400'}
-                                ${isRalSelected ? 'opacity-50 cursor-not-allowed' : ''}
+                                ${isRalSelected || isTerrazoLocked ? 'opacity-50 cursor-not-allowed' : ''}
                                 ${color.hex === '#FFFFFF' ? 'border-slate-300' : 'border-transparent'}
                             `}
                         ></div>
-                        <span className={`text-sm font-medium ${selectedColor?.id === color.id ? 'text-teal-600' : 'text-slate-600'} ${isRalSelected ? 'opacity-50' : ''}`}>{color.name}</span>
-                        {color.price > 0 && <span className={`text-xs text-slate-500 ${isRalSelected ? 'opacity-50' : ''}`}>+ {color.price.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>}
+                        <span className={`text-sm font-medium ${selectedColor?.id === color.id ? 'text-teal-600' : 'text-slate-600'} ${isRalSelected || isTerrazoLocked ? 'opacity-50' : ''}`}>{color.name}</span>
+                        {color.price > 0 && <span className={`text-xs text-slate-500 ${isRalSelected || isTerrazoLocked ? 'opacity-50' : ''}`}>+ {color.price.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>}
                     </button>
                 ))}
             </div>
@@ -59,12 +69,12 @@ const Step3Color: React.FC<Step3ColorProps> = ({
             <div className="mt-8 pt-6 border-t border-slate-200">
                 <h3 className="text-lg font-semibold text-slate-700 mb-4">Color Personalizado</h3>
                  <div
-                    onClick={onToggleRal}
+                    onClick={isTerrazoLocked ? undefined : onToggleRal}
                     role="checkbox"
                     aria-checked={isRalSelected}
-                    tabIndex={0}
-                    onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onToggleRal()}
-                    className={`flex items-center p-5 border-2 rounded-xl transition-all duration-200 cursor-pointer ${isRalSelected ? 'border-teal-500 bg-teal-50' : 'border-slate-200 bg-white hover:border-teal-400'}`}
+                    tabIndex={isTerrazoLocked ? -1 : 0}
+                    onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && !isTerrazoLocked && onToggleRal()}
+                    className={`flex items-center p-5 border-2 rounded-xl transition-all duration-200 ${isTerrazoLocked ? 'cursor-not-allowed bg-slate-50 opacity-60' : 'cursor-pointer'} ${isRalSelected ? 'border-teal-500 bg-teal-50' : 'border-slate-200 bg-white hover:border-teal-400'}`}
                 >
                     <div className={`flex items-center justify-center w-6 h-6 rounded-md border-2 transition-all duration-200 ${isRalSelected ? 'bg-teal-600 border-teal-600 text-white' : 'bg-slate-100 border-slate-300'}`}>
                        {isRalSelected && (

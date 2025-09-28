@@ -42,6 +42,7 @@ const Step6Accessories: React.FC<Step6AccessoriesProps> = ({
                     e.id === 'rejilla-gun-metal-pvd'
                 );
             case 'FLAT':
+            case 'FLAT TERRAZO':
             case 'CLASSIC':
             case 'STRUCT':
             case 'CENTRAL':

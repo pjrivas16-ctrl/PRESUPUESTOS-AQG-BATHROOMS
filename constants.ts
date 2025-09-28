@@ -28,9 +28,9 @@ export const PRICE_LIST: { [productLine: string]: { [width: number]: { [length: 
         90: { 90: 258, 100: 278, 110: 298, 120: 313, 130: 328, 140: 336, 150: 346, 160: 353, 170: 410, 180: 429, 190: 468, 200: 499 }
     },
     'FLAT TERRAZO': {
-        70: { 80: 228, 90: 251, 100: 273, 110: 291, 120: 306, 130: 329, 140: 335, 150: 360, 160: 370, 170: 398, 180: 419, 190: 439, 200: 460 },
-        80: { 80: 247, 90: 267, 100: 296, 110: 316, 120: 339, 130: 358, 140: 371, 150: 384, 160: 397, 170: 436, 180: 452, 190: 475, 200: 507 },
-        90: { 90: 297, 100: 320, 110: 343, 120: 360, 130: 377, 140: 386, 150: 398, 160: 406, 170: 472, 180: 493, 190: 538, 200: 574 }
+        70: { 80: 317, 90: 349, 100: 379, 110: 405, 120: 426, 130: 458, 140: 465, 150: 501, 160: 515, 170: 553, 180: 582, 190: 611, 200: 639 },
+        80: { 80: 344, 90: 371, 100: 411, 110: 440, 120: 472, 130: 498, 140: 517, 150: 534, 160: 553, 170: 607, 180: 629, 190: 660, 200: 705 },
+        90: { 90: 413, 100: 444, 110: 476, 120: 501, 130: 525, 140: 537, 150: 553, 160: 565, 170: 657, 180: 686, 190: 749, 200: 798 }
     },
     'CLASSIC': {
         70: { 80: 198, 90: 218, 100: 237, 110: 253, 120: 266, 130: 286, 140: 291, 150: 313, 160: 322, 170: 346, 180: 364, 190: 400, 200: 434, 210: 471 },
@@ -151,13 +151,15 @@ export const SHOWER_MODELS: ProductOption[] = [
         price: 0,
         priceFactor: 1.0,
     },
-    {
-        id: 'terrazo',
-        name: 'Textura Terrazo',
-        description: 'Acabado terrazo moderno y resistente, con una estética única.',
-        price: 0,
-        priceFactor: 1.0,
-    }
+    { id: 'terrazo-white', name: 'TERRAZO WHITE', description: 'Base blanca con incrustaciones de piedra color crema.', price: 0, priceFactor: 1.0 },
+    { id: 'terrazo-black', name: 'TERRAZO BLACK', description: 'Base negra con incrustaciones de piedra color gris.', price: 0, priceFactor: 1.0 },
+    { id: 'terrazo-graf', name: 'TERRAZO GRAF', description: 'Base grafito con incrustaciones de piedra color negro.', price: 0, priceFactor: 1.0 },
+    { id: 'terrazo-stone', name: 'TERRAZO STONE', description: 'Base stone con incrustaciones de piedra color negro.', price: 0, priceFactor: 1.0 },
+    { id: 'terrazo-moka', name: 'TERRAZO MOKA', description: 'Base moka con incrustaciones de piedra color negro.', price: 0, priceFactor: 1.0 },
+    { id: 'terrazo-cream', name: 'TERRAZO CREAM', description: 'Base crema con incrustaciones de piedra color blanco.', price: 0, priceFactor: 1.0 },
+    { id: 'terrazo-azure', name: 'TERRAZO AZURE', description: 'Base azul con incrustaciones de piedra color negro.', price: 0, priceFactor: 1.0 },
+    { id: 'terrazo-blush', name: 'TERRAZO BLUSH', description: 'Base rosa con incrustaciones de piedra color gris.', price: 0, priceFactor: 1.0 },
+    { id: 'terrazo-jade', name: 'TERRAZO JADE', description: 'Base jade con incrustaciones de piedra color gris.', price: 0, priceFactor: 1.0 },
 ];
 
 export const STANDARD_COLORS: ColorOption[] = [
