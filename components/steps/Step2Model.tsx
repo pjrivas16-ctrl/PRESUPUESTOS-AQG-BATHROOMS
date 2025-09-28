@@ -22,13 +22,16 @@ const Step2Model: React.FC<Step2ModelProps> = ({ onSelect, selectedModel, produc
         if (productLine === 'SOFTUM') {
             return SHOWER_MODELS.filter(m => m.id === 'sand');
         }
+        if (productLine === 'FLAT TERRAZO') {
+            return SHOWER_MODELS.filter(m => m.id === 'terrazo');
+        }
         if (productLine === 'LUXE' || productLine === 'LUXE CON TAPETA' || productLine === 'CLASSIC') {
             return SHOWER_MODELS.filter(m => m.id === 'pizarra');
         }
         if (productLine?.startsWith('FLAT') || productLine?.startsWith('RATIO')) {
              return SHOWER_MODELS.filter(m => m.id === 'lisa');
         }
-        return SHOWER_MODELS.filter(m => m.id !== 'sand');
+        return SHOWER_MODELS.filter(m => m.id !== 'sand' && m.id !== 'terrazo');
     }, [productLine]);
 
     useEffect(() => {
