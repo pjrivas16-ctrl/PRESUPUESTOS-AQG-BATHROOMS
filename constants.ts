@@ -229,6 +229,24 @@ export const ACCESSORY_EXTRAS: ProductOption[] = [
         description: 'Rejilla lacada en el mismo color que el plato de ducha.',
         price: 9.10,
     },
+    {
+        id: 'rejilla-oro-cepillado-pvd-standard',
+        name: 'Rejilla Oro Cepillado PVD',
+        description: 'Rejilla con acabado PVD en Oro Cepillado.',
+        price: 30,
+    },
+    {
+        id: 'rejilla-oro-rosa-cepillado-pvd-standard',
+        name: 'Rejilla Oro Rosa Cepillado PVD',
+        description: 'Rejilla con acabado PVD en Oro Rosa Cepillado.',
+        price: 30,
+    },
+    {
+        id: 'rejilla-gun-metal-pvd-standard',
+        name: 'Rejilla Gun Metal PVD',
+        description: 'Rejilla con acabado PVD en Gun Metal.',
+        price: 30,
+    },
 ];
 
 
