@@ -91,14 +91,9 @@ const MaintenanceGuidesPage: React.FC = () => {
                     }
                     icon={<DownloadIcon />}
                     actions={
-                        <>
-                            <Button onClick={() => window.open(promoNetosUrl, '_blank')}>
-                                Descargar Netos de Promo
-                            </Button>
-                            <Button disabled>
-                                Descargar Folleto (Próximamente)
-                            </Button>
-                        </>
+                        <Button onClick={() => window.open(promoNetosUrl, '_blank')}>
+                            Descargar Promoción
+                        </Button>
                     }
                 />
             </div>
