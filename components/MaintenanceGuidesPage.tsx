@@ -31,6 +31,7 @@ const MaintenanceGuidesPage: React.FC = () => {
     const showerTrayGuideUrl = 'https://www.dropbox.com/scl/fi/hem0jemc8hwwmp8jpv5rt/Guia-de-instalaci-n-platos-de-ducha-ES-EN.pdf?rlkey=q8qvp59tkxv35r0eytpvakq44&st=elqn0fju&dl=0';
     const countertopGuideUrl = 'https://www.dropbox.com/scl/fi/hn23b3zqodh6zicvkkn5a/Gu-a-de-instalaci-n-y-mantenimiento-de-encimeras.pdf?rlkey=yjypmncjg5dl5xa7y0aonevvb&st=y3ahmt4g&dl=0';
     const promoNetosUrl = 'https://www.dropbox.com/scl/fi/70uk16dlxe8rawaf0idg7/PROMO-COMBI-AQG-2025.pdf?rlkey=fmpg2apppmt3n7vo723fbs1ok&st=o115mwmt&dl=0';
+    const technicalSheetsUrl = 'https://www.dropbox.com/scl/fo/4ksaaabub0m25ixpus2cv/AEHKMko7CHfzytbLdVyrYXI?rlkey=wen76391vg197v1ey0kbg05st&st=9ljlb12n&dl=0';
 
     const Button: React.FC<{ onClick?: () => void; disabled?: boolean; children: React.ReactNode }> = ({ onClick, disabled, children }) => (
          <button
@@ -78,6 +79,16 @@ const MaintenanceGuidesPage: React.FC = () => {
                     actions={
                         <Button disabled>
                             Próximamente
+                        </Button>
+                    }
+                />
+                <ResourceCard
+                    title="Fichas Técnicas"
+                    description="Descarga las fichas técnicas oficiales de AQG para obtener información detallada sobre las especificaciones de nuestros productos."
+                    icon={<DownloadIcon />}
+                    actions={
+                        <Button onClick={() => window.open(technicalSheetsUrl, '_blank')}>
+                            Descargar Fichas
                         </Button>
                     }
                 />
