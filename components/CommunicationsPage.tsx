@@ -22,7 +22,11 @@ const ContactCard: React.FC<{
     </div>
 );
 
-const CommunicationsPage: React.FC = () => {
+interface CommunicationsPageProps {
+    onPlanVisit: () => void;
+}
+
+const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onPlanVisit }) => {
     
     const handleBizumClick = () => {
         alert("Pero que buena gente eres, pero qué haces en esta sección?...Ponte a trabajar por La Virgen del Amor hermoso.");
@@ -75,6 +79,21 @@ const CommunicationsPage: React.FC = () => {
                         <a href="mailto:atencioncliente@aqgbathrooms.com" className="px-4 py-2 text-sm font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors">
                             Reportar Incidencia por Email
                         </a>
+                    }
+                />
+
+                <ContactCard
+                    title="Visita a Fábrica"
+                    description="Si estás pensando en conocer de primera mano nuestro proceso productivo, ¡estaremos encantados de recibirte! Planifica tu visita a nuestras instalaciones en Alcoi."
+                    icon={
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
+                        </svg>
+                    }
+                    actions={
+                        <button onClick={onPlanVisit} className="px-4 py-2 text-sm font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors">
+                            Cómo Llegar
+                        </button>
                     }
                 />
 

@@ -323,6 +323,47 @@ const SaveQuoteModal: React.FC<{
     );
 };
 
+const VisitModal = ({ onClose }: { onClose: () => void }) => {
+    const address = "Carrer dels Fusters, 13, 03801 Alcoi, Alicante";
+    const encodedAddress = encodeURIComponent(address);
+
+    const links = [
+        { name: 'Google Maps', url: `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}` },
+        { name: 'Waze', url: `https://waze.com/ul?q=${encodedAddress}` },
+        { name: 'Apple Maps', url: `http://maps.apple.com/?daddr=${encodedAddress}` },
+    ];
+
+    return (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
+            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+                <div className="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 className="text-xl font-bold text-slate-800">Cómo Llegar a Fábrica</h3>
+                        <p className="text-sm text-slate-500">{address}</p>
+                    </div>
+                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
+                </div>
+                <p className="text-slate-600 mb-6 text-sm">
+                    Selecciona tu aplicación de navegación preferida para obtener la ruta.
+                </p>
+                <div className="flex flex-col gap-3">
+                    {links.map(link => (
+                         <a 
+                            key={link.name}
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full text-center px-6 py-3 font-semibold text-white bg-teal-600 rounded-lg shadow-md hover:bg-teal-700 transition-colors inline-flex items-center justify-center gap-2"
+                        >
+                           Abrir en {link.name}
+                        </a>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 
 const App: React.FC = () => {
     // --- STATE MANAGEMENT ---
@@ -351,6 +392,7 @@ const App: React.FC = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isCustomModalOpen, setCustomModalOpen] = useState(false);
     const [isDrainerModalOpen, setDrainerModalOpen] = useState(false);
+    const [isVisitModalOpen, setVisitModalOpen] = useState(false);
 
     // Initial load from localStorage
     useEffect(() => {
@@ -803,7 +845,7 @@ const App: React.FC = () => {
             case 'conditions': return <CommercialConditionsPage />;
             case 'guides': return <MaintenanceGuidesPage />;
             case 'transparency': return <TransparencyPage />;
-            case 'communications': return <CommunicationsPage />;
+            case 'communications': return <CommunicationsPage onPlanVisit={() => setVisitModalOpen(true)} />;
             case 'quote': return (
                 <div className="flex flex-col md:flex-row h-full">
                     {/* Main content area (steps, preview, buttons) */}
@@ -942,6 +984,7 @@ const App: React.FC = () => {
                 
                 {isCustomModalOpen && <CustomModal onClose={() => setCustomModalOpen(false)} />}
                 {isDrainerModalOpen && <DrainerModal onClose={() => setDrainerModalOpen(false)} />}
+                {isVisitModalOpen && <VisitModal onClose={() => setVisitModalOpen(false)} />}
 
                 {isSettingsModalOpen && currentUser && (
                     <SettingsModal 
