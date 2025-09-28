@@ -90,7 +90,7 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ userName, onNewQuote, onViewQ
                     className="px-6 py-4 font-semibold text-teal-600 bg-teal-100 rounded-lg hover:bg-teal-200 transition-colors flex items-center justify-center gap-2"
                 >
                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 011-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
+                        <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
                     </svg>
                     Ver Mis Presupuestos
                 </button>
@@ -970,7 +970,7 @@ const App: React.FC = () => {
                  const currentVisibleStep = STEPS.find(s => s.number === currentStep);
 
                 return (
-                    <div className="flex-grow flex flex-col h-full">
+                    <div className="flex-grow flex flex-col min-h-0">
                         <div className="px-4 md:px-8 pt-6">
                             <StepTracker currentStep={currentStep} steps={STEPS} onStepClick={handleStepClick} />
                         </div>
