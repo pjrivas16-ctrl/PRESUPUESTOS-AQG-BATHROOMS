@@ -37,22 +37,34 @@ const TransparencyPage: React.FC = () => {
             
             <div className="flex flex-col gap-6">
                 <InfoCard
-                    title="Comisiones: Platos de Ducha"
-                    description="Tabla de comisiones aplicable a las familias de platos de ducha según el descuento ofrecido al cliente final."
+                    title="Tabla de Comisiones"
+                    description="Tabla de comisiones aplicable según el descuento ofrecido al cliente final."
                     icon={<PercentIcon />}
                 >
-                    <div className="flex justify-between text-sm"><span className="font-semibold text-slate-600">Dto. 0% a 30%</span> <span className="font-bold text-teal-600">10% Comisión</span></div>
-                    <div className="flex justify-between text-sm"><span className="font-semibold text-slate-600">Dto. 31% a 40%</span> <span className="font-bold text-teal-600">8% Comisión</span></div>
-                    <div className="flex justify-between text-sm"><span className="font-semibold text-slate-600">Dto. 41% a 50%</span> <span className="font-bold text-teal-600">5% Comisión</span></div>
-                    <div className="flex justify-between text-sm"><span className="font-semibold text-slate-600">Dto. &gt; 50%</span> <span className="font-bold text-red-600">0% Comisión</span></div>
-                </InfoCard>
-                <InfoCard
-                    title="Comisiones: Otros"
-                    description="Comisiones fijas para el resto de familias de producto, independientemente del descuento aplicado."
-                    icon={<PercentIcon />}
-                >
-                     <div className="flex justify-between text-sm"><span className="font-semibold text-slate-600">Encimeras y Muebles</span> <span className="font-bold text-teal-600">8% Comisión</span></div>
-                     <div className="flex justify-between text-sm"><span className="font-semibold text-slate-600">Mamparas</span> <span className="font-bold text-teal-600">5% Comisión</span></div>
+                    <div className="space-y-2">
+                        <div className="flex justify-between text-sm"><span className="font-semibold text-slate-600">Descuento 40%</span> <span className="font-bold text-teal-600">10% Comisión</span></div>
+                        <div className="flex justify-between text-sm"><span className="font-semibold text-slate-600">Descuento 45%</span> <span className="font-bold text-teal-600">8% Comisión</span></div>
+                        <div className="flex justify-between text-sm"><span className="font-semibold text-slate-600">Descuento 50%</span> <span className="font-bold text-teal-600">7% Comisión</span></div>
+                        
+                        <div className="pt-2 mt-2 border-t border-slate-300/50">
+                            <div className="flex justify-between text-sm"><span className="font-semibold text-slate-600">Descuento 55%</span> <span className="font-bold text-teal-600">6% Comisión</span></div>
+                            <p className="text-xs text-slate-500 pl-2">↳ Máximo en encimeras, lavabos y terrazos.</p>
+                        </div>
+                        
+                        <div className="pt-2 mt-2 border-t border-slate-300/50">
+                            <div className="flex justify-between text-sm"><span className="font-semibold text-slate-600">Descuento 60%</span> <span className="font-bold text-teal-600">5% Comisión</span></div>
+                            <p className="text-xs text-slate-500 pl-2">↳ Máximo para platos de ducha a medida.</p>
+                        </div>
+
+                        <div className="pt-2 mt-2 border-t border-slate-300/50">
+                            <div className="flex justify-between text-sm"><span className="font-semibold text-slate-600">Descuento 65% CLASSIC</span> <span className="font-bold text-teal-600">5% Comisión</span></div>
+                            <div className="flex justify-between text-sm"><span className="font-semibold text-slate-600">Descuento 70% CLASSIC</span> <span className="font-bold text-teal-600">4% Comisión</span></div>
+                        </div>
+
+                        <div className="pt-2 mt-2 border-t border-slate-300/50">
+                            <div className="flex justify-between text-sm"><span className="font-semibold text-slate-600">Netos Especiales</span> <span className="font-bold text-teal-600">3% Comisión</span></div>
+                        </div>
+                    </div>
                 </InfoCard>
 
                 <InfoCard
