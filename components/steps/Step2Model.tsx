@@ -25,24 +25,29 @@ const Step2Model: React.FC<Step2ModelProps> = ({ onSelect, selectedModel, produc
         if (productLine === 'FLAT TERRAZO') {
             return SHOWER_MODELS.filter(m => m.id.startsWith('terrazo-'));
         }
+        if (productLine === 'CLASSIC TECH') {
+            return SHOWER_MODELS.filter(m => m.id.startsWith('tech-'));
+        }
         if (productLine === 'LUXE' || productLine === 'LUXE CON TAPETA' || productLine === 'CLASSIC') {
             return SHOWER_MODELS.filter(m => m.id === 'pizarra');
         }
         if (productLine?.startsWith('FLAT') || productLine?.startsWith('RATIO')) {
              return SHOWER_MODELS.filter(m => m.id === 'lisa');
         }
-        return SHOWER_MODELS.filter(m => m.id !== 'sand' && !m.id.startsWith('terrazo'));
+        return SHOWER_MODELS.filter(m => m.id !== 'sand' && !m.id.startsWith('terrazo') && !m.id.startsWith('tech-'));
     }, [productLine]);
 
     useEffect(() => {
         // If there's only one model option and it's not already selected, select it automatically.
-        if (modelsToShow.length === 1 && (!selectedModel || selectedModel.id !== modelsToShow[0].id)) {
+        if (modelsToShow.length === 1 && (!selectedModel || selectedModel.id !== modelsToShow[0].id) && productLine !== 'CLASSIC TECH') {
             onSelect(modelsToShow[0]);
         }
-    }, [modelsToShow, selectedModel, onSelect]);
+    }, [modelsToShow, selectedModel, onSelect, productLine]);
 
-    const title = 'Selecciona la textura';
-    const description = 'Cada textura ofrece una sensación y estética únicas.';
+    const isClassicTech = productLine === 'CLASSIC TECH';
+    const title = isClassicTech ? 'Selecciona el acabado' : 'Selecciona la textura';
+    const description = isClassicTech ? 'Elige uno de nuestros acabados de impresión digital. La rejilla se suministra impresa a juego.' : 'Cada textura ofrece una sensación y estética únicas.';
+
 
     return (
         <div className="animate-fade-in">
@@ -52,7 +57,7 @@ const Step2Model: React.FC<Step2ModelProps> = ({ onSelect, selectedModel, produc
             <div className="grid grid-cols-1 gap-4">
                 {modelsToShow.map((model) => {
                     const isSelected = selectedModel?.id === model.id;
-                    const isDisabled = modelsToShow.length === 1 && productLine !== 'FLAT TERRAZO';
+                    const isDisabled = modelsToShow.length === 1 && productLine !== 'FLAT TERRAZO' && !isClassicTech;
                     
                     let colorSwatch = null;
                     if (productLine === 'FLAT TERRAZO' && model.id.startsWith('terrazo-')) {
@@ -91,6 +96,13 @@ const Step2Model: React.FC<Step2ModelProps> = ({ onSelect, selectedModel, produc
                     );
                 })}
             </div>
+
+            {selectedModel?.id === 'tech-decorado-cliente' && (
+                <div className="mt-6 text-sm text-amber-800 bg-amber-100 p-4 rounded-lg border border-amber-200 animate-fade-in">
+                    <p className="font-bold">Instrucciones para Decorado Personalizado</p>
+                    <p className="mt-1">Para este acabado, es necesario contactar con fábrica para especificar el decorado deseado. Puede suministrar una imagen de alta resolución o una referencia de un banco de imágenes.</p>
+                </div>
+            )}
         </div>
     );
 };

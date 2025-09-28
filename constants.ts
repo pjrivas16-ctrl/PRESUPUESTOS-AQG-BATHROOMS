@@ -160,6 +160,14 @@ export const SHOWER_MODELS: ProductOption[] = [
     { id: 'terrazo-azure', name: 'TERRAZO AZURE', description: 'Base azul con incrustaciones de piedra color negro.', price: 0, priceFactor: 1.0 },
     { id: 'terrazo-blush', name: 'TERRAZO BLUSH', description: 'Base rosa con incrustaciones de piedra color gris.', price: 0, priceFactor: 1.0 },
     { id: 'terrazo-jade', name: 'TERRAZO JADE', description: 'Base jade con incrustaciones de piedra color gris.', price: 0, priceFactor: 1.0 },
+    // CLASSIC TECH Finishes
+    { id: 'tech-black-marble', name: 'BLACK MARBLE', description: 'Acabado digital con impresión de mármol negro.', price: 0, priceFactor: 1.0 },
+    { id: 'tech-white-marble', name: 'WHITE MARBLE', description: 'Acabado digital con impresión de mármol blanco.', price: 0, priceFactor: 1.0 },
+    { id: 'tech-gold-marble', name: 'GOLD MARBLE', description: 'Acabado digital con impresión de mármol dorado.', price: 0, priceFactor: 1.0 },
+    { id: 'tech-dark-cement', name: 'DARK CEMENT', description: 'Acabado digital con impresión de cemento oscuro.', price: 0, priceFactor: 1.0 },
+    { id: 'tech-light-cement', name: 'LIGHT CEMENT', description: 'Acabado digital con impresión de cemento claro.', price: 0, priceFactor: 1.0 },
+    { id: 'tech-bone-stone', name: 'BONE STONE', description: 'Acabado digital con impresión de piedra color hueso.', price: 0, priceFactor: 1.0 },
+    { id: 'tech-decorado-cliente', name: 'OPCIÓN DECORADO CLIENTE', description: 'Suministra tu propio diseño para una personalización total.', price: 0, priceFactor: 1.0 },
 ];
 
 export const STANDARD_COLORS: ColorOption[] = [
