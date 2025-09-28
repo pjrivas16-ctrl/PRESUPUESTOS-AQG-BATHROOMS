@@ -580,27 +580,36 @@ const App: React.FC = () => {
 
 
     const handleNextStep = useCallback(() => {
-        // If we are on the last configuration step, add item and move to summary
-        if (currentStep === STEPS.length - 1) {
-            const newItem: QuoteItem = {
+        const isLastConfigStep = currentStep === STEPS.length - 1;
+
+        if (isLastConfigStep) {
+            // Finalize the item being configured
+            const finalItem: QuoteItem = {
                 ...currentItemConfig,
                 id: editingItemId || `item_${Date.now()}`,
             };
 
+            // Use functional updates for `setQuoteItems` to prevent stale state issues
             if (editingItemId) {
-                setQuoteItems(quoteItems.map(item => item.id === editingItemId ? newItem : item));
+                // We are editing an item, so map over the existing items and replace it.
+                setQuoteItems(prevItems => 
+                    prevItems.map(item =>
+                        item.id === editingItemId ? finalItem : item
+                    )
+                );
             } else {
-                setQuoteItems(prevItems => [...prevItems, newItem]);
+                // We are adding a new item.
+                setQuoteItems(prevItems => [...prevItems, finalItem]);
             }
             
+            // Reset the configuration for the next item and navigate to the summary page.
             resetQuoteState();
-            setCurrentStep(STEPS.length); // Go to summary
-        } 
-        // For all other steps, just increment
-        else if (currentStep < STEPS.length) {
+            setCurrentStep(STEPS.length);
+        } else if (currentStep < STEPS.length) {
+            // It's not the last step, so just advance to the next one.
             setCurrentStep(prev => prev + 1);
         }
-    }, [currentStep, STEPS, currentItemConfig, quoteItems, editingItemId, resetQuoteState]);
+    }, [currentStep, STEPS, currentItemConfig, editingItemId, resetQuoteState]);
 
     const handlePrevStep = useCallback(() => {
         if (currentStep > 1) {
@@ -661,7 +670,7 @@ const App: React.FC = () => {
     
     const handleDeleteItem = (itemId: string) => {
         if (window.confirm('¿Estás seguro de que quieres eliminar este artículo?')) {
-            setQuoteItems(quoteItems.filter(item => item.id !== itemId));
+            setQuoteItems(prevItems => prevItems.filter(item => item.id !== itemId));
         }
     };
 
@@ -862,73 +871,112 @@ const App: React.FC = () => {
             case 2: return <Step1Dimensions quote={currentItemConfig} onUpdate={(width, length) => handleUpdateQuoteItem({ width, length })} />;
             case 3: return <Step2Model selectedModel={currentItemConfig.model} productLine={currentItemConfig.productLine} onSelect={(model) => handleUpdateQuoteItem({ model })} />;
             case 4: return <Step3Color {...updateColorProps} productLine={currentItemConfig.productLine} />;
-            case 5: return <Step5Cuts selectedExtras={currentItemConfig.extras} productLine={currentItemConfig.productLine} baseWidth={currentItemConfig.width} baseLength={currentItemConfig.length} cutWidth={currentItemConfig.cutWidth} cutLength={currentItemConfig.cutLength} onUpdateCutDimensions={(dims) => handleUpdateQuoteItem(dims)} structFrames={currentItemConfig.structFrames} onUpdateStructFrames={(frames) => handleUpdateQuoteItem({ structFrames: frames })} onToggle={(extra) => { const isSelected = currentItemConfig.extras.some(e => e.id === extra.id); const otherCuts = currentItemConfig.extras.filter(e => e.id !== extra.id && !e.id.startsWith('corte')); handleUpdateQuoteItem({ extras: isSelected ? otherCuts : [...otherCuts, extra] }); }} />;
-            case 6: return <Step6Accessories selectedExtras={currentItemConfig.extras} productLine={currentItemConfig.productLine} mainColor={currentItemConfig.color} bitonoColor={currentItemConfig.bitonoColor} onSelectBitonoColor={(color) => handleUpdateQuoteItem({ bitonoColor: color })} onToggle={(extra) => {
-                const isSelected = currentItemConfig.extras.some(e => e.id === extra.id);
-                const currentExtras = currentItemConfig.extras;
-                let newExtras: ProductOption[];
-        
-                const isGrate = extra.id.includes('rejilla');
-                
-                if (isSelected) {
-                    // Deselecting the current extra
-                    newExtras = currentExtras.filter(e => e.id !== extra.id);
-                } else {
-                    // Selecting a new extra
-                    if (isGrate) {
-                        // If it's a grate, first remove all other grates
-                        const nonGrateExtras = currentExtras.filter(e => !e.id.includes('rejilla'));
-                        newExtras = [...nonGrateExtras, extra];
-                    } else {
-                        // If it's not a grate, just add it
-                        newExtras = [...currentExtras, extra];
-                    }
-                }
-        
-                // Handle bitono color logic correctly: only clear if 'bitono' extra itself is being deselected
-                const newBitonoColor = (extra.id === 'bitono' && isSelected) ? null : currentItemConfig.bitonoColor;
-        
-                handleUpdateQuoteItem({ 
-                    extras: newExtras, 
-                    bitonoColor: newBitonoColor
-                });
-            }} />;
-            case 7: return <Step5Summary items={quoteItems} totalPrice={finalTotalPrice} onReset={handleResetQuote} onSaveRequest={() => setSaveModalOpen(true)} onGeneratePdfRequest={() => handleGeneratePdf()} onPrintRequest={handlePrint} onStartNew={() => { resetQuoteState(); setCurrentStep(1); }} onEdit={handleEditItem} onDelete={handleDeleteItem} calculatePriceDetails={calculatePriceDetails} appliedDiscounts={appliedDiscounts} onUpdateDiscounts={setAppliedDiscounts} />;
-            default: return null;
+            case 5: 
+                return <Step5Cuts 
+                    selectedExtras={currentItemConfig.extras} 
+                    productLine={currentItemConfig.productLine} 
+                    baseWidth={currentItemConfig.width} 
+                    baseLength={currentItemConfig.length} 
+                    cutWidth={currentItemConfig.cutWidth} 
+                    cutLength={currentItemConfig.cutLength}
+                    onUpdateCutDimensions={(dims) => handleUpdateQuoteItem(dims)} 
+                    structFrames={currentItemConfig.structFrames} 
+                    onUpdateStructFrames={(frames) => handleUpdateQuoteItem({ structFrames: frames })}
+                    onToggle={(extra) => {
+                         const isSelected = currentItemConfig.extras.some(e => e.id === extra.id);
+                         const otherCuts = currentItemConfig.extras.filter(e => !e.id.startsWith('corte'));
+                         if (isSelected) {
+                            // If it's a cut, deselecting it removes all cuts
+                             handleUpdateQuoteItem({ extras: otherCuts, cutWidth: undefined, cutLength: undefined });
+                         } else {
+                            // Selecting a cut deselects any other cut first
+                             handleUpdateQuoteItem({ extras: [...otherCuts, extra] });
+                         }
+                    }}
+                />;
+            case 6: 
+                return <Step6Accessories 
+                    selectedExtras={currentItemConfig.extras} 
+                    productLine={currentItemConfig.productLine} 
+                    mainColor={currentItemConfig.color} 
+                    bitonoColor={currentItemConfig.bitonoColor} 
+                    onSelectBitonoColor={(color) => handleUpdateQuoteItem({ bitonoColor: color })}
+                    onToggle={(extra) => {
+                        let newExtras = [...currentItemConfig.extras];
+                        const isSelected = newExtras.some(e => e.id === extra.id);
+                        const isGrate = extra.id.startsWith('rejilla-');
+                        
+                        if (isSelected) {
+                            newExtras = newExtras.filter(e => e.id !== extra.id);
+                        } else {
+                            if (isGrate) {
+                                // Deselect any other grate before selecting the new one
+                                newExtras = newExtras.filter(e => !e.id.startsWith('rejilla-'));
+                            }
+                            newExtras.push(extra);
+                        }
+                        handleUpdateQuoteItem({ extras: newExtras });
+                    }}
+                />;
+            case 7: 
+                return <Step5Summary 
+                    items={quoteItems} 
+                    totalPrice={finalTotalPrice} 
+                    onReset={handleResetQuote} 
+                    onSaveRequest={() => setSaveModalOpen(true)} 
+                    onGeneratePdfRequest={() => handleGeneratePdf()} 
+                    onPrintRequest={handlePrint} 
+                    onStartNew={() => { resetQuoteState(); setCurrentStep(1); }} 
+                    onEdit={handleEditItem} 
+                    onDelete={handleDeleteItem} 
+                    calculatePriceDetails={calculatePriceDetails}
+                    appliedDiscounts={appliedDiscounts}
+                    onUpdateDiscounts={setAppliedDiscounts}
+                />;
+            default: 
+                return null;
         }
     };
-    
-    const mainContent = () => {
-        switch (view) {
-            case 'welcome': return <WelcomePage userName={currentUser.preparedBy || currentUser.companyName} onNewQuote={handleNewQuote} onViewQuotes={() => handleNavigate('my-quotes')} onResumeQuote={handleNavigateToQuote} hasActiveQuote={quoteItems.length > 0} />;
-            case 'my-quotes': return <MyQuotesPage user={currentUser} onDuplicateQuote={handleDuplicateQuote} onViewPdf={handleViewPdf} />;
-            case 'conditions': return <CommercialConditionsPage />;
-            case 'guides': return <MaintenanceGuidesPage />;
-            case 'transparency': return <TransparencyPage />;
-            case 'communications': return <CommunicationsPage onPlanVisit={() => setVisitModalOpen(true)} />;
-            case 'quote': return (
-                <div className="flex flex-col md:flex-row h-full">
-                    {/* Main content area (steps, preview, buttons) */}
-                    <div className="flex-1 flex flex-col bg-slate-50 overflow-y-auto">
-                         {/* Mobile Header with Step Info */}
-                         <div className="md:hidden flex-shrink-0 p-4 border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-                            <p className="text-sm font-bold text-slate-700 text-center">
-                                Paso {currentStep} de {STEPS.length}: {STEPS[currentStep - 1]?.title}
-                            </p>
-                            <div className="w-full bg-slate-200 rounded-full h-1.5 mt-2">
-                                <div className="bg-teal-500 h-1.5 rounded-full transition-all duration-300" style={{ width: `${(currentStep / STEPS.length) * 100}%` }}></div>
-                            </div>
-                        </div>
-                        
-                        <div className="p-4 md:p-6 lg:p-8 flex-grow">
-                            {renderCurrentStep()}
-                        </div>
 
-                        {/* Conditional rendering solves the bug and UX issue */}
+    const renderView = () => {
+        if (!currentUser) {
+            return <AuthPage onLogin={handleLogin} />;
+        }
+
+        switch (view) {
+            case 'welcome':
+                return <WelcomePage 
+                    userName={currentUser.preparedBy || currentUser.companyName}
+                    onNewQuote={handleNewQuote}
+                    onViewQuotes={() => setView('my-quotes')}
+                    onResumeQuote={handleResumeQuote}
+                    hasActiveQuote={quoteItems.length > 0 || !!currentItemConfig.productLine}
+                />;
+            case 'my-quotes':
+                return <MyQuotesPage user={currentUser} onDuplicateQuote={handleDuplicateQuote} onViewPdf={handleViewPdf} />;
+            case 'conditions':
+                return <CommercialConditionsPage />;
+            case 'guides':
+                return <MaintenanceGuidesPage />;
+            case 'transparency':
+                return <TransparencyPage />;
+            case 'communications':
+                return <CommunicationsPage onPlanVisit={() => setVisitModalOpen(true)} />;
+            case 'quote':
+                 const currentVisibleStep = STEPS.find(s => s.number === currentStep);
+
+                return (
+                    <div className="flex-grow flex flex-col h-full">
+                        <div className="px-4 md:px-8 pt-6">
+                            <StepTracker currentStep={currentStep} steps={STEPS} onStepClick={handleStepClick} />
+                        </div>
+                        <div className="main-content-body flex-grow p-4 md:p-8 overflow-y-auto">
+                           {currentVisibleStep && renderCurrentStep()}
+                        </div>
                         {currentStep < STEPS.length && (
-                            <div className="flex-shrink-0">
-                                <CurrentItemPreview config={currentItemConfig} price={currentItemBasePrice * currentItemConfig.quantity * (1 + VAT_RATE)} />
-                                <NextPrevButtons 
+                             <>
+                                <CurrentItemPreview config={currentItemConfig} price={currentItemBasePrice * currentItemConfig.quantity} />
+                                <NextPrevButtons
                                     onNext={handleNextStep}
                                     onPrev={handlePrevStep}
                                     currentStep={currentStep}
@@ -936,202 +984,117 @@ const App: React.FC = () => {
                                     isNextDisabled={isNextStepDisabled}
                                     isLastStep={currentStep === STEPS.length - 1}
                                     onDiscard={() => {
-                                        if (window.confirm('¿Descartar cambios en este artículo y volver al resumen?')) {
+                                        if (window.confirm('¿Descartar el artículo actual y volver al resumen?')) {
                                             resetQuoteState();
                                             setCurrentStep(STEPS.length);
                                         }
                                     }}
                                 />
-                            </div>
+                             </>
                         )}
                     </div>
-
-                    {/* Desktop Sidebar */}
-                    <div className="hidden md:block w-72 bg-white border-l border-slate-200 p-4 md:p-6 overflow-y-auto">
-                        <StepTracker currentStep={currentStep} steps={STEPS} onStepClick={handleStepClick} />
-                    </div>
-                </div>
-            );
-            default: return null;
+                );
+            default:
+                return null;
         }
     };
+    
+    // Sidebar Navigation Link
+    const NavLink: React.FC<{
+        onClick: () => void;
+        icon: React.ReactNode;
+        label: string;
+        isActive: boolean;
+    }> = ({ onClick, icon, label, isActive }) => (
+        <button 
+            onClick={onClick} 
+            className={`flex items-center w-full gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
+                isActive 
+                ? 'bg-teal-500 text-white font-semibold shadow' 
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+        >
+            {icon}
+            <span className="flex-1">{label}</span>
+        </button>
+    );
 
-    const renderView = () => {
-        if (!currentUser) {
-            return (
-                <div className="flex items-center justify-center min-h-screen bg-slate-100 p-4">
-                    <AuthPage onLogin={handleLogin} />
-                </div>
-            );
-        }
+    const hasActiveQuote = quoteItems.length > 0 || !!currentItemConfig.productLine;
 
-        const SidebarLink: React.FC<{
-            onClick: () => void;
-            label: string;
-            icon: React.ReactNode;
-            isActive: boolean;
-        }> = ({ onClick, label, icon, isActive }) => (
-            <button
-                onClick={onClick}
-                className={`flex items-center w-full px-4 py-3 text-sm font-semibold rounded-lg transition-colors ${isActive ? 'bg-teal-500 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
-            >
-                <span className="mr-3">{icon}</span>
-                {label}
-            </button>
-        );
-
-        return (
-            <div className="flex h-screen font-sans bg-slate-50 overflow-hidden">
-                {isSidebarOpen && (
-                    <div
-                        className="fixed inset-0 bg-black/60 z-20 md:hidden"
-                        onClick={() => setIsSidebarOpen(false)}
-                        aria-hidden="true"
-                    />
-                )}
-                <aside className={`absolute md:relative z-30 w-64 bg-white border-r border-slate-200 p-4 flex-shrink-0 flex flex-col h-full transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
-                    <div className="text-center mb-6 hidden md:block">
-                        <h2 className="text-xl font-bold text-teal-600">AQG Comercial</h2>
-                    </div>
-                    <nav className="flex-grow space-y-2">
-                        <SidebarLink label="Inicio" onClick={() => handleNavigate('welcome')} isActive={view === 'welcome'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>} />
-                        <SidebarLink label="Nuevo Presupuesto" onClick={handleNavigateToQuote} isActive={view === 'quote'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>} />
-                        <SidebarLink label="Mis Presupuestos" onClick={() => handleNavigate('my-quotes')} isActive={view === 'my-quotes'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 011-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" /></svg>} />
-                         <div className="pt-4 mt-4 border-t border-slate-200 space-y-2">
-                            <SidebarLink label="Promociones" onClick={() => handleNavigate('conditions')} isActive={view === 'conditions'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>} />
-                            <SidebarLink label="Descargas" onClick={() => handleNavigate('guides')} isActive={view === 'guides'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg>} />
-                            <SidebarLink label="Comunicaciones" onClick={() => handleNavigate('communications')} isActive={view === 'communications'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.083-3.083A6.983 6.983 0 012 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM4.417 11.583A5.012 5.012 0 004 10c0-2.209 2.239-4 5-4s5 1.791 5 4-2.239 4-5 4a5.012 5.012 0 00-1.583-.417z" clipRule="evenodd" /></svg>} />
-                            <SidebarLink label="Transparencia" onClick={() => handleNavigate('transparency')} isActive={view === 'transparency'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2h4v4a2 2 0 002 2h4a2 2 0 002-2v-4a2 2 0 00-2-2h-4V6a2 2 0 00-2-2H4zm2 6a2 2 0 100-4 2 2 0 000 4zm6 0a2 2 0 100-4 2 2 0 000 4zm-6 6a2 2 0 100-4 2 2 0 000 4zm6 0a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" /></svg>} />
-                        </div>
-                    </nav>
-
-                    <div className="mt-6 pt-6 border-t border-slate-200">
-                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-slate-200 text-slate-600 rounded-full flex items-center justify-center font-bold">
-                                {currentUser.companyName.charAt(0)}
-                            </div>
-                            <div className="flex-grow">
-                                <p className="font-bold text-sm text-slate-800">{currentUser.companyName}</p>
-                                <p className="text-xs text-slate-500">{currentUser.email}</p>
-                            </div>
-                            <button onClick={() => setSettingsModalOpen(true)} className="text-slate-500 hover:text-teal-600" aria-label="Ajustes">
-                               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01-.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" /></svg>
-                            </button>
-                        </div>
-                        <button onClick={handleLogout} className="w-full mt-4 px-4 py-2 text-sm font-semibold text-red-600 bg-red-100 hover:bg-red-200 rounded-lg transition-colors">
-                            Cerrar Sesión
+    return (
+        <div className="h-screen w-screen bg-slate-100 font-sans flex text-slate-800">
+             {currentUser && (
+                <>
+                    {/* --- Mobile Header --- */}
+                    <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-sm border-b border-slate-200 flex items-center justify-between px-4 z-40">
+                         <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-slate-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
                         </button>
-                    </div>
-                </aside>
-                
-                <div className="flex-1 flex flex-col overflow-hidden">
-                    <header className="md:hidden flex-shrink-0 flex items-center justify-between p-4 bg-white/80 backdrop-blur-sm border-b border-slate-200 z-10">
-                        <h2 className="text-xl font-bold text-teal-600">AQG Comercial</h2>
-                        <button onClick={() => setIsSidebarOpen(true)} className="text-slate-600 p-1" aria-label="Abrir menú">
-                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
-                        </button>
+                        <h1 className="font-bold text-teal-600">AQG Comercial</h1>
+                        <div className="w-8"></div>
                     </header>
-                    
-                    <main className="main-content flex-grow overflow-y-auto">
-                        {view !== 'quote' && (
-                            <div className="p-4 md:p-6 lg:p-8 h-full">
-                                {mainContent()}
+
+                    {/* --- Sidebar --- */}
+                    <div 
+                        className={`fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 md:relative md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
+                        w-72 bg-white border-r border-slate-200 flex flex-col p-4 shrink-0 shadow-xl md:shadow-none`}
+                    >
+                         <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-200">
+                             <h1 className="text-2xl font-bold text-teal-600 tracking-tight">AQG</h1>
+                             <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-slate-400 p-1">&times;</button>
+                        </div>
+
+                        <nav className="flex-grow space-y-2">
+                            <NavLink onClick={() => handleNavigate('welcome')} isActive={view === 'welcome'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>} label="Inicio" />
+                            <NavLink onClick={handleNavigateToQuote} isActive={view === 'quote'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V8z" clipRule="evenodd" /></svg>} label={hasActiveQuote ? "Presupuesto Activo" : "Nuevo Presupuesto"} />
+                            <NavLink onClick={() => handleNavigate('my-quotes')} isActive={view === 'my-quotes'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" /></svg>} label="Mis Presupuestos" />
+                           
+                           <div className="pt-4 mt-4 border-t border-slate-200 space-y-2">
+                                <NavLink onClick={() => handleNavigate('conditions')} isActive={view === 'conditions'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a1 1 0 011-1h14a1 1 0 011 1v5a.997.997 0 01-.293-.707zM5 6a1 1 0 100 2 1 1 0 000-2z" clipRule="evenodd" /></svg>} label="Promociones" />
+                                <NavLink onClick={() => handleNavigate('guides')} isActive={view === 'guides'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" /></svg>} label="Descargas" />
+                                <NavLink onClick={() => handleNavigate('transparency')} isActive={view === 'transparency'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2H4zm5 2a1 1 0 00-1 1v1a1 1 0 001 1h2a1 1 0 001-1V5a1 1 0 00-1-1H9zM8 9a1 1 0 00-1 1v3a1 1 0 102 0v-3a1 1 0 00-1-1zm4 0a1 1 0 100 2h1a1 1 0 100-2h-1z" clipRule="evenodd" /></svg>} label="Transparencia" />
+                                <NavLink onClick={() => handleNavigate('communications')} isActive={view === 'communications'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" /></svg>} label="Comunicaciones" />
                             </div>
-                        )}
-                        {view === 'quote' && mainContent()}
-                    </main>
-                </div>
-                
-                {isCustomModalOpen && <CustomModal onClose={() => setCustomModalOpen(false)} />}
-                {isDrainerModalOpen && <DrainerModal onClose={() => setDrainerModalOpen(false)} />}
-                {isVisitModalOpen && <VisitModal onClose={() => setVisitModalOpen(false)} />}
+                        </nav>
 
-                {isSettingsModalOpen && currentUser && (
-                    <SettingsModal 
-                        isOpen={isSettingsModalOpen}
-                        onClose={() => setSettingsModalOpen(false)}
-                        user={currentUser}
-                        onSave={(settings) => {
-                            const updatedUser = { ...currentUser, ...settings };
-                            setCurrentUser(updatedUser);
-                            const users = JSON.parse(localStorage.getItem('users') || '[]') as StoredUser[];
-                            const updatedUsers = users.map(u => u.email === updatedUser.email ? { ...u, ...settings } : u);
-                            localStorage.setItem('users', JSON.stringify(updatedUsers));
-                        }}
-                        onExport={handleExportData}
-                        onImport={handleImportData}
-                    />
-                )}
-                 {pdfPreviewUrl && <PdfPreviewModal url={pdfPreviewUrl} onClose={() => setPdfPreviewUrl(null)} />}
-                 {isSaveModalOpen && currentUser && (
-                    <SaveQuoteModal 
-                        isOpen={isSaveModalOpen}
-                        onClose={() => setSaveModalOpen(false)}
-                        onSave={handleSaveQuote}
-                        currentUser={currentUser}
-                    />
-                 )}
-            </div>
-        );
-    };
+                        <div className="mt-auto pt-4 border-t border-slate-200 space-y-2">
+                             <div className="text-xs text-center text-slate-400 mb-2">
+                                <p className="font-semibold text-slate-600">{currentUser.companyName}</p>
+                                <p>{currentUser.email}</p>
+                            </div>
+                            <NavLink onClick={() => setSettingsModalOpen(true)} isActive={false} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" /></svg>} label="Ajustes" />
+                            <NavLink onClick={handleLogout} isActive={false} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" /></svg>} label="Cerrar Sesión" />
+                        </div>
+                    </div>
+                </>
+             )}
 
-    return renderView();
+            <main className={`main-content flex-grow flex flex-col h-screen ${!currentUser ? 'items-center justify-center' : ''} ${isSidebarOpen ? 'md:w-[calc(100vw-288px)]' : 'w-full'} pt-16 md:pt-0`}>
+                {renderView()}
+            </main>
+            
+            {/* --- Modals --- */}
+            {currentUser && <SettingsModal 
+                isOpen={isSettingsModalOpen} 
+                onClose={() => setSettingsModalOpen(false)}
+                onSave={(settings) => {
+                    const updatedUser = { ...currentUser, ...settings };
+                    setCurrentUser(updatedUser);
+                    try {
+                         const users = JSON.parse(localStorage.getItem('users') || '[]') as StoredUser[];
+                         const updatedUsers = users.map(u => u.email === updatedUser.email ? { ...u, ...settings } : u);
+                         localStorage.setItem('users', JSON.stringify(updatedUsers));
+                    } catch(e) { console.error(e); }
+                }}
+                user={currentUser}
+                onExport={handleExportData}
+                onImport={handleImportData}
+            />}
+            {isSaveModalOpen && currentUser && <SaveQuoteModal isOpen={isSaveModalOpen} onClose={() => setSaveModalOpen(false)} onSave={handleSaveQuote} currentUser={currentUser} />}
+            {pdfPreviewUrl && <PdfPreviewModal url={pdfPreviewUrl} onClose={() => { URL.revokeObjectURL(pdfPreviewUrl); setPdfPreviewUrl(null); }} />}
+            {isVisitModalOpen && <VisitModal onClose={() => setVisitModalOpen(false)} />}
+        </div>
+    );
 };
-
-const CustomModal = ({ onClose }: { onClose: () => void }) => (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
-        <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-lg" onClick={e => e.stopPropagation()}>
-            <div className="flex items-start gap-4 mb-4">
-                <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z" />
-                    </svg>
-                </div>
-                <div>
-                    <h3 className="text-xl font-bold text-slate-800">Plato de Ducha a Medida (CUSTOM)</h3>
-                    <p className="text-sm text-slate-500">Requiere acción manual</p>
-                </div>
-            </div>
-            <p className="text-slate-600 mb-6 text-sm">
-                Has seleccionado una fabricación especial. Este tipo de plato requiere un croquis detallado con las medidas y formas específicas.
-                Por favor, envía el croquis a Sandra para poder procesar tu solicitud y proporcionarte un presupuesto.
-            </p>
-            <div className="flex flex-wrap justify-end gap-3">
-                <button onClick={onClose} className="px-6 py-2 font-semibold text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">Cerrar</button>
-                <a 
-                    href="mailto:sandra.martinez@aqgbathrooms.com?subject=Solicitud de Presupuesto para Plato CUSTOM"
-                    className="px-6 py-2 font-semibold text-white bg-teal-600 rounded-lg shadow-md hover:bg-teal-700 transition-colors inline-flex items-center gap-2"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                      <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                    </svg>
-                    Enviar Email a Sandra
-                </a>
-            </div>
-        </div>
-    </div>
-);
-
-const DrainerModal = ({ onClose }: { onClose: () => void }) => (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={e => e.stopPropagation()}>
-        <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-lg text-center" onClick={e => e.stopPropagation()}>
-            <div className="w-16 h-16 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-5">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-            </div>
-            <h3 className="text-2xl font-bold text-slate-800 tracking-tight mb-3">Colección DRAINER</h3>
-            <p className="text-slate-600 mb-6">
-                Este modelo pertenece a nuestro próximo catálogo y estará disponible para presupuestar muy pronto.
-                Gracias por tu interés.
-            </p>
-            <div className="flex justify-center">
-                <button onClick={onClose} className="px-10 py-3 font-semibold text-white bg-teal-600 rounded-lg shadow-md hover:bg-teal-700 transition-colors">Entendido</button>
-            </div>
-        </div>
-    </div>
-);
-
 
 export default App;
