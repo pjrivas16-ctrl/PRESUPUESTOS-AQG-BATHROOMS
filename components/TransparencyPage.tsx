@@ -69,7 +69,7 @@ const TransparencyPage: React.FC = () => {
 
                 <InfoCard
                     title="Condiciones de Colaboración"
-                    description="Resumen de las condiciones comerciales clave que rigen nuestra colaboración profesional."
+                    description="Resumen de las condiciones clave que rigen nuestra colaboración profesional."
                     icon={<DocumentIcon />}
                 >
                     <p className="text-sm"><span className="font-semibold text-slate-600">Liquidación:</span> Mensual, sobre todas las ventas.</p>
