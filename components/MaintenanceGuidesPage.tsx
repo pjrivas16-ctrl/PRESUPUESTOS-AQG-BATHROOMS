@@ -35,19 +35,10 @@ const DownloadIcon = () => (
     </svg>
 );
 
-const VideoIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-);
-
-
 const MaintenanceGuidesPage: React.FC = () => {
     
     const showerTrayGuideUrl = 'https://www.dropbox.com/scl/fi/hem0jemc8hwwmp8jpv5rt/Guia-de-instalaci-n-platos-de-ducha-ES-EN.pdf?rlkey=q8qvp59tkxv35r0eytpvakq44&st=elqn0fju&dl=0';
     const countertopGuideUrl = 'https://www.dropbox.com/scl/fi/hn23b3zqodh6zicvkkn5a/Gu-a-de-instalaci-n-y-mantenimiento-de-encimeras.pdf?rlkey=yjypmncjg5dl5xa7y0aonevvb&st=y3ahmt4g&dl=0';
-    const videoUrl = 'https://youtu.be/k7PxlTtmS5w';
 
     return (
         <div className="animate-fade-in h-full">
@@ -68,13 +59,6 @@ const MaintenanceGuidesPage: React.FC = () => {
                     onClick={() => window.open(countertopGuideUrl, '_blank')}
                     buttonText="Descargar Guía"
                     icon={<DownloadIcon />}
-                />
-                <ResourceCard
-                    title="Video Presentación"
-                    description="Conoce nuestra empresa, nuestros valores y nuestro proceso de fabricación en este video de presentación."
-                    onClick={() => window.open(videoUrl, '_blank')}
-                    buttonText="Ver Video"
-                    icon={<VideoIcon />}
                 />
                  <ResourceCard
                     title="Catálogo General"

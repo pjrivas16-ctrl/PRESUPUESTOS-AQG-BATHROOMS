@@ -28,6 +28,8 @@ interface CommunicationsPageProps {
 
 const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onPlanVisit }) => {
     
+    const videoUrl = 'https://youtu.be/k7PxlTtmS5w';
+    
     const handleBizumClick = () => {
         alert("Pero que buena gente eres, pero qué haces en esta sección?...Ponte a trabajar por La Virgen del Amor hermoso.");
     };
@@ -94,6 +96,22 @@ const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onPlanVisit }) 
                         <button onClick={onPlanVisit} className="px-4 py-2 text-sm font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors">
                             Cómo Llegar
                         </button>
+                    }
+                />
+
+                <ContactCard
+                    title="Video Presentación"
+                    description="Conoce nuestra empresa, nuestros valores y nuestro proceso de fabricación en este video de presentación."
+                    icon={
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    }
+                    actions={
+                        <a href={videoUrl} target="_blank" rel="noopener noreferrer" className="px-4 py-2 text-sm font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors">
+                            Ver Video
+                        </a>
                     }
                 />
 
