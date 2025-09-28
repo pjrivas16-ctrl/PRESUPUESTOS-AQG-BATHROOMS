@@ -1,6 +1,7 @@
 import React from 'react';
 
 interface Step {
+    id: number;
     number: number;
     title: string;
 }
@@ -28,7 +29,7 @@ const StepTracker: React.FC<StepTrackerProps> = ({ currentStep, steps, onStepCli
                     const isClickable = isCompleted;
 
                     return (
-                        <li key={step.number}>
+                        <li key={step.id}>
                             <button
                                 onClick={() => isClickable && onStepClick(step.number)}
                                 disabled={!isClickable}

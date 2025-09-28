@@ -276,20 +276,20 @@ export const SOFTUM_WIDTHS = [70, 80, 90];
 export const SOFTUM_LENGTHS = [100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
 
 export const SHOWER_TRAY_STEPS = [
-    { number: 1, title: 'Colección' },
-    { number: 2, title: 'Dimensiones' },
-    { number: 3, title: 'Textura' },
-    { number: 4, title: 'Color' },
-    { number: 5, title: 'Cortes' },
-    { number: 6, title: 'Accesorios' },
-    { number: 7, title: 'Resumen' },
+    { id: 1, title: 'Colección' },
+    { id: 2, title: 'Dimensiones' },
+    { id: 3, title: 'Textura' },
+    { id: 4, title: 'Color' },
+    { id: 5, title: 'Cortes' },
+    { id: 6, title: 'Accesorios' },
+    { id: 7, title: 'Resumen' },
 ];
 
 export const KITS_STEPS = [
-    { number: 1, title: 'Colección' },
-    { number: 2, title: 'Selección de Kit' },
-    { number: 3, title: 'Color y Referencia' },
-    { number: 4, title: 'Resumen' },
+    { id: 1, title: 'Colección' },
+    { id: 10, title: 'Selección de Kit' },
+    { id: 11, title: 'Color y Referencia' },
+    { id: 12, title: 'Resumen' },
 ];
 
 export const VAT_RATE = 0.21;

@@ -425,30 +425,40 @@ const App: React.FC = () => {
 
     // Determine which steps to show based on product line
     const STEPS = useMemo(() => {
-        if (currentItemConfig.productLine === 'KITS') {
-            return KITS_STEPS;
+        const baseSteps = currentItemConfig.productLine === 'KITS' ? KITS_STEPS : SHOWER_TRAY_STEPS;
+        
+        let filteredSteps = baseSteps;
+        if (currentItemConfig.productLine === 'FLAT TERRAZO') {
+            // Filter out step with id 4 (Color)
+            filteredSteps = baseSteps.filter(step => step.id !== 4);
         }
-        return SHOWER_TRAY_STEPS;
+
+        // Re-assign sequential numbers for UI display (StepTracker, etc.)
+        return filteredSteps.map((step, index) => ({
+            ...step,
+            number: index + 1
+        }));
     }, [currentItemConfig.productLine]);
     
     const isNextStepDisabled = useMemo(() => {
-        switch (currentStep) {
+        const stepDetails = STEPS.find(s => s.number === currentStep);
+        if (!stepDetails) return true;
+
+        switch (stepDetails.id) {
             case 1: // Collection
                 return !currentItemConfig.productLine;
-            case 2: // Dimensions or Kit Selection
-                if (currentItemConfig.productLine === 'KITS') {
-                    return !currentItemConfig.kitProduct;
-                }
+            case 2: // Dimensions
                 return !currentItemConfig.width || !currentItemConfig.length;
-            case 3: // Texture or Kit Details
-                if (currentItemConfig.productLine === 'KITS') {
-                    if (currentItemConfig.kitProduct?.id === 'kit-pintura' || currentItemConfig.kitProduct?.id === 'kit-reparacion') {
-                        const isRalSelected = currentItemConfig.extras.some(e => e.id === 'ral');
-                        return !currentItemConfig.color && (!isRalSelected || !currentItemConfig.ralCode);
-                    }
-                    return false; // No extra validation for repair kit
-                }
+             case 10: // Kit Selection
+                return !currentItemConfig.kitProduct;
+            case 3: // Texture
                 return !currentItemConfig.model;
+             case 11: // Kit Details
+                if (currentItemConfig.kitProduct?.id === 'kit-pintura' || currentItemConfig.kitProduct?.id === 'kit-reparacion') {
+                    const isRalSelected = currentItemConfig.extras.some(e => e.id === 'ral');
+                    return !currentItemConfig.color && (!isRalSelected || !currentItemConfig.ralCode);
+                }
+                return false;
             case 4: // Color
                 const isRalSelected = currentItemConfig.extras.some(e => e.id === 'ral');
                 return !currentItemConfig.color && (!isRalSelected || !currentItemConfig.ralCode);
@@ -468,7 +478,7 @@ const App: React.FC = () => {
             default:
                 return false;
         }
-    }, [currentStep, currentItemConfig]);
+    }, [currentStep, currentItemConfig, STEPS]);
 
     
     // --- PRICE CALCULATION ---
@@ -556,7 +566,7 @@ const App: React.FC = () => {
         } else {
             setCurrentStep(1);
         }
-    }, [quoteItems.length, STEPS.length]);
+    }, [quoteItems.length, STEPS]);
 
     const handleNavigate = (targetView: typeof view) => {
         setView(targetView);
@@ -590,7 +600,7 @@ const App: React.FC = () => {
         else if (currentStep < STEPS.length) {
             setCurrentStep(prev => prev + 1);
         }
-    }, [currentStep, STEPS.length, currentItemConfig, quoteItems, editingItemId, resetQuoteState]);
+    }, [currentStep, STEPS, currentItemConfig, quoteItems, editingItemId, resetQuoteState]);
 
     const handlePrevStep = useCallback(() => {
         if (currentStep > 1) {
@@ -644,7 +654,7 @@ const App: React.FC = () => {
             setCurrentItemConfig(itemToEdit);
             setEditingItemId(itemId);
             // Determine start step based on product line
-            const startStep = itemToEdit.productLine === 'KITS' ? KITS_STEPS[0].number : SHOWER_TRAY_STEPS[0].number;
+            const startStep = itemToEdit.productLine === 'KITS' ? KITS_STEPS[0].id : SHOWER_TRAY_STEPS[0].id;
             setCurrentStep(startStep);
         }
     };
@@ -833,23 +843,56 @@ const App: React.FC = () => {
             onRalCodeChange: (code: string) => handleUpdateQuoteItem({ ralCode: code }),
         };
 
+        const stepDetails = STEPS.find(s => s.number === currentStep);
+        const stepId = stepDetails?.id;
+
+
         if (currentItemConfig.productLine === 'KITS') {
-            switch (currentStep) {
+            switch (stepId) {
                 case 1: return <Step1ModelSelection selectedProductLine={currentItemConfig.productLine} onUpdate={handleProductLineSelect} quantity={currentItemConfig.quantity} onUpdateQuantity={(q) => handleUpdateQuoteItem({ quantity: q })} />;
-                case 2: return <Step2KitSelection selectedKit={currentItemConfig.kitProduct} onSelect={(kit) => handleUpdateQuoteItem({ kitProduct: kit })} />;
-                case 3: return <Step3KitDetails currentItemConfig={currentItemConfig} onSelectColor={updateColorProps.onSelectColor} onToggleRal={updateColorProps.onToggleRal} onRalCodeChange={updateColorProps.onRalCodeChange} onInvoiceRefChange={(ref) => handleUpdateQuoteItem({ invoiceReference: ref })} />;
-                case 4: return <Step5Summary items={quoteItems} totalPrice={finalTotalPrice} onReset={handleResetQuote} onSaveRequest={() => setSaveModalOpen(true)} onGeneratePdfRequest={() => handleGeneratePdf()} onPrintRequest={handlePrint} onStartNew={() => { resetQuoteState(); setCurrentStep(1); }} onEdit={handleEditItem} onDelete={handleDeleteItem} calculatePriceDetails={calculatePriceDetails} appliedDiscounts={appliedDiscounts} onUpdateDiscounts={setAppliedDiscounts} />;
+                case 10: return <Step2KitSelection selectedKit={currentItemConfig.kitProduct} onSelect={(kit) => handleUpdateQuoteItem({ kitProduct: kit })} />;
+                case 11: return <Step3KitDetails currentItemConfig={currentItemConfig} onSelectColor={updateColorProps.onSelectColor} onToggleRal={updateColorProps.onToggleRal} onRalCodeChange={updateColorProps.onRalCodeChange} onInvoiceRefChange={(ref) => handleUpdateQuoteItem({ invoiceReference: ref })} />;
+                case 12: return <Step5Summary items={quoteItems} totalPrice={finalTotalPrice} onReset={handleResetQuote} onSaveRequest={() => setSaveModalOpen(true)} onGeneratePdfRequest={() => handleGeneratePdf()} onPrintRequest={handlePrint} onStartNew={() => { resetQuoteState(); setCurrentStep(1); }} onEdit={handleEditItem} onDelete={handleDeleteItem} calculatePriceDetails={calculatePriceDetails} appliedDiscounts={appliedDiscounts} onUpdateDiscounts={setAppliedDiscounts} />;
                 default: return null;
             }
         }
 
-        switch (currentStep) {
+        switch (stepId) {
             case 1: return <Step1ModelSelection selectedProductLine={currentItemConfig.productLine} onUpdate={handleProductLineSelect} quantity={currentItemConfig.quantity} onUpdateQuantity={(q) => handleUpdateQuoteItem({ quantity: q })} />;
             case 2: return <Step1Dimensions quote={currentItemConfig} onUpdate={(width, length) => handleUpdateQuoteItem({ width, length })} />;
             case 3: return <Step2Model selectedModel={currentItemConfig.model} productLine={currentItemConfig.productLine} onSelect={(model) => handleUpdateQuoteItem({ model })} />;
             case 4: return <Step3Color {...updateColorProps} productLine={currentItemConfig.productLine} />;
             case 5: return <Step5Cuts selectedExtras={currentItemConfig.extras} productLine={currentItemConfig.productLine} baseWidth={currentItemConfig.width} baseLength={currentItemConfig.length} cutWidth={currentItemConfig.cutWidth} cutLength={currentItemConfig.cutLength} onUpdateCutDimensions={(dims) => handleUpdateQuoteItem(dims)} structFrames={currentItemConfig.structFrames} onUpdateStructFrames={(frames) => handleUpdateQuoteItem({ structFrames: frames })} onToggle={(extra) => { const isSelected = currentItemConfig.extras.some(e => e.id === extra.id); const otherCuts = currentItemConfig.extras.filter(e => e.id !== extra.id && !e.id.startsWith('corte')); handleUpdateQuoteItem({ extras: isSelected ? otherCuts : [...otherCuts, extra] }); }} />;
-            case 6: return <Step6Accessories selectedExtras={currentItemConfig.extras} productLine={currentItemConfig.productLine} mainColor={currentItemConfig.color} bitonoColor={currentItemConfig.bitonoColor} onSelectBitonoColor={(color) => handleUpdateQuoteItem({ bitonoColor: color })} onToggle={(extra) => { const isSelected = currentItemConfig.extras.some(e => e.id === extra.id); const otherExtras = currentItemConfig.extras.filter(e => e.id !== extra.id); handleUpdateQuoteItem({ extras: isSelected ? otherExtras : [...otherExtras, extra], bitonoColor: isSelected ? null : currentItemConfig.bitonoColor }); }} />;
+            case 6: return <Step6Accessories selectedExtras={currentItemConfig.extras} productLine={currentItemConfig.productLine} mainColor={currentItemConfig.color} bitonoColor={currentItemConfig.bitonoColor} onSelectBitonoColor={(color) => handleUpdateQuoteItem({ bitonoColor: color })} onToggle={(extra) => {
+                const isSelected = currentItemConfig.extras.some(e => e.id === extra.id);
+                const currentExtras = currentItemConfig.extras;
+                let newExtras: ProductOption[];
+        
+                const isGrate = extra.id.includes('rejilla');
+                
+                if (isSelected) {
+                    // Deselecting the current extra
+                    newExtras = currentExtras.filter(e => e.id !== extra.id);
+                } else {
+                    // Selecting a new extra
+                    if (isGrate) {
+                        // If it's a grate, first remove all other grates
+                        const nonGrateExtras = currentExtras.filter(e => !e.id.includes('rejilla'));
+                        newExtras = [...nonGrateExtras, extra];
+                    } else {
+                        // If it's not a grate, just add it
+                        newExtras = [...currentExtras, extra];
+                    }
+                }
+        
+                // Handle bitono color logic correctly: only clear if 'bitono' extra itself is being deselected
+                const newBitonoColor = (extra.id === 'bitono' && isSelected) ? null : currentItemConfig.bitonoColor;
+        
+                handleUpdateQuoteItem({ 
+                    extras: newExtras, 
+                    bitonoColor: newBitonoColor
+                });
+            }} />;
             case 7: return <Step5Summary items={quoteItems} totalPrice={finalTotalPrice} onReset={handleResetQuote} onSaveRequest={() => setSaveModalOpen(true)} onGeneratePdfRequest={() => handleGeneratePdf()} onPrintRequest={handlePrint} onStartNew={() => { resetQuoteState(); setCurrentStep(1); }} onEdit={handleEditItem} onDelete={handleDeleteItem} calculatePriceDetails={calculatePriceDetails} appliedDiscounts={appliedDiscounts} onUpdateDiscounts={setAppliedDiscounts} />;
             default: return null;
         }
@@ -1071,7 +1114,7 @@ const CustomModal = ({ onClose }: { onClose: () => void }) => (
 );
 
 const DrainerModal = ({ onClose }: { onClose: () => void }) => (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={e => e.stopPropagation()}>
         <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-lg text-center" onClick={e => e.stopPropagation()}>
             <div className="w-16 h-16 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-5">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
