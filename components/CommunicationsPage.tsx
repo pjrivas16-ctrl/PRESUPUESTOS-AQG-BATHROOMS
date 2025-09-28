@@ -1,5 +1,22 @@
 import React from 'react';
 
+const InfoCard: React.FC<{ title: string; description: string; icon: React.ReactNode; children?: React.ReactNode; }> = ({ title, description, icon, children }) => (
+    <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200/80 flex flex-col text-left">
+        <div className="flex items-center gap-4 mb-4">
+            <div className="w-14 h-14 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center flex-shrink-0">
+               {icon}
+            </div>
+            <div>
+                 <h3 className="text-xl font-bold text-slate-800 tracking-tight">{title}</h3>
+            </div>
+        </div>
+        <p className="flex-grow text-slate-500 mb-4 text-sm">{description}</p>
+        <div className="bg-slate-50 border border-slate-200 text-slate-700 p-4 rounded-lg mt-auto space-y-2">
+            {children}
+        </div>
+    </div>
+);
+
 const ContactCard: React.FC<{
     title: string;
     description: React.ReactNode;
@@ -59,6 +76,27 @@ const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onPlanVisit }) 
                         </>
                     }
                 />
+
+                <InfoCard
+                    title="Tiempos de Expedición"
+                    description="Consulta los plazos de entrega estimados para nuestros productos. Ten en cuenta que son días laborales y pueden variar según la demanda."
+                    icon={
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    }
+                >
+                    <ul className="space-y-1 text-sm">
+                        <li className="flex justify-between items-center"><span className="font-semibold">STOCK CLASSIC STANDARD WHITE:</span> <span className="font-bold text-teal-600 text-right">24/48 Horas*</span></li>
+                        <li className="text-xs text-slate-500 pl-2">↳ *Excepto 210x100 y 220x100: 10 días laborales.</li>
+                        <li className="flex justify-between items-center pt-1 border-t border-slate-200 mt-1"><span className="font-semibold">PLATOS A MEDIDA / CORTES:</span> <span className="font-bold text-teal-600">6 días lab.</span></li>
+                        <li className="flex justify-between items-center"><span className="font-semibold">PANELES:</span> <span className="font-bold text-teal-600">6 días lab.</span></li>
+                        <li className="flex justify-between items-center pt-1 border-t border-slate-200 mt-1"><span className="font-semibold">LAVABOS:</span> <span className="font-bold text-teal-600">10 días lab.</span></li>
+                        <li className="flex justify-between items-center"><span className="font-semibold">PLATOS TECH:</span> <span className="font-bold text-teal-600">15 días lab.</span></li>
+                        <li className="flex justify-between items-center"><span className="font-semibold">ENCIMERAS:</span> <span className="font-bold text-teal-600">20 días lab.</span></li>
+                        <li className="flex justify-between items-center"><span className="font-semibold">PLATOS CUSTOM:</span> <span className="font-bold text-teal-600">20 días lab.</span></li>
+                    </ul>
+                </InfoCard>
 
                 <ContactCard
                     title="Atención al Cliente (Incidencias)"
