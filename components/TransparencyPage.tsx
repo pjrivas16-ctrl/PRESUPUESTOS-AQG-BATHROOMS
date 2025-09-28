@@ -73,7 +73,7 @@ const TransparencyPage: React.FC = () => {
                     icon={<DocumentIcon />}
                 >
                     <p className="text-sm"><span className="font-semibold text-slate-600">Liquidación:</span> Mensual, sobre todas las ventas.</p>
-                    <p className="text-sm"><span className="font-semibold text-slate-600">Objetivos:</span> Deben cumplirse los marcados por la dirección comercial.</p>
+                    <p className="text-sm"><span className="font-semibold text-slate-600">Objetivos:</span> Deben cumplirse los marcados por la dirección comercial. El no alcanzar las ventas mínimas establecidas para la zona asignada puede ser motivo de rescisión de la colaboración.</p>
                     <p className="text-sm"><span className="font-semibold text-slate-600">Incompatibilidad:</span> La representación de AQG es incompatible con otras marcas que vendan producto homólogo.</p>
                 </InfoCard>
 
