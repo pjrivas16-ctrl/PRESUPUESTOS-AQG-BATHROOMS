@@ -37,7 +37,6 @@ const Step6Accessories: React.FC<Step6AccessoriesProps> = ({
             case 'LUXE':
                 return generalExtras.filter(e => 
                     e.id === 'rejilla-lacada-luxe' || 
-                    e.id === 'tapeta-mismo-material' ||
                     e.id === 'rejilla-oro-cepillado-pvd' ||
                     e.id === 'rejilla-oro-rosa-cepillado-pvd' ||
                     e.id === 'rejilla-gun-metal-pvd'

@@ -93,6 +93,7 @@ export const PRICE_LIST: { [productLine: string]: { [width: number]: { [length: 
 export const PRODUCT_LINES = [
     'SOFTUM',
     'LUXE',
+    'LUXE CON TAPETA',
     'FLAT',
     'CLASSIC',
     'CLASSIC TECH',
@@ -216,12 +217,6 @@ export const ACCESSORY_EXTRAS: ProductOption[] = [
         name: 'Rejilla Gun Metal PVD',
         description: 'Rejilla con acabado PVD en Gun Metal para el modelo LUXE.',
         price: 150,
-    },
-    {
-        id: 'tapeta-mismo-material',
-        name: 'Tapeta Mismo Material y Color',
-        description: 'Sustituye la rejilla INOX por una tapa del mismo material y color que el plato.',
-        price: 0,
     },
     {
         id: 'rejilla-lacada-standard',
