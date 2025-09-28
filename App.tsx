@@ -324,8 +324,8 @@ const SaveQuoteModal: React.FC<{
 };
 
 const VisitModal = ({ onClose }: { onClose: () => void }) => {
-    const address = "Carrer dels Fusters, 13, 03801 Alcoi, Alicante";
-    const encodedAddress = encodeURIComponent(address);
+    const addressForUrl = "Carretera Almoradi-Rojales, km.1, 03160 Almoradi, Alicante, España";
+    const encodedAddress = encodeURIComponent(addressForUrl);
 
     const links = [
         { name: 'Google Maps', url: `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}` },
@@ -339,7 +339,12 @@ const VisitModal = ({ onClose }: { onClose: () => void }) => {
                 <div className="flex justify-between items-start mb-4">
                     <div>
                         <h3 className="text-xl font-bold text-slate-800">Cómo Llegar a Fábrica</h3>
-                        <p className="text-sm text-slate-500">{address}</p>
+                        <div className="text-sm text-slate-500 mt-1">
+                            <p className="font-semibold">AQG BATHROOMS</p>
+                            <p>Carretera Almoradi-Rojales, km.1</p>
+                            <p>03160 Almoradi (Alicante)</p>
+                            <p>España</p>
+                        </div>
                     </div>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
                 </div>
