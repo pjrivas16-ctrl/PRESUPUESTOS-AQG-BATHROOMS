@@ -349,6 +349,8 @@ const App: React.FC = () => {
     const [isSaveModalOpen, setSaveModalOpen] = useState(false);
     const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isCustomModalOpen, setCustomModalOpen] = useState(false);
+    const [isDrainerModalOpen, setDrainerModalOpen] = useState(false);
 
     // Initial load from localStorage
     useEffect(() => {
@@ -561,6 +563,22 @@ const App: React.FC = () => {
         setCurrentItemConfig(prev => ({ ...prev, ...updates }));
     }, []);
 
+    const handleProductLineSelect = (val: string) => {
+        if (val === 'CUSTOM') {
+            setCustomModalOpen(true);
+        } else if (val === 'DRAINER') {
+            setDrainerModalOpen(true);
+        } else {
+            handleUpdateQuoteItem({
+                productLine: val,
+                quantity: 1,
+                model: null,
+                color: STANDARD_COLORS[0],
+                extras: [],
+            });
+        }
+    };
+
     const handleEditItem = (itemId: string) => {
         const itemToEdit = quoteItems.find(item => item.id === itemId);
         if (itemToEdit) {
@@ -758,7 +776,7 @@ const App: React.FC = () => {
 
         if (currentItemConfig.productLine === 'KITS') {
             switch (currentStep) {
-                case 1: return <Step1ModelSelection selectedProductLine={currentItemConfig.productLine} onUpdate={(val) => handleUpdateQuoteItem({ productLine: val, quantity: 1, model: null, color: STANDARD_COLORS[0], extras: [] })} quantity={currentItemConfig.quantity} onUpdateQuantity={(q) => handleUpdateQuoteItem({ quantity: q })} />;
+                case 1: return <Step1ModelSelection selectedProductLine={currentItemConfig.productLine} onUpdate={handleProductLineSelect} quantity={currentItemConfig.quantity} onUpdateQuantity={(q) => handleUpdateQuoteItem({ quantity: q })} />;
                 case 2: return <Step2KitSelection selectedKit={currentItemConfig.kitProduct} onSelect={(kit) => handleUpdateQuoteItem({ kitProduct: kit })} />;
                 case 3: return <Step3KitDetails currentItemConfig={currentItemConfig} onSelectColor={updateColorProps.onSelectColor} onToggleRal={updateColorProps.onToggleRal} onRalCodeChange={updateColorProps.onRalCodeChange} onInvoiceRefChange={(ref) => handleUpdateQuoteItem({ invoiceReference: ref })} />;
                 case 4: return <Step5Summary items={quoteItems} totalPrice={finalTotalPrice} onReset={handleResetQuote} onSaveRequest={() => setSaveModalOpen(true)} onGeneratePdfRequest={() => handleGeneratePdf()} onPrintRequest={handlePrint} onStartNew={() => { resetQuoteState(); setCurrentStep(1); }} onEdit={handleEditItem} onDelete={handleDeleteItem} calculatePriceDetails={calculatePriceDetails} appliedDiscounts={appliedDiscounts} onUpdateDiscounts={setAppliedDiscounts} />;
@@ -767,7 +785,7 @@ const App: React.FC = () => {
         }
 
         switch (currentStep) {
-            case 1: return <Step1ModelSelection selectedProductLine={currentItemConfig.productLine} onUpdate={(val) => handleUpdateQuoteItem({ productLine: val, quantity: 1, model: null, color: STANDARD_COLORS[0], extras: [] })} quantity={currentItemConfig.quantity} onUpdateQuantity={(q) => handleUpdateQuoteItem({ quantity: q })} />;
+            case 1: return <Step1ModelSelection selectedProductLine={currentItemConfig.productLine} onUpdate={handleProductLineSelect} quantity={currentItemConfig.quantity} onUpdateQuantity={(q) => handleUpdateQuoteItem({ quantity: q })} />;
             case 2: return <Step1Dimensions quote={currentItemConfig} onUpdate={(width, length) => handleUpdateQuoteItem({ width, length })} />;
             case 3: return <Step2Model selectedModel={currentItemConfig.model} productLine={currentItemConfig.productLine} onSelect={(model) => handleUpdateQuoteItem({ model })} />;
             case 4: return <Step3Color {...updateColorProps} />;
@@ -921,6 +939,9 @@ const App: React.FC = () => {
                         {view === 'quote' && mainContent()}
                     </main>
                 </div>
+                
+                {isCustomModalOpen && <CustomModal onClose={() => setCustomModalOpen(false)} />}
+                {isDrainerModalOpen && <DrainerModal onClose={() => setDrainerModalOpen(false)} />}
 
                 {isSettingsModalOpen && currentUser && (
                     <SettingsModal 
@@ -953,5 +974,61 @@ const App: React.FC = () => {
 
     return renderView();
 };
+
+const CustomModal = ({ onClose }: { onClose: () => void }) => (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
+        <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-lg" onClick={e => e.stopPropagation()}>
+            <div className="flex items-start gap-4 mb-4">
+                <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 className="text-xl font-bold text-slate-800">Plato de Ducha a Medida (CUSTOM)</h3>
+                    <p className="text-sm text-slate-500">Requiere acción manual</p>
+                </div>
+            </div>
+            <p className="text-slate-600 mb-6 text-sm">
+                Ha seleccionado una fabricación especial. Este tipo de plato requiere un croquis detallado con las medidas y formas específicas.
+                Por favor, envíe el croquis a Sandra para poder procesar su solicitud y proporcionarle un presupuesto.
+            </p>
+            <div className="flex flex-wrap justify-end gap-3">
+                <button onClick={onClose} className="px-6 py-2 font-semibold text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">Cerrar</button>
+                <a 
+                    href="mailto:sandra.martinez@aqgbathrooms.com?subject=Solicitud de Presupuesto para Plato CUSTOM"
+                    className="px-6 py-2 font-semibold text-white bg-teal-600 rounded-lg shadow-md hover:bg-teal-700 transition-colors inline-flex items-center gap-2"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                      <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                    </svg>
+                    Enviar Email a Sandra
+                </a>
+            </div>
+        </div>
+    </div>
+);
+
+const DrainerModal = ({ onClose }: { onClose: () => void }) => (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
+        <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-lg text-center" onClick={e => e.stopPropagation()}>
+            <div className="w-16 h-16 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-5">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <h3 className="text-2xl font-bold text-slate-800 tracking-tight mb-3">Colección DRAINER</h3>
+            <p className="text-slate-600 mb-6">
+                Este modelo pertenece a nuestro próximo catálogo y estará disponible para presupuestar muy pronto.
+                Gracias por su interés.
+            </p>
+            <div className="flex justify-center">
+                <button onClick={onClose} className="px-10 py-3 font-semibold text-white bg-teal-600 rounded-lg shadow-md hover:bg-teal-700 transition-colors">Entendido</button>
+            </div>
+        </div>
+    </div>
+);
+
 
 export default App;
