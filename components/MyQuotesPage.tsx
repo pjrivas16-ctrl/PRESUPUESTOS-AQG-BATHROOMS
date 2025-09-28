@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useMemo } from 'react';
 import type { User, SavedQuote, QuoteItem } from '../types';
 
@@ -182,7 +183,7 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                 body += `${line}: ${discount}%\n`;
             }
         } else {
-            body += `Ninguno\n`;
+            body += `Aplicar descuentos por defecto de la ficha del cliente.\n`;
         }
 
         body += `\n--- TOTALES ---\n` +
