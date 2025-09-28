@@ -41,8 +41,13 @@ const Step6Accessories: React.FC<Step6AccessoriesProps> = ({
                     e.id === 'rejilla-oro-rosa-cepillado-pvd' ||
                     e.id === 'rejilla-gun-metal-pvd'
                 );
-            case 'FLAT':
             case 'FLAT TERRAZO':
+                return generalExtras.filter(e => 
+                    e.id === 'rejilla-oro-cepillado-pvd-standard' ||
+                    e.id === 'rejilla-oro-rosa-cepillado-pvd-standard' ||
+                    e.id === 'rejilla-gun-metal-pvd-standard'
+                );
+            case 'FLAT':
             case 'CLASSIC':
             case 'STRUCT':
             case 'CENTRAL':

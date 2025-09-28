@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { SHOWER_MODELS } from '../../constants';
+import { SHOWER_MODELS, STANDARD_COLORS } from '../../constants';
 import type { ProductOption } from '../../types';
 
 interface Step2ModelProps {
@@ -54,6 +54,20 @@ const Step2Model: React.FC<Step2ModelProps> = ({ onSelect, selectedModel, produc
                     const isSelected = selectedModel?.id === model.id;
                     const isDisabled = modelsToShow.length === 1 && productLine !== 'FLAT TERRAZO';
                     
+                    let colorSwatch = null;
+                    if (productLine === 'FLAT TERRAZO' && model.id.startsWith('terrazo-')) {
+                        const colorId = model.id.replace('terrazo-', '');
+                        const color = STANDARD_COLORS.find(c => c.id === colorId);
+                        if (color) {
+                            colorSwatch = (
+                                <div 
+                                    style={{ backgroundColor: color.hex }}
+                                    className={`w-8 h-8 rounded-full border-2 flex-shrink-0 ${color.hex === '#FFFFFF' ? 'border-slate-300' : 'border-transparent'}`}
+                                ></div>
+                            );
+                        }
+                    }
+
                     return (
                         <button
                             key={model.id}
@@ -66,9 +80,12 @@ const Step2Model: React.FC<Step2ModelProps> = ({ onSelect, selectedModel, produc
                             disabled:cursor-default disabled:hover:border-teal-500 disabled:bg-teal-50"
                         >
                             <CheckBadge />
-                            <div>
-                                <h3 className="font-bold text-slate-800 text-lg">{model.name}</h3>
-                                <p className="text-sm text-slate-500 mt-1">{model.description}</p>
+                            <div className="flex items-center gap-4">
+                                {colorSwatch}
+                                <div>
+                                    <h3 className="font-bold text-slate-800 text-lg">{model.name}</h3>
+                                    <p className="text-sm text-slate-500 mt-1">{model.description}</p>
+                                </div>
                             </div>
                         </button>
                     );
