@@ -63,6 +63,7 @@ const TransparencyPage: React.FC = () => {
 
                         <div className="pt-2 mt-2 border-t border-slate-300/50">
                             <div className="flex justify-between text-sm"><span className="font-semibold text-slate-600">Netos Especiales</span> <span className="font-bold text-teal-600">3% Comisión</span></div>
+                            <p className="text-xs text-slate-500 pl-2">↳ Referido a netos especiales o descuentos mayores del 70%.</p>
                         </div>
                     </div>
                 </InfoCard>
