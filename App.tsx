@@ -369,6 +369,25 @@ const VisitModal = ({ onClose }: { onClose: () => void }) => {
     );
 };
 
+const InfoModal: React.FC<{ title: string; children: React.ReactNode; onClose: () => void }> = ({ title, children, onClose }) => (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
+        <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-start mb-4">
+                <h3 className="text-xl font-bold text-slate-800">{title}</h3>
+                <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
+            </div>
+            <div className="text-slate-600 mb-6 text-sm space-y-2">
+                {children}
+            </div>
+            <div className="flex justify-end">
+                <button onClick={onClose} className="px-6 py-2 font-semibold text-white bg-teal-600 rounded-lg shadow-md hover:bg-teal-700 transition-colors">
+                    Entendido
+                </button>
+            </div>
+        </div>
+    </div>
+);
+
 
 const App: React.FC = () => {
     // --- STATE MANAGEMENT ---
@@ -433,8 +452,7 @@ const App: React.FC = () => {
             filteredSteps = baseSteps.filter(step => step.id !== 4);
         } else if (currentItemConfig.productLine === 'CLASSIC TECH') {
             // For CLASSIC TECH, remove Color (4) and Accessories (6)
-            const idsToRemove = [4, 6];
-            filteredSteps = baseSteps.filter(step => !idsToRemove.includes(step.id));
+            filteredSteps = baseSteps.filter(step => step.id !== 4 && step.id !== 6);
         }
 
         // Re-assign sequential numbers for UI display (StepTracker, etc.)
@@ -655,7 +673,7 @@ const App: React.FC = () => {
                 productLine: val,
                 quantity: 1,
                 model: null,
-                color: STANDARD_COLORS[0],
+                color: val === 'CLASSIC TECH' ? null : STANDARD_COLORS[0],
                 extras: [],
             });
         }
@@ -971,9 +989,6 @@ const App: React.FC = () => {
 
                 return (
                     <div className="flex-grow flex flex-col min-h-0">
-                        <div className="px-4 md:px-8 pt-6">
-                            <StepTracker currentStep={currentStep} steps={STEPS} onStepClick={handleStepClick} />
-                        </div>
                         <div className="main-content-body flex-grow p-4 md:p-8 overflow-y-auto">
                            {currentVisibleStep && renderCurrentStep()}
                         </div>
@@ -1097,6 +1112,18 @@ const App: React.FC = () => {
             {isSaveModalOpen && currentUser && <SaveQuoteModal isOpen={isSaveModalOpen} onClose={() => setSaveModalOpen(false)} onSave={handleSaveQuote} currentUser={currentUser} />}
             {pdfPreviewUrl && <PdfPreviewModal url={pdfPreviewUrl} onClose={() => { URL.revokeObjectURL(pdfPreviewUrl); setPdfPreviewUrl(null); }} />}
             {isVisitModalOpen && <VisitModal onClose={() => setVisitModalOpen(false)} />}
+            {isCustomModalOpen && (
+                <InfoModal title="Colección CUSTOM" onClose={() => setCustomModalOpen(false)}>
+                    <p>Para platos de ducha <strong>CUSTOM</strong>, es necesario contactar con fábrica para especificar las medidas y características deseadas.</p>
+                    <p>El precio se calculará de forma personalizada.</p>
+                </InfoModal>
+            )}
+            {isDrainerModalOpen && (
+                <InfoModal title="Colección DRAINER" onClose={() => setDrainerModalOpen(false)}>
+                     <p>Para platos de ducha <strong>DRAINER</strong>, es necesario contactar con fábrica para especificar las medidas y características deseadas.</p>
+                     <p>El precio se calculará de forma personalizada.</p>
+                </InfoModal>
+            )}
         </div>
     );
 };

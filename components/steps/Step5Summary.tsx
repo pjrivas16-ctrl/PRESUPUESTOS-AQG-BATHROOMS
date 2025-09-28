@@ -48,7 +48,7 @@ const QuoteItemCard: React.FC<{ item: QuoteItem; onEdit: () => void; onDelete: (
                             {item.cutWidth && item.cutLength && (
                                 <p className="text-sm text-slate-500 font-medium">Corte a: <span className="text-teal-600">{item.cutWidth}cm x {item.cutLength}cm</span></p>
                             )}
-                            <p className="text-sm text-slate-500">Color: {item.color?.name || `RAL ${item.ralCode}`}</p>
+                            {item.productLine !== 'CLASSIC TECH' && <p className="text-sm text-slate-500">Color: {item.color?.name || `RAL ${item.ralCode}`}</p>}
                             {item.productLine === 'STRUCT DETAIL' && <p className="text-sm text-slate-500">Marcos: {item.structFrames}</p>}
                             {renderExtras()}
                         </>
