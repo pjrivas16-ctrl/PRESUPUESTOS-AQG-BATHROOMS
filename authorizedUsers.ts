@@ -32,5 +32,11 @@ export const authorizedUsers: StoredUser[] = [
         companyName: 'FAMILIA FALO',
         email: 'koneri@koneri.es',
         password: 'Alicantechachi3',
+    },
+    {
+        companyName: 'Javier Tey',
+        email: 'javier.tey@aqgbathrooms.com',
+        password: 'padelmolon1',
+        preparedBy: 'Javier Tey'
     }
 ];
