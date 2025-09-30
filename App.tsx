@@ -1,3 +1,4 @@
+
 // Fix: Import useState, useEffect, useRef, useCallback, and useMemo from React to resolve multiple hook-related errors.
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 // Fix: Import PriceDetails from types.ts to use a shared type definition.
@@ -264,8 +265,8 @@ const SaveQuoteModal: React.FC<{
 }> = ({ isOpen, onClose, onSave, currentUser }) => {
     const [customerName, setCustomerName] = useState('');
     const [projectReference, setProjectReference] = useState('');
-    const [fiscalName, setFiscalName] = useState(currentUser.fiscalName || '');
-    const [sucursal, setSucursal] = useState(currentUser.sucursal || '');
+    const [fiscalName, setFiscalName] = useState('');
+    const [sucursal, setSucursal] = useState('');
     const [deliveryAddress, setDeliveryAddress] = useState('');
 
     if (!isOpen) return null;
