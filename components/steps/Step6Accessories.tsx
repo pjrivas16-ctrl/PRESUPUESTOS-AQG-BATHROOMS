@@ -6,6 +6,7 @@ interface Step6AccessoriesProps {
     onToggle: (extra: ProductOption) => void;
     selectedExtras: ProductOption[];
     productLine: string | null;
+    width?: number;
     mainColor: ColorOption | null;
     bitonoColor: ColorOption | null | undefined;
     onSelectBitonoColor: (color: ColorOption) => void;
@@ -21,6 +22,7 @@ const Step6Accessories: React.FC<Step6AccessoriesProps> = ({
     onToggle, 
     selectedExtras, 
     productLine,
+    width,
     mainColor,
     bitonoColor,
     onSelectBitonoColor,
@@ -65,6 +67,19 @@ const Step6Accessories: React.FC<Step6AccessoriesProps> = ({
         }
     }, [productLine]);
 
+    const getExtraPrice = (extra: ProductOption): number => {
+        if (productLine === 'LUXE' && ['rejilla-oro-cepillado-pvd', 'rejilla-oro-rosa-cepillado-pvd', 'rejilla-gun-metal-pvd'].includes(extra.id)) {
+            switch (width) {
+                case 70: return 86;
+                case 80: return 90;
+                case 90: return 94;
+                case 100: return 98;
+                default: return extra.price; // Fallback to static price
+            }
+        }
+        return extra.price;
+    };
+
     const availableBitonoColors = useMemo(() => {
         if (!mainColor) return STANDARD_COLORS;
         return STANDARD_COLORS.filter(c => c.id !== mainColor.id);
@@ -81,6 +96,7 @@ const Step6Accessories: React.FC<Step6AccessoriesProps> = ({
             <div className="space-y-4">
                 {availableExtras.length > 0 ? availableExtras.map((extra) => {
                     const isCurrentlySelected = isSelected(extra.id);
+                    const price = getExtraPrice(extra);
                     return (
                         <div key={extra.id}>
                             <div
@@ -99,7 +115,7 @@ const Step6Accessories: React.FC<Step6AccessoriesProps> = ({
                                     <p className="text-sm text-slate-500">{extra.description}</p>
                                 </div>
                                 <div className="font-bold text-slate-800 text-lg text-right ml-4">
-                                    {extra.price > 0 && `+ ${extra.price}€`}
+                                    {price > 0 && `+ ${price.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}`}
                                 </div>
                             </div>
                             

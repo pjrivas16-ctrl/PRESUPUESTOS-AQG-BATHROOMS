@@ -41,7 +41,28 @@ export const calculateItemPrice = (item: QuoteState): number => {
     // Add prices for all selected extras
     if (extras) {
         extras.forEach(extra => {
-            total += extra.price;
+            if (productLine === 'LUXE' && ['rejilla-oro-cepillado-pvd', 'rejilla-oro-rosa-cepillado-pvd', 'rejilla-gun-metal-pvd'].includes(extra.id)) {
+                switch (width) {
+                    case 70:
+                        total += 86;
+                        break;
+                    case 80:
+                        total += 90;
+                        break;
+                    case 90:
+                        total += 94;
+                        break;
+                    case 100:
+                        total += 98;
+                        break;
+                    default:
+                        // Fallback to static price if width is somehow not available
+                        total += extra.price;
+                        break;
+                }
+            } else {
+                total += extra.price;
+            }
         });
     }
 

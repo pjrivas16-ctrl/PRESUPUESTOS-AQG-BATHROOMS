@@ -947,6 +947,7 @@ const App: React.FC = () => {
                 return <Step6Accessories 
                     selectedExtras={currentItemConfig.extras} 
                     productLine={currentItemConfig.productLine} 
+                    width={currentItemConfig.width}
                     mainColor={currentItemConfig.color} 
                     bitonoColor={currentItemConfig.bitonoColor} 
                     onSelectBitonoColor={(color) => handleUpdateQuoteItem({ bitonoColor: color })}
