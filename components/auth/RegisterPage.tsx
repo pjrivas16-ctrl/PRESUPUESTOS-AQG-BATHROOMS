@@ -58,7 +58,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onRegister, onNavigateToLog
             {error && <p className="bg-red-100 text-red-700 p-3 rounded-md mb-4 text-sm">{error}</p>}
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label htmlFor="companyName" className="block text-sm font-medium text-slate-700 mb-2">Nombre de la Empresa <span className="text-red-500">*</span></label>
+                    <label htmlFor="companyName" className="block text-sm font-medium text-slate-700 mb-2">NOMBRE DELEGAD@ VENTAS <span className="text-red-500">*</span></label>
                     <input id="companyName" type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm" required />
                 </div>
                 <div>
