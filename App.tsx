@@ -1,4 +1,5 @@
 
+
 // Fix: Import useState, useEffect, useRef, useCallback, and useMemo from React to resolve multiple hook-related errors.
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 // Fix: Import PriceDetails from types.ts to use a shared type definition.
@@ -627,6 +628,10 @@ const App: React.FC = () => {
                 ...currentItemConfig,
                 id: editingItemId || `item_${Date.now()}`,
             };
+            
+            // Before resetting state, we need to know if the item was a Kit
+            // to navigate to the correct summary step number later.
+            const wasKits = currentItemConfig.productLine === 'KITS';
 
             // Use functional updates for `setQuoteItems` to prevent stale state issues
             if (editingItemId) {
@@ -641,9 +646,15 @@ const App: React.FC = () => {
                 setQuoteItems(prevItems => [...prevItems, finalItem]);
             }
             
-            // Reset the configuration for the next item and navigate to the summary page.
+            // Reset the configuration for the next item.
             resetQuoteState();
-            setCurrentStep(STEPS.length);
+            
+            // After resetting, the STEPS logic will recalculate to the default flow.
+            // To avoid showing the wrong step, we explicitly navigate to the summary
+            // step number of the now-active default flow.
+            const summaryStepNumber = wasKits ? KITS_STEPS.length : SHOWER_TRAY_STEPS.length;
+            setCurrentStep(summaryStepNumber);
+
         } else if (currentStep < STEPS.length) {
             // It's not the last step, so just advance to the next one.
             setCurrentStep(prev => prev + 1);
