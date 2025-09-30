@@ -1,6 +1,7 @@
 
 
 
+
 // Fix: Import useState, useEffect, useRef, useCallback, and useMemo from React to resolve multiple hook-related errors.
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 // Fix: Import PriceDetails from types.ts to use a shared type definition.
@@ -444,8 +445,8 @@ const App: React.FC = () => {
 
         if (currentItemConfig.productLine === 'FLAT TERRAZO') {
             filteredSteps = baseSteps.filter(step => step.id !== 4);
-        } else if (currentItemConfig.productLine === 'CLASSIC TECH') {
-            // For CLASSIC TECH, remove Color (4) and Accessories (6)
+        } else if (currentItemConfig.productLine === 'CLASSIC TECH' || currentItemConfig.productLine === 'CENTRAL TECH') {
+            // For CLASSIC TECH and CENTRAL TECH, remove Color (4) and Accessories (6)
             filteredSteps = baseSteps.filter(step => step.id !== 4 && step.id !== 6);
         }
 
@@ -702,7 +703,7 @@ const App: React.FC = () => {
                 productLine: val,
                 quantity: 1,
                 model: null,
-                color: val === 'CLASSIC TECH' ? null : STANDARD_COLORS[0],
+                color: val === 'CLASSIC TECH' || val === 'CENTRAL TECH' ? null : STANDARD_COLORS[0],
                 extras: [],
                 structFrames: val === 'STRUCT DETAIL' ? 4 : undefined,
             });
