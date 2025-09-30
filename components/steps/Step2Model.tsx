@@ -28,13 +28,13 @@ const Step2Model: React.FC<Step2ModelProps> = ({ onSelect, selectedModel, produc
         if (productLine === 'CLASSIC TECH' || productLine === 'CENTRAL TECH') {
             return SHOWER_MODELS.filter(m => m.id.startsWith('tech-'));
         }
-        if (productLine === 'LUXE' || productLine === 'LUXE CON TAPETA' || productLine === 'CLASSIC' || productLine === 'CENTRAL') {
+        if (productLine === 'LUXE' || productLine === 'LUXE CON TAPETA' || productLine === 'CLASSIC' || productLine === 'CENTRAL' || productLine === 'RATIO') {
             return SHOWER_MODELS.filter(m => m.id === 'pizarra');
         }
         if (productLine === 'STRUCT' || productLine === 'STRUCT DETAIL') {
             return SHOWER_MODELS.filter(m => m.id === 'pizarra');
         }
-        if (productLine?.startsWith('FLAT') || productLine?.startsWith('RATIO')) {
+        if (productLine?.startsWith('FLAT')) {
              return SHOWER_MODELS.filter(m => m.id === 'lisa');
         }
         return SHOWER_MODELS.filter(m => m.id !== 'sand' && !m.id.startsWith('terrazo') && !m.id.startsWith('tech-'));
