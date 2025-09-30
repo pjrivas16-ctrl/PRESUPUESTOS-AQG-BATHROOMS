@@ -734,7 +734,7 @@ const App: React.FC = () => {
     const generateCustomerPdf = async (quote: SavedQuote, user: User, forDownload: boolean) => {
         // Dynamic import of PDF generation utilities
         const { default: generatePdf } = await import('./utils/pdfGenerator');
-        const pdfBlob = await generatePdf(quote, user, appliedDiscounts);
+        const pdfBlob = await generatePdf(quote, user, quote.customerDiscounts || appliedDiscounts);
         
         if (forDownload) {
             const link = document.createElement('a');
@@ -765,6 +765,23 @@ const App: React.FC = () => {
         if (!currentUser) return;
         await generateCustomerPdf(savedQuote, currentUser, false);
     };
+
+    const handleGenerateAndDownloadPdf = async (quote: SavedQuote) => {
+        if (!currentUser) return;
+        const { default: generatePdf } = await import('./utils/pdfGenerator');
+        // Use the correct discounts from the saved quote object
+        const pdfBlob = await generatePdf(quote, currentUser, quote.customerDiscounts || {});
+        
+        // Download logic
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(pdfBlob);
+        link.download = `Presupuesto_AQG_${quote.id.replace(/quote_c_/g, '')}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+    };
+
 
     const handlePrint = () => {
         window.print();
@@ -1003,7 +1020,7 @@ const App: React.FC = () => {
                     hasActiveQuote={quoteItems.length > 0 || !!currentItemConfig.productLine}
                 />;
             case 'my-quotes':
-                return <MyQuotesPage user={currentUser} onDuplicateQuote={handleDuplicateQuote} onViewPdf={handleViewPdf} />;
+                return <MyQuotesPage user={currentUser} onDuplicateQuote={handleDuplicateQuote} onViewPdf={handleViewPdf} onGenerateAndDownloadPdf={handleGenerateAndDownloadPdf} />;
             case 'conditions':
                 return <CommercialConditionsPage />;
             case 'guides':

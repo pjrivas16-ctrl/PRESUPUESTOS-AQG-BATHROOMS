@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import type { User, SavedQuote, QuoteItem } from '../types';
+import { VAT_RATE } from '../constants';
 
 interface MyQuotesPageProps {
     user: User;
     onDuplicateQuote: (quote: SavedQuote) => void;
     onViewPdf: (quote: SavedQuote) => void;
+    onGenerateAndDownloadPdf: (quote: SavedQuote) => void;
 }
 
 
-const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onViewPdf }) => {
+const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onViewPdf, onGenerateAndDownloadPdf }) => {
     const [allQuotes, setAllQuotes] = useState<SavedQuote[]>([]);
     const [selectedQuote, setSelectedQuote] = useState<SavedQuote | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -56,34 +58,11 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
             (quote.projectReference?.toLowerCase().includes(lowercasedFilter))
         );
     }, [allQuotes, searchTerm, filter]);
-
-
-    const handleToggleOrdered = (quoteId: string) => {
-        const timestamp = Date.now();
-        
-        const updatedQuotes = allQuotes.map(q => 
-            q.id === quoteId ? { ...q, orderedTimestamp: q.orderedTimestamp ? undefined : timestamp } : q
-        );
-        setAllQuotes(updatedQuotes);
-
-        if (selectedQuote?.id === quoteId) {
-            setSelectedQuote(prev => prev ? { ...prev, orderedTimestamp: prev.orderedTimestamp ? undefined : timestamp } : null);
-        }
-
-        try {
-            const allStoredQuotes = JSON.parse(localStorage.getItem('quotes') || '[]') as SavedQuote[];
-            const quotesToSave = allStoredQuotes.map(q => 
-                q.id === quoteId ? { ...q, orderedTimestamp: q.orderedTimestamp ? undefined : timestamp } : q
-            );
-            localStorage.setItem('quotes', JSON.stringify(quotesToSave));
-        } catch (error) {
-            console.error("Failed to update quote in localStorage", error);
-        }
-    };
     
     const handleDuplicate = () => {
         if (!selectedQuote) return;
         onDuplicateQuote(selectedQuote);
+        setSelectedQuote(null);
     };
 
     const handleDeleteQuote = (quoteId: string) => {
@@ -99,110 +78,45 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
             } catch (error) {
                 console.error("Failed to delete quote from localStorage", error);
                 alert("Hubo un error al eliminar el presupuesto.");
-                // Optionally, revert state if localStorage fails
                 setAllQuotes(allQuotes);
             }
         }
+    };
+
+    const handleSendEmail = () => {
+        if (!selectedQuote) return;
+
+        onGenerateAndDownloadPdf(selectedQuote);
+
+        const subject = `Presupuesto de AQG Bathrooms Nº ${selectedQuote.id.replace(/quote_c_/g, '')}`;
+        const body = `Estimado/a ${selectedQuote.customerName || 'cliente'},\n\nAdjunto encontrará el presupuesto que nos ha solicitado.\n\nPara cualquier consulta, no dude en contactarnos.\n\nSaludos cordiales,\n${user.preparedBy || user.companyName}`;
+        const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+        setTimeout(() => {
+            window.location.href = mailtoLink;
+        }, 500);
+
+        alert('El PDF se ha descargado. Por favor, adjúntalo al correo electrónico que se abrirá a continuación.');
     };
 
     const renderModal = () => {
         if (!selectedQuote) return null;
 
         const { quoteItems } = selectedQuote;
-        const quoteNumber = selectedQuote.id.replace(/quote_i_|quote_c_/g, '');
-        const clientIdentifier = user.fiscalName || user.companyName;
+        const quoteNumber = selectedQuote.id.replace(/quote_c_/g, '');
         
-        const subject = `Nuevo Pedido de ${clientIdentifier} - Presupuesto Nº ${quoteNumber}`;
-        
-        let body = `Hola,\n\n` +
-                   `El comercial ${user.preparedBy || user.companyName} ha solicitado tramitar el pedido correspondiente al presupuesto Nº ${quoteNumber}.\n\n`;
-        
-        if (user.sucursal) {
-            body += `Sucursal Comercial: ${user.sucursal}\n\n`;
-        }
-        
-        body += `--- DATOS DEL CLIENTE FINAL ---\n` +
-                `Nombre Fiscal: ${selectedQuote.fiscalName || 'No especificado'}\n` +
-                `Nombre Comercial: ${selectedQuote.customerName || 'No especificado'}\n` +
-                `Población/Sucursal: ${selectedQuote.sucursal || 'No especificada'}\n`;
-
-        if (selectedQuote.projectReference) {
-            body += `Referencia del Proyecto: ${selectedQuote.projectReference}\n`;
-        }
-        
-        if(selectedQuote.deliveryAddress) {
-            body += `\nDIRECCIÓN DE ENTREGA:\n${selectedQuote.deliveryAddress}\n`;
-        } else {
-            body += `\n(Utilizar dirección principal del cliente para la entrega)\n`;
-        }
-
-        body += `\n--- DETALLES DEL PEDIDO ---\n`;
-
-
-        quoteItems.forEach((item, index) => {
-             body += `\nArtículo ${index + 1}: `;
-            if (item.productLine === 'KITS') {
-                body += `${item.kitProduct?.name}\n` +
-                        `- Unidades: ${item.quantity || 1}\n`;
-                if(item.kitProduct?.id === 'kit-pintura' || item.kitProduct?.id === 'kit-reparacion') {
-                    body += `- Color: ${item.color?.name || `RAL ${item.ralCode}`}\n`;
-                }
-                if(item.invoiceReference) {
-                    body += `- Ref. Factura: ${item.invoiceReference}\n`;
-                }
-            } else {
-                const techProductsWithoutColor = ['CLASSIC TECH', 'CENTRAL TECH', 'RATIO TECH'];
-                const showColor = !techProductsWithoutColor.includes(item.productLine || '');
-
-                body += `Plato de ducha ${item.productLine}\n` +
-                        `- Unidades: ${item.quantity || 1}\n` +
-                        `- Textura: ${item.model?.name}\n` +
-                        `- Dimensiones: ${item.width}x${item.length}cm\n`;
-                if (item.cutWidth && item.cutLength) {
-                    body += `- Corte a medida: ${item.cutWidth}x${item.cutLength}cm\n`;
-                }
-                
-                if (showColor) {
-                    body += `- Color: ${item.color?.name || `RAL ${item.ralCode}`}\n`;
-                }
-
-                if (item.extras.length > 0) {
-                    body += `  Extras:\n`;
-                    item.extras.forEach(extra => {
-                        let extraLine = `  - ${extra.name}`;
-                        if (extra.id === 'bitono') {
-                            if (item.bitonoColor) extraLine += ` (Tapa: ${item.bitonoColor.name})`;
-                        }
-                        body += `${extraLine}\n`;
-                    });
-                }
-            }
-        });
-        
-        
-        body += `\n--- DESCUENTOS APLICADOS ---\n`;
-        if (selectedQuote.customerDiscounts && Object.keys(selectedQuote.customerDiscounts).length > 0) {
-            for (const [line, discount] of Object.entries(selectedQuote.customerDiscounts)) {
-                body += `${line}: ${discount}%\n`;
-            }
-        } else {
-            body += `Aplicar descuentos por defecto de la ficha del cliente.\n`;
-        }
-
-        body += `\n--- TOTALES ---\n` +
-                `Subtotal (PVP): ${ (selectedQuote.pvpTotalPrice || 0).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }) }\n` +
-                `Base Imponible (con Dtos.): ${ (selectedQuote.totalPrice / 1.21).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }) }\n` +
-                `Total (IVA Incl.): ${ selectedQuote.totalPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }) }\n\n` +
-                `Gracias.`;
-
-        const mailtoLink = `mailto:sandra.martinez@aqgbathrooms.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        const pvpTotalPrice = selectedQuote.pvpTotalPrice || 0;
+        const finalPrice = selectedQuote.totalPrice;
+        const baseImponible = finalPrice / (1 + VAT_RATE);
+        const iva = finalPrice - baseImponible;
+        const descuentoTotal = pvpTotalPrice > 0 ? pvpTotalPrice - baseImponible : 0;
 
         return (
             <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setSelectedQuote(null)}>
                 <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                     <div className="flex justify-between items-start">
                         <div>
-                             <h3 className="text-xl font-bold text-slate-800">Detalles del Presupuesto</h3>
+                             <h3 className="text-xl font-bold text-slate-800">Visualización de Presupuesto</h3>
                              <p className="text-sm text-slate-500">Nº <span className="font-semibold">{quoteNumber}</span></p>
                              <p className="text-sm text-slate-500">Cliente: <span className="font-semibold">{selectedQuote.fiscalName || selectedQuote.customerName}</span></p>
                              {selectedQuote.sucursal && <p className="text-xs text-slate-500">Sucursal: {selectedQuote.sucursal}</p>}
@@ -211,12 +125,6 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                         </div>
                         <button onClick={() => setSelectedQuote(null)} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
                     </div>
-                    
-                    {selectedQuote.orderedTimestamp && (
-                        <div className="mt-4 p-3 bg-green-100 text-green-800 rounded-lg text-sm font-semibold text-center">
-                            Confirmado como pedido el {new Date(selectedQuote.orderedTimestamp).toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' })}
-                        </div>
-                    )}
 
                     <div className="mt-6 border-t border-slate-200">
                         {quoteItems.map((item, index) => {
@@ -245,17 +153,37 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                         )})}
                     </div>
 
-                    <div className="mt-6 pt-4 border-t-2 border-dashed border-slate-200 text-right">
-                        {selectedQuote.type === 'customer' && selectedQuote.pvpTotalPrice && (
-                             <div className="text-sm text-slate-500">Subtotal (PVP): <span className="font-semibold">{selectedQuote.pvpTotalPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span></div>
+                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-2 mt-6">
+                        <div className="flex justify-between items-center text-sm text-slate-600">
+                            <span>Subtotal (PVP)</span>
+                            <span className="font-semibold">{pvpTotalPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+                        </div>
+                         {descuentoTotal > 0.01 && (
+                            <div className="flex justify-between items-center text-sm text-slate-600">
+                                <span>Descuentos</span>
+                                <span className="font-semibold">- {descuentoTotal.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+                            </div>
                         )}
-                        <div className="text-lg font-bold text-slate-800">Total (IVA Incl.): <span className="text-teal-600">{selectedQuote.totalPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span></div>
+                        <div className="flex justify-between items-center text-sm text-slate-600">
+                            <span>Base Imponible</span>
+                            <span className="font-semibold">{baseImponible.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm text-slate-600">
+                            <span>IVA (21%)</span>
+                            <span className="font-semibold">{iva.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xl font-bold text-slate-800 pt-2 mt-2 border-t border-slate-300">
+                            <span>TOTAL</span>
+                            <span className="text-teal-600">
+                                {finalPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
+                            </span>
+                        </div>
                     </div>
 
-                    <div className="mt-8 pt-6 border-t border-slate-200 flex flex-wrap justify-between items-center gap-3">
-                         <button 
+                    <div className="mt-8 pt-6 border-t border-slate-200 flex flex-wrap justify-between items-center gap-4">
+                        <button 
                             onClick={() => handleDeleteQuote(selectedQuote.id)}
-                            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-red-600 bg-red-100 rounded-md hover:bg-red-200 transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-red-600 bg-red-100 rounded-lg hover:bg-red-200 transition-colors"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -263,14 +191,14 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                             Eliminar
                         </button>
                         <div className="flex flex-wrap justify-end gap-3">
-                            <button onClick={handleDuplicate} className="px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors">Duplicar</button>
-                            <button onClick={() => onViewPdf(selectedQuote)} className="px-4 py-2 text-sm font-semibold text-teal-600 bg-teal-100 rounded-md hover:bg-teal-200 transition-colors">Ver PDF</button>
-                            <button onClick={() => handleToggleOrdered(selectedQuote.id)} className={`px-4 py-2 text-sm font-semibold text-white rounded-md transition-colors ${selectedQuote.orderedTimestamp ? 'bg-amber-500 hover:bg-amber-600' : 'bg-slate-700 hover:bg-slate-800'}`}>
-                                {selectedQuote.orderedTimestamp ? 'Desmarcar Pedido' : 'Marcar como Pedido'}
+                            <button onClick={() => onViewPdf(selectedQuote)} className="px-4 py-2 text-sm font-semibold text-teal-600 bg-teal-100 rounded-lg hover:bg-teal-200 transition-colors">Visualización de Presupuesto</button>
+                            <button onClick={handleSendEmail} className="px-5 py-2.5 font-semibold text-white bg-teal-600 rounded-lg shadow-md hover:bg-teal-700 transition-colors inline-flex items-center justify-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                                  <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                                </svg>
+                                Enviar Presupuesto por Email
                             </button>
-                            <a href={mailtoLink} target="_blank" rel="noopener noreferrer" className="px-6 py-2 font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors inline-block">
-                                Tramitar Pedido
-                            </a>
                         </div>
                     </div>
                 </div>
@@ -308,7 +236,7 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
 
     return (
         <div className="animate-fade-in h-full flex flex-col">
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 p-4 md:p-0">
                 <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">Mis Presupuestos</h2>
                 <p className="text-slate-500 mb-6">Gestiona tus presupuestos guardados. Puedes ver los detalles, duplicarlos o tramitar el pedido.</p>
 
@@ -329,7 +257,7 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                 </div>
             </div>
 
-            <div className="flex-grow overflow-y-auto pt-6 -mx-4 px-4 pb-4">
+            <div className="flex-grow overflow-y-auto pt-6 -mx-4 px-4 md:mx-0 md:px-0 pb-4">
                 {filteredQuotes.length > 0 ? (
                     <div className="space-y-3">
                         {filteredQuotes.map(quote => (
