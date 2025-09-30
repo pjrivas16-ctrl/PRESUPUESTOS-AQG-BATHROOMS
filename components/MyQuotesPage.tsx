@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useEffect, useMemo } from 'react';
 import type { User, SavedQuote, QuoteItem } from '../types';
 
@@ -272,26 +273,41 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
         );
     };
 
-    const StatCard: React.FC<{label: string; value: number; color: string}> = ({label, value, color}) => (
-        <div className={`bg-white border-l-4 ${color} p-4 rounded-r-lg shadow-sm`}>
-            <p className="text-sm text-slate-500">{label}</p>
-            <p className="text-2xl font-bold text-slate-800">{value}</p>
-        </div>
-    );
+    const FilterButton: React.FC<{
+        label: string;
+        count: number;
+        filterKey: 'all' | 'ordered' | 'pending';
+    }> = ({ label, count, filterKey }) => {
+        const isActive = filter === filterKey;
+        return (
+             <button
+                onClick={() => setFilter(filterKey)}
+                className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-colors duration-200 ease-in-out
+                ${isActive
+                    ? 'bg-teal-600 text-white shadow-md'
+                    : 'bg-white text-slate-700 hover:bg-slate-100'
+                }`}
+            >
+                {label}
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full 
+                    ${isActive
+                        ? 'bg-white text-teal-700'
+                        : 'bg-slate-200 text-slate-600'
+                    }`}
+                >
+                    {count}
+                </span>
+            </button>
+        )
+    };
 
     return (
         <div className="animate-fade-in h-full flex flex-col">
             <div className="flex-shrink-0">
                 <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">Mis Presupuestos</h2>
                 <p className="text-slate-500 mb-6">Gestiona tus presupuestos guardados. Puedes ver los detalles, duplicarlos o tramitar el pedido.</p>
-                
-                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                    <StatCard label="Total" value={stats.total} color="border-teal-500" />
-                    <StatCard label="Pedidos" value={stats.ordered} color="border-green-500" />
-                    <StatCard label="Pendientes" value={stats.pending} color="border-amber-500" />
-                </div>
-                
-                <div className="mb-4">
+
+                <div className="space-y-4">
                     <input
                         type="text"
                         placeholder="Buscar por cliente, referencia o ID..."
@@ -299,18 +315,12 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full p-3 bg-white border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
                     />
-                </div>
 
-                <div className="flex space-x-2">
-                    {(['all', 'ordered', 'pending'] as const).map(f => (
-                        <button 
-                            key={f}
-                            onClick={() => setFilter(f)}
-                            className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${filter === f ? 'bg-teal-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-100'}`}
-                        >
-                           { {all: 'Todos', ordered: 'Pedidos', pending: 'Pendientes'}[f] }
-                        </button>
-                    ))}
+                    <div className="flex items-center gap-2">
+                        <FilterButton label="Todos" count={stats.total} filterKey="all" />
+                        <FilterButton label="Pedidos" count={stats.ordered} filterKey="ordered" />
+                        <FilterButton label="Pendientes" count={stats.pending} filterKey="pending" />
+                    </div>
                 </div>
             </div>
 
