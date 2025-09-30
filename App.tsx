@@ -19,7 +19,6 @@ import Step5Cuts from './components/steps/Step5Cuts';
 import Step6Accessories from './components/steps/Step6Accessories';
 import Step5Summary from './components/steps/Step5Summary';
 import Step2KitSelection from './components/steps/kits/Step2KitSelection';
-import Step3KitDetails from './components/steps/kits/Step3KitDetails';
 import NextPrevButtons from './components/NextPrevButtons';
 import AuthPage from './components/auth/AuthPage';
 import MyQuotesPage from './components/MyQuotesPage';
@@ -462,16 +461,15 @@ const App: React.FC = () => {
                 return !currentItemConfig.productLine;
             case 2: // Dimensions
                 return !currentItemConfig.width || !currentItemConfig.length;
-             case 10: // Kit Selection
-                return !currentItemConfig.kitProduct;
-            case 3: // Texture
-                return !currentItemConfig.model;
-             case 11: // Kit Details
+             case 10: // Kit Selection & Details
+                if (!currentItemConfig.kitProduct) return true;
                 if (currentItemConfig.kitProduct?.id === 'kit-pintura' || currentItemConfig.kitProduct?.id === 'kit-reparacion') {
                     const isRalSelected = currentItemConfig.extras.some(e => e.id === 'ral');
                     return !currentItemConfig.color && (!isRalSelected || !currentItemConfig.ralCode);
                 }
                 return false;
+            case 3: // Texture
+                return !currentItemConfig.model;
             case 4: // Color
                 const isRalSelected = currentItemConfig.extras.some(e => e.id === 'ral');
                 return !currentItemConfig.color && (!isRalSelected || !currentItemConfig.ralCode);
@@ -699,7 +697,7 @@ const App: React.FC = () => {
                 productLine: val,
                 quantity: 1,
                 model: null,
-                color: val === 'CLASSIC TECH' || val === 'CENTRAL TECH' || val === 'RATIO TECH' ? null : STANDARD_COLORS[0],
+                color: val === 'CLASSIC TECH' || val === 'CENTRAL TECH' || val === 'RATIO TECH' || val === 'KITS' ? null : STANDARD_COLORS[0],
                 extras: [],
                 structFrames: val === 'STRUCT DETAIL' ? 4 : undefined,
             });
@@ -925,8 +923,7 @@ const App: React.FC = () => {
         if (currentItemConfig.productLine === 'KITS') {
             switch (stepId) {
                 case 1: return <Step1ModelSelection selectedProductLine={currentItemConfig.productLine} onUpdate={handleProductLineSelect} quantity={currentItemConfig.quantity} onUpdateQuantity={(q) => handleUpdateQuoteItem({ quantity: q })} />;
-                case 10: return <Step2KitSelection selectedKit={currentItemConfig.kitProduct} onSelect={(kit) => handleUpdateQuoteItem({ kitProduct: kit })} />;
-                case 11: return <Step3KitDetails currentItemConfig={currentItemConfig} onSelectColor={updateColorProps.onSelectColor} onToggleRal={updateColorProps.onToggleRal} onRalCodeChange={updateColorProps.onRalCodeChange} onInvoiceRefChange={(ref) => handleUpdateQuoteItem({ invoiceReference: ref })} />;
+                case 10: return <Step2KitSelection onUpdate={handleUpdateQuoteItem} currentItemConfig={currentItemConfig} />;
                 case 12: return <Step5Summary items={quoteItems} totalPrice={finalTotalPrice} onReset={handleResetQuote} onSaveRequest={() => setSaveModalOpen(true)} onGeneratePdfRequest={() => handleGeneratePdf()} onPrintRequest={handlePrint} onStartNew={() => { resetQuoteState(); setCurrentStep(1); }} onEdit={handleEditItem} onDelete={handleDeleteItem} calculatePriceDetails={calculatePriceDetails} appliedDiscounts={appliedDiscounts} onUpdateDiscounts={setAppliedDiscounts} />;
                 default: return null;
             }

@@ -293,8 +293,7 @@ export const SHOWER_TRAY_STEPS = [
 
 export const KITS_STEPS = [
     { id: 1, title: 'Colección' },
-    { id: 10, title: 'Selección de Kit' },
-    { id: 11, title: 'Color y Referencia' },
+    { id: 10, title: 'Selección y Detalles del Kit' },
     { id: 12, title: 'Resumen' },
 ];
 
