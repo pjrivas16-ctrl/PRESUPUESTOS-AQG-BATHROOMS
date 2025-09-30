@@ -10,7 +10,7 @@ interface Step2ModelProps {
 
 const CheckBadge = () => (
     <div className="absolute top-3 right-3 w-6 h-6 bg-teal-500 text-white rounded-full flex items-center justify-center transition-transform transform scale-0 group-aria-checked:scale-100 duration-300 ease-in-out">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="http://www.w3.org/2000/svg" fill="currentColor">
           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
         </svg>
     </div>
@@ -29,6 +29,9 @@ const Step2Model: React.FC<Step2ModelProps> = ({ onSelect, selectedModel, produc
             return SHOWER_MODELS.filter(m => m.id.startsWith('tech-'));
         }
         if (productLine === 'LUXE' || productLine === 'LUXE CON TAPETA' || productLine === 'CLASSIC') {
+            return SHOWER_MODELS.filter(m => m.id === 'pizarra');
+        }
+        if (productLine === 'STRUCT') {
             return SHOWER_MODELS.filter(m => m.id === 'pizarra');
         }
         if (productLine?.startsWith('FLAT') || productLine?.startsWith('RATIO')) {
