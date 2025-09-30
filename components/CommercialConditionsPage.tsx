@@ -27,7 +27,7 @@ const CommercialConditionsPage: React.FC = () => {
                 <ToolCard
                     title="Oferta de Bienvenida"
                     description="Dirigida a nuevos clientes o a la recuperación de clientes con más de un año de inactividad. Utiliza esta potente oferta para conseguir tu primera venta, abrir nuevas cuentas o reactivar clientes perdidos."
-                    details="El argumento de venta es ofrecer en todos los productos un 50%+25% durante 2 meses ó hasta 5000 euros de compra, lo que antes ocurra."
+                    details="El argumento de venta es ofrecer un 50%+25% de descuento durante 2 meses o hasta 5000€ de compra. Si el cliente adquiere también la 'Promo Expositor', la oferta se amplía a 3 meses o 7500€ de compra, lo que antes ocurra."
                     icon={
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
