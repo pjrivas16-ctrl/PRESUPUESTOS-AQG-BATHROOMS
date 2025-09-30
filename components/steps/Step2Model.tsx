@@ -31,7 +31,7 @@ const Step2Model: React.FC<Step2ModelProps> = ({ onSelect, selectedModel, produc
         if (productLine === 'LUXE' || productLine === 'LUXE CON TAPETA' || productLine === 'CLASSIC') {
             return SHOWER_MODELS.filter(m => m.id === 'pizarra');
         }
-        if (productLine === 'STRUCT') {
+        if (productLine === 'STRUCT' || productLine === 'STRUCT DETAIL') {
             return SHOWER_MODELS.filter(m => m.id === 'pizarra');
         }
         if (productLine?.startsWith('FLAT') || productLine?.startsWith('RATIO')) {

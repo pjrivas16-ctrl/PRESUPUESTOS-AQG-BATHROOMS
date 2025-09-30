@@ -1,5 +1,6 @@
 
 
+
 // Fix: Import useState, useEffect, useRef, useCallback, and useMemo from React to resolve multiple hook-related errors.
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 // Fix: Import PriceDetails from types.ts to use a shared type definition.
@@ -703,6 +704,7 @@ const App: React.FC = () => {
                 model: null,
                 color: val === 'CLASSIC TECH' ? null : STANDARD_COLORS[0],
                 extras: [],
+                structFrames: val === 'STRUCT DETAIL' ? 4 : undefined,
             });
         }
     };
