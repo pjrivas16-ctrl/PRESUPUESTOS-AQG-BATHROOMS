@@ -3,9 +3,10 @@ import React, { useState } from 'react';
 interface LoginPageProps {
     onLogin: (email: string, password: string) => Promise<void>;
     onNavigateToRegister: () => void;
+    onNavigateToForgotPassword: () => void;
 }
 
-const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onNavigateToRegister }) => {
+const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onNavigateToRegister, onNavigateToForgotPassword }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -46,7 +47,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onNavigateToRegister }) 
                     <input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full p-3 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-2 focus:ring-teal-500 transition" required />
                 </div>
                 <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">Contraseña</label>
+                    <div className="flex justify-between items-center mb-2">
+                         <label htmlFor="password" className="block text-sm font-medium text-slate-700">Contraseña</label>
+                         <button type="button" onClick={onNavigateToForgotPassword} className="text-xs font-semibold text-teal-600 hover:underline focus:outline-none">
+                            ¿Has olvidado tu contraseña?
+                        </button>
+                    </div>
                      <div className="relative">
                         <input id="password" type={showPassword ? "text" : "password"} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full p-3 pr-10 bg-white border border-slate-300 rounded-md shadow-sm focus:ring-2 focus:ring-teal-500 transition" required />
                          <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 hover:text-slate-700 focus:outline-none" aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}>

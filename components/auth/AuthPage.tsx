@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import LoginPage from './LoginPage';
 import RegisterPage from './RegisterPage';
+import ForgotPasswordPage from './ForgotPasswordPage';
 import type { StoredUser } from '../../types';
 
 interface AuthPageProps {
@@ -9,13 +10,32 @@ interface AuthPageProps {
 }
 
 const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onRegister }) => {
-    const [isRegistering, setIsRegistering] = useState(false);
+    const [view, setView] = useState<'login' | 'register' | 'forgotPassword'>('login');
 
-    if (isRegistering) {
-        return <RegisterPage onRegister={onRegister} onNavigateToLogin={() => setIsRegistering(false)} />;
+    const handleUpdatePassword = (email: string, newPassword: string): Promise<void> => {
+        return new Promise((resolve, reject) => {
+            const users = JSON.parse(localStorage.getItem('users') || '[]') as StoredUser[];
+            const userIndex = users.findIndex(u => u.email.toLowerCase() === email.toLowerCase());
+
+            if (userIndex > -1) {
+                users[userIndex].password = newPassword;
+                localStorage.setItem('users', JSON.stringify(users));
+                resolve();
+            } else {
+                reject(new Error('No se ha encontrado el usuario.'));
+            }
+        });
+    };
+
+    switch (view) {
+        case 'register':
+            return <RegisterPage onRegister={onRegister} onNavigateToLogin={() => setView('login')} />;
+        case 'forgotPassword':
+            return <ForgotPasswordPage onPasswordUpdated={() => setView('login')} onNavigateToLogin={() => setView('login')} onUpdatePassword={handleUpdatePassword} />;
+        case 'login':
+        default:
+            return <LoginPage onLogin={onLogin} onNavigateToRegister={() => setView('register')} onNavigateToForgotPassword={() => setView('forgotPassword')} />;
     }
-
-    return <LoginPage onLogin={onLogin} onNavigateToRegister={() => setIsRegistering(true)} />;
 };
 
 export default AuthPage;
