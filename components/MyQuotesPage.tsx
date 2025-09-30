@@ -89,7 +89,7 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
         onGenerateAndDownloadPdf(selectedQuote);
 
         const subject = `Presupuesto de AQG Bathrooms Nº ${selectedQuote.id.replace(/quote_c_/g, '')}`;
-        const body = `Estimado/a ${selectedQuote.customerName || 'cliente'},\n\nAdjunto encontrará el presupuesto que nos ha solicitado.\n\nPara cualquier consulta, no dude en contactarnos.\n\nSaludos cordiales,\n${user.preparedBy || user.companyName}`;
+        const body = `Estimado/a ${selectedQuote.fiscalName || selectedQuote.customerName || 'cliente'},\n\nAdjunto encontrará el presupuesto que nos ha solicitado.\n\nPara cualquier consulta, no dude en contactarnos.\n\nSaludos cordiales,\n${user.preparedBy || user.companyName}`;
         const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
         setTimeout(() => {
@@ -110,6 +110,7 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
         const baseImponible = finalPrice / (1 + VAT_RATE);
         const iva = finalPrice - baseImponible;
         const descuentoTotal = pvpTotalPrice > 0 ? pvpTotalPrice - baseImponible : 0;
+        const discountPercentage = pvpTotalPrice > 0 ? (descuentoTotal / pvpTotalPrice) * 100 : 0;
 
         return (
             <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setSelectedQuote(null)}>
@@ -160,8 +161,8 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                         </div>
                          {descuentoTotal > 0.01 && (
                             <div className="flex justify-between items-center text-sm text-slate-600">
-                                <span>Descuentos</span>
-                                <span className="font-semibold">- {descuentoTotal.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+                                <span>Descuentos ({discountPercentage.toFixed(2)}%)</span>
+                                <span className="font-semibold text-red-600">- {descuentoTotal.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
                             </div>
                         )}
                         <div className="flex justify-between items-center text-sm text-slate-600">
