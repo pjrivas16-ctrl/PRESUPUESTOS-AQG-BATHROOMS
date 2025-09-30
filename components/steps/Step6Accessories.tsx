@@ -48,12 +48,12 @@ const Step6Accessories: React.FC<Step6AccessoriesProps> = ({
                     e.id === 'rejilla-gun-metal-pvd-standard'
                 );
             case 'STRUCT':
-            case 'STRUCT DETAIL':
                 return generalExtras.filter(e => e.id === 'rejilla-lacada-standard');
             case 'FLAT':
             case 'CLASSIC':
             case 'CENTRAL':
             case 'RATIO':
+            case 'STRUCT DETAIL':
                 return generalExtras.filter(e => 
                     e.id === 'rejilla-lacada-standard' ||
                     e.id === 'rejilla-oro-cepillado-pvd-standard' ||
