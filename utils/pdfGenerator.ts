@@ -1,6 +1,5 @@
 import type { SavedQuote, User, QuoteItem, PriceDetails } from '../types';
 import { VAT_RATE } from '../constants';
-// import { aqgLogoB64 } from '../assets'; // Logo removed
 import { calculatePriceDetails as calculatePriceDetailsUtil } from './priceUtils';
 
 // Helper to format the description of a quote item for the PDF table
@@ -21,7 +20,11 @@ const formatItemDescription = (item: QuoteItem): string => {
     if (item.cutWidth && item.cutLength) {
         desc += ` (Corte a ${item.cutWidth}x${item.cutLength}cm)`;
     }
-    desc += `\nColor: ${item.color?.name || `RAL ${item.ralCode}`}`;
+    
+    const techProductsWithoutColor = ['CLASSIC TECH', 'CENTRAL TECH', 'RATIO TECH'];
+    if (!techProductsWithoutColor.includes(item.productLine || '')) {
+        desc += `\nColor: ${item.color?.name || `RAL ${item.ralCode}`}`;
+    }
 
     if (item.extras && item.extras.length > 0) {
         const extrasList = item.extras.map(e => {

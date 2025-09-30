@@ -280,8 +280,6 @@ export const SOFTUM_EXTRAS: ProductOption[] = [
 // Standard Dimensions Fallbacks
 export const STANDARD_WIDTHS = [70, 75, 80, 90, 100, 110, 120, 130];
 export const STANDARD_LENGTHS = [80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280];
-export const SOFTUM_WIDTHS = [70, 80, 90];
-export const SOFTUM_LENGTHS = [100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
 
 export const SHOWER_TRAY_STEPS = [
     { id: 1, title: 'Colección' },

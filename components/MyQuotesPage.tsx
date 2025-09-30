@@ -1,7 +1,3 @@
-
-
-
-
 import React, { useState, useEffect, useMemo } from 'react';
 import type { User, SavedQuote, QuoteItem } from '../types';
 
@@ -155,6 +151,9 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                     body += `- Ref. Factura: ${item.invoiceReference}\n`;
                 }
             } else {
+                const techProductsWithoutColor = ['CLASSIC TECH', 'CENTRAL TECH', 'RATIO TECH'];
+                const showColor = !techProductsWithoutColor.includes(item.productLine || '');
+
                 body += `Plato de ducha ${item.productLine}\n` +
                         `- Unidades: ${item.quantity || 1}\n` +
                         `- Textura: ${item.model?.name}\n` +
@@ -162,7 +161,10 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                 if (item.cutWidth && item.cutLength) {
                     body += `- Corte a medida: ${item.cutWidth}x${item.cutLength}cm\n`;
                 }
-                body += `- Color: ${item.color?.name || `RAL ${item.ralCode}`}\n`;
+                
+                if (showColor) {
+                    body += `- Color: ${item.color?.name || `RAL ${item.ralCode}`}\n`;
+                }
 
                 if (item.extras.length > 0) {
                     body += `  Extras:\n`;
@@ -217,7 +219,10 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                     )}
 
                     <div className="mt-6 border-t border-slate-200">
-                        {quoteItems.map((item, index) => (
+                        {quoteItems.map((item, index) => {
+                             const techProductsWithoutColor = ['CLASSIC TECH', 'CENTRAL TECH', 'RATIO TECH'];
+                             const showColor = !techProductsWithoutColor.includes(item.productLine || '');
+                             return (
                              <div key={item.id} className="py-4 border-b border-slate-200 last:border-b-0">
                                 <h4 className="font-bold text-teal-700 mb-2">Artículo {index + 1}: {item.productLine === 'KITS' ? item.kitProduct?.name : `${item.productLine} - ${item.model?.name}`}</h4>
                                 {item.productLine !== 'KITS' ? (
@@ -226,7 +231,7 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                                         {item.cutWidth && item.cutLength && (
                                             <p className="text-sm text-slate-500 font-medium">Corte a: <span className="text-teal-600">{item.cutWidth}cm x {item.cutLength}cm</span></p>
                                         )}
-                                        <p className="text-sm text-slate-500">Color: {item.color?.name || `RAL ${item.ralCode}`}</p>
+                                        {showColor && <p className="text-sm text-slate-500">Color: {item.color?.name || `RAL ${item.ralCode}`}</p>}
                                         {item.extras.length > 0 && <p className="text-xs text-slate-400 mt-1">Extras: {item.extras.map(e => e.name).join(', ')}</p>}
                                     </>
                                 ) : (
@@ -237,7 +242,7 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                                     </>
                                 )}
                              </div>
-                        ))}
+                        )})}
                     </div>
 
                     <div className="mt-6 pt-4 border-t-2 border-dashed border-slate-200 text-right">

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import type { QuoteState, ProductOption, ColorOption, User, SavedQuote, StoredUser, QuoteItem, PriceDetails } from './types';
 // Fix: Added STANDARD_COLORS to the import to resolve an undefined variable error.
 import { 
-    PRICE_LIST, SHOWER_TRAY_STEPS, KITS_STEPS, SHOWER_MODELS, KIT_PRODUCTS, ACCESSORY_EXTRAS, STANDARD_COLORS, VAT_RATE, PROMO_DURATION_DAYS, PROMO_ID
+    SHOWER_TRAY_STEPS, KITS_STEPS, ACCESSORY_EXTRAS, STANDARD_COLORS, VAT_RATE
 } from './constants';
 import { authorizedEmails } from './authorizedUsers';
 import { calculateItemPrice as calculateItemPriceUtil, calculatePriceDetails as calculatePriceDetailsUtil } from './utils/priceUtils';

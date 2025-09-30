@@ -19,6 +19,8 @@ interface Step5SummaryProps {
 
 const QuoteItemCard: React.FC<{ item: QuoteItem; onEdit: () => void; onDelete: () => void; priceDetails: PriceDetails; }> = ({ item, onEdit, onDelete, priceDetails }) => {
     const isKitProduct = item.productLine === 'KITS';
+    const techProductsWithoutColor = ['CLASSIC TECH', 'CENTRAL TECH', 'RATIO TECH'];
+    const showColor = !techProductsWithoutColor.includes(item.productLine || '');
 
     const renderExtras = () => {
         if (!item.extras || item.extras.length === 0) return null;
@@ -38,7 +40,7 @@ const QuoteItemCard: React.FC<{ item: QuoteItem; onEdit: () => void; onDelete: (
                     {isKitProduct ? (
                         <>
                             <h4 className="font-bold text-slate-800">{item.kitProduct?.name} ({item.quantity} {item.quantity > 1 ? 'unidades' : 'unidad'})</h4>
-                            {item.kitProduct?.id === 'kit-pintura' && <p className="text-sm text-slate-500">Color: {item.color?.name || `RAL ${item.ralCode}`}</p>}
+                            {(item.kitProduct?.id === 'kit-pintura' || item.kitProduct?.id === 'kit-reparacion') && <p className="text-sm text-slate-500">Color: {item.color?.name || `RAL ${item.ralCode}`}</p>}
                             {item.invoiceReference && <p className="text-sm text-slate-500">Ref. Factura: {item.invoiceReference}</p>}
                         </>
                     ) : (
@@ -48,7 +50,7 @@ const QuoteItemCard: React.FC<{ item: QuoteItem; onEdit: () => void; onDelete: (
                             {item.cutWidth && item.cutLength && (
                                 <p className="text-sm text-slate-500 font-medium">Corte a: <span className="text-teal-600">{item.cutWidth}cm x {item.cutLength}cm</span></p>
                             )}
-                            {item.productLine !== 'CLASSIC TECH' && <p className="text-sm text-slate-500">Color: {item.color?.name || `RAL ${item.ralCode}`}</p>}
+                            {showColor && <p className="text-sm text-slate-500">Color: {item.color?.name || `RAL ${item.ralCode}`}</p>}
                             {item.productLine === 'STRUCT DETAIL' && <p className="text-sm text-slate-500">Marcos: {item.structFrames}</p>}
                             {renderExtras()}
                         </>
