@@ -1,42 +1,14 @@
-import type { StoredUser } from './types';
-
 // ==================================================================================
-// LISTA DE USUARIOS INICIAL (SEED DATA)
+// LISTA DE EMAILS AUTORIZADOS PARA REGISTRO
 // ==================================================================================
-// Este archivo funciona como una lista inicial para "sembrar" la base de datos de
-// usuarios en el navegador la primera vez que se carga la aplicación.
-//
-// Una vez que la aplicación se ha ejecutado, los usuarios se gestionan directamente
-// en el almacenamiento del navegador (localStorage). Los cambios hechos aquí no
-// afectarán a las cuentas existentes.
+// Esta lista contiene los únicos correos electrónicos que tienen permiso para
+// crear una cuenta en la aplicación. Los usuarios se registrarán por sí mismos.
 // ==================================================================================
 
-export const authorizedUsers: StoredUser[] = [
-    {
-        companyName: 'AQG Bathrooms (Admin)',
-        email: 'admin@aqg.com',
-        password: 'adminpassword',
-        preparedBy: 'Equipo AQG'
-    },
-    {
-        companyName: 'JAIME',
-        email: 'jrodriguezrepresentacion@gmail.com',
-        password: 'POLLITOLOCO'
-    },
-    {
-        companyName: 'SUSANA',
-        email: 'susana.delgado1@yahoo.es',
-        password: 'Lilaverdeamor',
-    },
-    {
-        companyName: 'FAMILIA FALO',
-        email: 'koneri@koneri.es',
-        password: 'Alicantechachi3',
-    },
-    {
-        companyName: 'Javier Tey',
-        email: 'javier.tey@aqgbathrooms.com',
-        password: 'padelmolon1',
-        preparedBy: 'Javier Tey'
-    }
+export const authorizedEmails: string[] = [
+    'admin@aqg.com',
+    'jrodriguezrepresentacion@gmail.com',
+    'susana.delgado1@yahoo.es',
+    'koneri@koneri.es',
+    'javier.tey@aqgbathrooms.com',
 ];

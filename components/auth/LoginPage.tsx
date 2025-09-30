@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 
 interface LoginPageProps {
     onLogin: (email: string, password: string) => Promise<void>;
+    onNavigateToRegister: () => void;
 }
 
-const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
+const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onNavigateToRegister }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -64,6 +65,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                     </button>
                 </div>
             </form>
+             <p className="text-center text-sm text-slate-500 mt-8">
+                ¿No tienes una cuenta?{' '}
+                <button onClick={onNavigateToRegister} className="font-semibold text-teal-600 hover:underline">
+                    Regístrate
+                </button>
+            </p>
         </div>
     );
 };

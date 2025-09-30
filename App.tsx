@@ -6,7 +6,7 @@ import type { QuoteState, ProductOption, ColorOption, User, SavedQuote, StoredUs
 import { 
     PRICE_LIST, SHOWER_TRAY_STEPS, KITS_STEPS, SHOWER_MODELS, KIT_PRODUCTS, ACCESSORY_EXTRAS, STANDARD_COLORS, VAT_RATE, PROMO_DURATION_DAYS, PROMO_ID
 } from './constants';
-import { authorizedUsers } from './authorizedUsers';
+import { authorizedEmails } from './authorizedUsers';
 import { calculateItemPrice as calculateItemPriceUtil, calculatePriceDetails as calculatePriceDetailsUtil } from './utils/priceUtils';
 
 
@@ -431,15 +431,6 @@ const App: React.FC = () => {
         }
     }, []);
 
-    // Seed users if none exist
-    useEffect(() => {
-        const users = localStorage.getItem('users');
-        if (!users) {
-            localStorage.setItem('users', JSON.stringify(authorizedUsers));
-        }
-    }, []);
-    
-
     // --- DERIVED STATE & MEMOS ---
 
     // Determine which steps to show based on product line
@@ -547,6 +538,31 @@ const App: React.FC = () => {
             }, 500);
         });
     }, []);
+
+    const handleRegister = useCallback(async (newUser: Omit<StoredUser, 'promotion'>): Promise<void> => {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                 const lowercasedEmail = newUser.email.toLowerCase();
+
+                if (!authorizedEmails.map(e => e.toLowerCase()).includes(lowercasedEmail)) {
+                    return reject(new Error('Este email no está autorizado para registrarse.'));
+                }
+
+                const users = JSON.parse(localStorage.getItem('users') || '[]') as StoredUser[];
+                
+                const existingUser = users.find(u => u.email.toLowerCase() === lowercasedEmail);
+                if (existingUser) {
+                    return reject(new Error('Ya existe una cuenta registrada con este email.'));
+                }
+
+                const userToStore: StoredUser = { ...newUser, email: lowercasedEmail };
+                const updatedUsers = [...users, userToStore];
+                localStorage.setItem('users', JSON.stringify(updatedUsers));
+                
+                handleLogin(newUser.email, newUser.password).then(resolve).catch(reject);
+            }, 500);
+        });
+    }, [handleLogin]);
 
     const handleLogout = useCallback(() => {
         if (window.confirm('¿Estás seguro de que quieres cerrar sesión?')) {
@@ -962,7 +978,7 @@ const App: React.FC = () => {
 
     const renderView = () => {
         if (!currentUser) {
-            return <AuthPage onLogin={handleLogin} />;
+            return <AuthPage onLogin={handleLogin} onRegister={handleRegister} />;
         }
 
         switch (view) {
