@@ -25,7 +25,7 @@ const Step2Model: React.FC<Step2ModelProps> = ({ onSelect, selectedModel, produc
         if (productLine === 'FLAT TERRAZO') {
             return SHOWER_MODELS.filter(m => m.id.startsWith('terrazo-'));
         }
-        if (productLine === 'CLASSIC TECH' || productLine === 'CENTRAL TECH') {
+        if (productLine === 'CLASSIC TECH' || productLine === 'CENTRAL TECH' || productLine === 'RATIO TECH') {
             return SHOWER_MODELS.filter(m => m.id.startsWith('tech-'));
         }
         if (productLine === 'LUXE' || productLine === 'LUXE CON TAPETA' || productLine === 'CLASSIC' || productLine === 'CENTRAL' || productLine === 'RATIO') {
@@ -41,14 +41,14 @@ const Step2Model: React.FC<Step2ModelProps> = ({ onSelect, selectedModel, produc
     }, [productLine]);
 
     useEffect(() => {
-        const isTechProduct = productLine === 'CLASSIC TECH' || productLine === 'CENTRAL TECH';
+        const isTechProduct = productLine === 'CLASSIC TECH' || productLine === 'CENTRAL TECH' || productLine === 'RATIO TECH';
         // If there's only one model option and it's not already selected, select it automatically.
         if (modelsToShow.length === 1 && (!selectedModel || selectedModel.id !== modelsToShow[0].id) && !isTechProduct) {
             onSelect(modelsToShow[0]);
         }
     }, [modelsToShow, selectedModel, onSelect, productLine]);
 
-    const isTechProduct = productLine === 'CLASSIC TECH' || productLine === 'CENTRAL TECH';
+    const isTechProduct = productLine === 'CLASSIC TECH' || productLine === 'CENTRAL TECH' || productLine === 'RATIO TECH';
     const title = isTechProduct ? 'Selecciona el acabado' : 'Selecciona la textura';
     const description = isTechProduct ? 'Elige uno de nuestros acabados de impresión digital. La rejilla se suministra impresa a juego.' : 'Cada textura ofrece una sensación y estética únicas.';
 
