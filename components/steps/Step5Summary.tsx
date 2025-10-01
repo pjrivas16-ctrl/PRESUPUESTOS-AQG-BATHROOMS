@@ -99,7 +99,7 @@ const Step5Summary: React.FC<Step5SummaryProps> = ({
     const taxAmount = totalPrice - basePrice;
 
     const productLinesInQuote = useMemo(() => {
-        const lines = new Set(items.map(item => item.productLine).filter(Boolean));
+        const lines = new Set(items.map(item => item.productLine).filter(line => line && line !== 'KITS'));
         return Array.from(lines) as string[];
     }, [items]);
 

@@ -1,3 +1,4 @@
+
 // Fix: Import useState, useEffect, useRef, useCallback, and useMemo from React to resolve multiple hook-related errors.
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 // Fix: Import PriceDetails from types.ts to use a shared type definition.
@@ -500,8 +501,8 @@ const App: React.FC = () => {
     // Create a memoized version of calculatePriceDetails that can be passed down
     // to child components without causing re-renders, as it's wrapped in useCallback.
     const calculatePriceDetails = useCallback((item: QuoteItem): PriceDetails => {
-        return calculatePriceDetailsUtil(item, appliedDiscounts, currentUser);
-    }, [appliedDiscounts, currentUser]);
+        return calculatePriceDetailsUtil(item, appliedDiscounts);
+    }, [appliedDiscounts]);
 
     // Calculate total prices for the entire quote
     const { pvpTotalPrice, discountedTotalPrice } = useMemo(() => {

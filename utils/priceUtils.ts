@@ -1,5 +1,5 @@
-import type { QuoteState, QuoteItem, PriceDetails, User } from '../types';
-import { PRICE_LIST, VAT_RATE, PROMO_ID, PROMO_DURATION_DAYS } from '../constants';
+import type { QuoteState, QuoteItem, PriceDetails } from '../types';
+import { PRICE_LIST, VAT_RATE } from '../constants';
 
 // This function calculates the base PVP price for a single item (quantity = 1)
 export const calculateItemPrice = (item: QuoteState): number => {
@@ -73,8 +73,7 @@ export const calculateItemPrice = (item: QuoteState): number => {
 // This function calculates detailed pricing including discounts and VAT for a full quote item (including quantity)
 export const calculatePriceDetails = (
     item: QuoteItem, 
-    appliedDiscounts: { [key: string]: number }, 
-    currentUser: User | null
+    appliedDiscounts: { [key: string]: number }
 ): PriceDetails => {
     // Calculate the base PVP price for a single unit
     const singleItemPvp = calculateItemPrice(item);
@@ -82,34 +81,26 @@ export const calculatePriceDetails = (
     // Calculate the total PVP for the given quantity
     const pvpPrice = singleItemPvp * item.quantity;
 
-    // Check for and apply the welcome promotion discount
-    let promoDiscountPercent = 0;
-    if (currentUser?.promotion?.id === PROMO_ID) {
-        const activationTime = currentUser.promotion.activationTimestamp;
-        // Calculate the promotion expiry time
-        const expiryTime = activationTime + (PROMO_DURATION_DAYS * 24 * 60 * 60 * 1000);
-        // Check if the promotion is still active
-        if (Date.now() < expiryTime) {
-            // The discount is 50% + 25%, which is a 62.5% total discount.
-            // (1 - 0.5) * (1 - 0.25) = 0.5 * 0.75 = 0.375 price factor
-            // The discount percentage is 1 - 0.375 = 0.625
-            promoDiscountPercent = 0.625;
-        }
+    // KITS do not have discounts.
+    if (item.productLine === 'KITS') {
+        return {
+            basePrice: pvpPrice,
+            discountedPrice: pvpPrice,
+            finalPrice: pvpPrice * (1 + VAT_RATE),
+            discountPercent: 0,
+        };
     }
     
     // Get the specific discount for the product line, if any
     const lineDiscountPercent = (appliedDiscounts[item.productLine || ''] || 0) / 100;
-
-    // Combine discounts multiplicatively: Price * (1 - PromoDiscount) * (1 - LineDiscount)
-    const totalDiscountFactor = (1 - promoDiscountPercent) * (1 - lineDiscountPercent);
     
     // Calculate the price after applying all discounts
-    const discountedPrice = pvpPrice * totalDiscountFactor;
+    const discountedPrice = pvpPrice * (1 - lineDiscountPercent);
 
     return {
         basePrice: pvpPrice, // Total PVP before any discounts
         discountedPrice: discountedPrice, // Price after discounts, before VAT
         finalPrice: discountedPrice * (1 + VAT_RATE), // Final price including VAT
-        discountPercent: (1 - totalDiscountFactor) * 100, // The effective total discount percentage
+        discountPercent: lineDiscountPercent * 100, // The effective total discount percentage
     };
 };

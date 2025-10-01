@@ -101,7 +101,7 @@ export default async function generatePdf(
 
     // --- 3. ITEMS TABLE ---
     const tableBody = quote.quoteItems.map(item => {
-        const priceDetails = calculatePriceDetailsUtil(item, appliedDiscounts, user);
+        const priceDetails = calculatePriceDetailsUtil(item, appliedDiscounts);
         const singleItemPvp = priceDetails.basePrice / item.quantity;
         
         return [
