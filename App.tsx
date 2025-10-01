@@ -625,10 +625,6 @@ const App: React.FC = () => {
                 id: editingItemId || `item_${Date.now()}`,
             };
             
-            // Before resetting state, we need to know if the item was a Kit
-            // to navigate to the correct summary step number later.
-            const wasKits = currentItemConfig.productLine === 'KITS';
-
             // Use functional updates for `setQuoteItems` to prevent stale state issues
             if (editingItemId) {
                 // We are editing an item, so map over the existing items and replace it.
@@ -645,11 +641,9 @@ const App: React.FC = () => {
             // Reset the configuration for the next item.
             resetQuoteState();
             
-            // After resetting, the STEPS logic will recalculate to the default flow.
-            // To avoid showing the wrong step, we explicitly navigate to the summary
-            // step number of the now-active default flow.
-            const summaryStepNumber = wasKits ? KITS_STEPS.length : SHOWER_TRAY_STEPS.length;
-            setCurrentStep(summaryStepNumber);
+            // After adding an item (kit or shower tray), we reset the state
+            // and always navigate to the summary step of the default (shower tray) workflow.
+            setCurrentStep(SHOWER_TRAY_STEPS.length);
 
         } else if (currentStep < STEPS.length) {
             // It's not the last step, so just advance to the next one.
