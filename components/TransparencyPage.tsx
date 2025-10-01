@@ -92,8 +92,8 @@ const TransparencyPage: React.FC = () => {
                         <span className="font-bold text-teal-600">10% Comisión</span>
                     </div>
                     <div className="text-sm pt-2 mt-2 border-t border-slate-300">
-                        <p className="font-semibold text-slate-600">Nota sobre combinación:</p>
-                        <p className="text-xs text-slate-500">Si un cliente nuevo adquiere la <strong>Promo de Bienvenida y también la Promo Expositor</strong>, la comisión para ambas ventas será del <strong className="font-bold text-teal-600">10%</strong>.</p>
+                        <p className="font-semibold text-slate-600">Incentivo por Venta Combinada:</p>
+                        <p className="text-xs text-slate-500">Si un cliente nuevo que se acoge a la <strong>Promo de Bienvenida</strong> adquiere también el <strong>Pack Expositor</strong>, la comisión de las ventas de la Promo de Bienvenida se incrementa del 8% al <strong className="font-bold text-teal-600">10%</strong>.</p>
                     </div>
                 </InfoCard>
             </div>
