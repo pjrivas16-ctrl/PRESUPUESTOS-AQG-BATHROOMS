@@ -26,8 +26,16 @@ const DownloadIcon = () => (
     </svg>
 );
 
+const CalendarIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    </svg>
+);
+
 const MaintenanceGuidesPage: React.FC = () => {
     
+    const altaClienteUrl = 'https://www.dropbox.com/scl/fi/wrpn3w9bf4j17fz7f2hcf/Plantilla_Apertura-clientes-y-SEPA.docx?rlkey=9jhb9tbdvj5wbyfh07hgd20r7&st=u1h5dlv7&dl=0';
+    const calendarioUrl = 'https://www.dropbox.com/scl/fi/oa1mn5y3amr5b0pf2s9hq/Calendario-laboral-AQG-2025.xlsx?rlkey=xbu1ly58qj4ujuz7wz4vochrw&st=6034lwdn&dl=0';
     const showerTrayGuideUrl = 'https://www.dropbox.com/scl/fi/hem0jemc8hwwmp8jpv5rt/Guia-de-instalaci-n-platos-de-ducha-ES-EN.pdf?rlkey=q8qvp59tkxv35r0eytpvakq44&st=elqn0fju&dl=0';
     const countertopGuideUrl = 'https://www.dropbox.com/scl/fi/hn23b3zqodh6zicvkkn5a/Gu-a-de-instalaci-n-y-mantenimiento-de-encimeras.pdf?rlkey=yjypmncjg5dl5xa7y0aonevvb&st=y3ahmt4g&dl=0';
     const technicalSheetsUrl = 'https://www.dropbox.com/scl/fo/4ksaaabub0m25ixpus2cv/AEHKMko7CHfzytbLdVyrYXI?rlkey=wen76391vg197v1ey0kbg05st&st=9ljlb12n&dl=0';
@@ -51,6 +59,26 @@ const MaintenanceGuidesPage: React.FC = () => {
             <p className="text-slate-500 mb-6">Descarga nuestros catálogos, guías de instalación y otros documentos de interés.</p>
     
             <div className="flex flex-col gap-6">
+                 <ResourceCard
+                    title="Alta de Cliente y SEPA"
+                    description="Documentos necesarios para dar de alta un nuevo cliente."
+                    icon={<DownloadIcon />}
+                    actions={
+                        <Button onClick={() => window.open(altaClienteUrl, '_blank')}>
+                            Descargar Documento
+                        </Button>
+                    }
+                />
+                 <ResourceCard
+                    title="Calendario Laboral Fábrica"
+                    description="Consulta los días festivos y el calendario laboral de fábrica para planificar tus pedidos y entregas."
+                    icon={<CalendarIcon />}
+                    actions={
+                        <Button onClick={() => window.open(calendarioUrl, '_blank')}>
+                            Descargar Calendario
+                        </Button>
+                    }
+                />
                 <ResourceCard
                     title="Platos de Ducha"
                     description="Guía completa para la instalación y el cuidado de nuestros platos de ducha de resina con cargas minerales."
