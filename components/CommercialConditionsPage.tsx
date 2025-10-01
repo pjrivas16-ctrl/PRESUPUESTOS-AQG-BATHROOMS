@@ -76,6 +76,7 @@ const CommercialConditionsPage: React.FC = () => {
                     }
                 >
                     <p className="font-semibold text-xs">Argumento de venta: ¡Pack con precio sensacional! Informa a tu cliente que puede combinar un plato CLASSIC, FLAT o SOFTUM con una grifería monomando o termostática a un precio cerrado imbatible.</p>
+                    <p className="font-semibold text-xs text-amber-800">La opción de grifería en acabado ORO (monomando o termostática) incrementa el precio del pack en 50€.</p>
                     <a
                         href="https://www.dropbox.com/scl/fi/70uk16dlxe8rawaf0idg7/PROMO-COMBI-AQG-2025.pdf?rlkey=fmpg2apppmt3n7vo723fbs1ok&st=bfei1zh2&dl=0"
                         target="_blank"
