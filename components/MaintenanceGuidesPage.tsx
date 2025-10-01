@@ -32,10 +32,17 @@ const CalendarIcon = () => (
     </svg>
 );
 
+const BookIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+    </svg>
+);
+
 const MaintenanceGuidesPage: React.FC = () => {
     
     const altaClienteUrl = 'https://www.dropbox.com/scl/fi/wrpn3w9bf4j17fz7f2hcf/Plantilla_Apertura-clientes-y-SEPA.docx?rlkey=9jhb9tbdvj5wbyfh07hgd20r7&st=u1h5dlv7&dl=0';
     const calendarioUrl = 'https://www.dropbox.com/scl/fi/oa1mn5y3amr5b0pf2s9hq/Calendario-laboral-AQG-2025.xlsx?rlkey=xbu1ly58qj4ujuz7wz4vochrw&st=6034lwdn&dl=0';
+    const dossierMaterialesUrl = 'https://www.dropbox.com/scl/fi/z85ns38klzj1attd9f9r0/DOSSIER-1.0-FORMACIONES-AQG-PROPIEDADES-DE-MATERIALES-EMPLEADOS.pdf?rlkey=phz21t0vb3qg95or9yznkgw3h&st=d6s0c6un&dl=0';
     const showerTrayGuideUrl = 'https://www.dropbox.com/scl/fi/hem0jemc8hwwmp8jpv5rt/Guia-de-instalaci-n-platos-de-ducha-ES-EN.pdf?rlkey=q8qvp59tkxv35r0eytpvakq44&st=elqn0fju&dl=0';
     const countertopGuideUrl = 'https://www.dropbox.com/scl/fi/hn23b3zqodh6zicvkkn5a/Gu-a-de-instalaci-n-y-mantenimiento-de-encimeras.pdf?rlkey=yjypmncjg5dl5xa7y0aonevvb&st=y3ahmt4g&dl=0';
     const technicalSheetsUrl = 'https://www.dropbox.com/scl/fo/4ksaaabub0m25ixpus2cv/AEHKMko7CHfzytbLdVyrYXI?rlkey=wen76391vg197v1ey0kbg05st&st=9ljlb12n&dl=0';
@@ -76,6 +83,16 @@ const MaintenanceGuidesPage: React.FC = () => {
                     actions={
                         <Button onClick={() => window.open(calendarioUrl, '_blank')}>
                             Descargar Calendario
+                        </Button>
+                    }
+                />
+                 <ResourceCard
+                    title="Formación: Propiedades de los Materiales"
+                    description="Un dossier técnico-formativo que detalla las propiedades y ventajas de los materiales empleados en la fabricación de nuestros productos. Ideal para argumentar la calidad ante el cliente."
+                    icon={<BookIcon />}
+                    actions={
+                        <Button onClick={() => window.open(dossierMaterialesUrl, '_blank')}>
+                            Descargar Dossier
                         </Button>
                     }
                 />
