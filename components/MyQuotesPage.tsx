@@ -9,12 +9,66 @@ interface MyQuotesPageProps {
     onGenerateAndDownloadPdf: (quote: SavedQuote) => void;
 }
 
+const SendEmailModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+}> = ({ isOpen, onClose, onConfirm }) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4 animate-fade-in" onClick={onClose}>
+            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-lg" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center gap-4 mb-4">
+                    <div className="w-12 h-12 bg-teal-100 text-teal-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 className="text-xl font-bold text-slate-800">Enviar Presupuesto por Email</h3>
+                        <p className="text-sm text-slate-500">Sigue los pasos para enviar el documento.</p>
+                    </div>
+                </div>
+                <div className="text-sm text-slate-600 bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-2">
+                    <p>
+                        Por limitaciones de seguridad del navegador, el proceso es en dos pasos:
+                    </p>
+                    <p>
+                        1. Al pulsar el botón, <strong>se descargará el PDF</strong> del presupuesto en tu dispositivo.
+                    </p>
+                    <p>
+                        2. Inmediatamente después, <strong>se abrirá tu programa de correo</strong> con un email listo para que puedas <strong>adjuntar el PDF descargado</strong> y enviarlo.
+                    </p>
+                </div>
+
+                <div className="mt-8 flex justify-end gap-3">
+                    <button onClick={onClose} className="px-6 py-2 font-semibold text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
+                        Cancelar
+                    </button>
+                    <button 
+                        onClick={() => {
+                            onConfirm();
+                            onClose();
+                        }} 
+                        className="px-6 py-2 font-semibold text-white bg-teal-600 rounded-lg shadow-md hover:bg-teal-700 transition-colors inline-flex items-center gap-2"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" /><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" /></svg>
+                        Descargar PDF y Abrir Email
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 
 const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onViewPdf, onGenerateAndDownloadPdf }) => {
     const [allQuotes, setAllQuotes] = useState<SavedQuote[]>([]);
     const [selectedQuote, setSelectedQuote] = useState<SavedQuote | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState<'all' | 'ordered' | 'pending'>('all');
+    const [isSendEmailModalOpen, setSendEmailModalOpen] = useState(false);
 
     useEffect(() => {
         try {
@@ -83,20 +137,21 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
         }
     };
 
-    const handleSendEmail = () => {
+    const handleConfirmSendEmail = () => {
         if (!selectedQuote) return;
 
+        // 1. Start PDF Download
         onGenerateAndDownloadPdf(selectedQuote);
 
+        // 2. Prepare and open email client
         const subject = `Presupuesto de AQG Bathrooms Nº ${selectedQuote.id.replace(/quote_c_/g, '')}`;
         const body = `Estimado/a ${selectedQuote.fiscalName || selectedQuote.customerName || 'cliente'},\n\nAdjunto encontrará el presupuesto que nos ha solicitado.\n\nPara cualquier consulta, no dude en contactarnos.\n\nSaludos cordiales,\n${user.preparedBy || user.companyName}`;
         const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
+        // Use a timeout to allow the download to initiate before the browser navigates away
         setTimeout(() => {
             window.location.href = mailtoLink;
         }, 500);
-
-        alert('El PDF se ha descargado. Por favor, adjúntalo al correo electrónico que se abrirá a continuación.');
     };
 
     const renderModal = () => {
@@ -193,7 +248,7 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                         </button>
                         <div className="flex flex-wrap justify-end gap-3">
                             <button onClick={() => onViewPdf(selectedQuote)} className="px-4 py-2 text-sm font-semibold text-teal-600 bg-teal-100 rounded-lg hover:bg-teal-200 transition-colors">Visualización de Presupuesto</button>
-                            <button onClick={handleSendEmail} className="px-5 py-2.5 font-semibold text-white bg-teal-600 rounded-lg shadow-md hover:bg-teal-700 transition-colors inline-flex items-center justify-center gap-2">
+                            <button onClick={() => setSendEmailModalOpen(true)} className="px-5 py-2.5 font-semibold text-white bg-teal-600 rounded-lg shadow-md hover:bg-teal-700 transition-colors inline-flex items-center justify-center gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                   <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
                                   <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
@@ -300,6 +355,11 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
             </div>
             
             {renderModal()}
+            <SendEmailModal
+                isOpen={isSendEmailModalOpen}
+                onClose={() => setSendEmailModalOpen(false)}
+                onConfirm={handleConfirmSendEmail}
+            />
         </div>
     );
 };
