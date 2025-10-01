@@ -619,34 +619,31 @@ const App: React.FC = () => {
         const isLastConfigStep = currentStep === STEPS.length - 1;
 
         if (isLastConfigStep) {
-            // Finalize the item being configured
+            // This is the last configuration step (before summary).
             const finalItem: QuoteItem = {
                 ...currentItemConfig,
                 id: editingItemId || `item_${Date.now()}`,
             };
-            
-            // Use functional updates for `setQuoteItems` to prevent stale state issues
+
             if (editingItemId) {
-                // We are editing an item, so map over the existing items and replace it.
-                setQuoteItems(prevItems => 
+                setQuoteItems(prevItems =>
                     prevItems.map(item =>
                         item.id === editingItemId ? finalItem : item
                     )
                 );
             } else {
-                // We are adding a new item.
                 setQuoteItems(prevItems => [...prevItems, finalItem]);
             }
-            
-            // Reset the configuration for the next item.
+
             resetQuoteState();
             
-            // After adding an item (kit or shower tray), we reset the state
-            // and always navigate to the summary step of the default (shower tray) workflow.
+            // After finalizing any item (including KITS), we reset the state and navigate
+            // directly to the main summary page. This is the last step of the default
+            // SHOWER_TRAY_STEPS flow. This prevents showing incorrect intermediate steps.
             setCurrentStep(SHOWER_TRAY_STEPS.length);
 
         } else if (currentStep < STEPS.length) {
-            // It's not the last step, so just advance to the next one.
+            // It's not the last config step, so just advance to the next one.
             setCurrentStep(prev => prev + 1);
         }
     }, [currentStep, STEPS, currentItemConfig, editingItemId, resetQuoteState]);
