@@ -34,6 +34,14 @@ const CommercialConditionsPage: React.FC = () => {
                     }
                 >
                     <p className="font-semibold text-xs">El argumento de venta es ofrecer un 50%+25% de descuento durante 2 meses o hasta 5000€ de compra. Si el cliente adquiere también la 'Promo Expositor', la oferta se amplía a 3 meses o 7500€ de compra, lo que antes ocurra.</p>
+                    <a
+                        href="https://www.dropbox.com/scl/fi/5609jvr6md4t0r0vitk6l/PROMO-ALTA-NUEVA-CLIENTE-AQG.pdf?rlkey=3bzyt4b0hw7k86c5cvy6r07r5&st=hd9eelpv&dl=0"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block w-full px-4 py-2 text-sm font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors"
+                    >
+                        Descargar Folleto
+                    </a>
                 </ToolCard>
 
                 {/* Card 2: Display Stand Offer */}
