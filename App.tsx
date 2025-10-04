@@ -28,6 +28,7 @@ import MaintenanceGuidesPage from './components/MaintenanceGuidesPage';
 import TransparencyPage from './components/TransparencyPage';
 import CommunicationsPage from './components/CommunicationsPage';
 import CurrentItemPreview from './components/CurrentItemPreview';
+import BuyingGroupsPage from './components/BuyingGroupsPage';
 
 // Declare jsPDF on window for TypeScript
 declare global {
@@ -392,7 +393,7 @@ const InfoModal: React.FC<{ title: string; children: React.ReactNode; onClose: (
 const App: React.FC = () => {
     // --- STATE MANAGEMENT ---
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-    const [view, setView] = useState<'auth' | 'welcome' | 'quote' | 'my-quotes' | 'conditions' | 'guides' | 'transparency' | 'communications'>('auth');
+    const [view, setView] = useState<'auth' | 'welcome' | 'quote' | 'my-quotes' | 'conditions' | 'guides' | 'transparency' | 'communications' | 'buying-groups'>('auth');
 
     // --- QUOTE STATE ---
     const [currentStep, setCurrentStep] = useState<number>(1);
@@ -1018,6 +1019,8 @@ const App: React.FC = () => {
                 return <TransparencyPage />;
             case 'communications':
                 return <CommunicationsPage onPlanVisit={() => setVisitModalOpen(true)} />;
+            case 'buying-groups':
+                return <BuyingGroupsPage />;
             case 'quote':
                  const currentVisibleStep = STEPS.find(s => s.number === currentStep);
 
@@ -1104,6 +1107,7 @@ const App: React.FC = () => {
                            
                            <div className="pt-4 mt-4 border-t border-slate-200 space-y-2">
                                 <NavLink onClick={() => handleNavigate('conditions')} isActive={view === 'conditions'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a1 1 0 011-1h14a1 1 0 011 1v5a.997.997 0 01-.293-.707zM5 6a1 1 0 100 2 1 1 0 000-2z" clipRule="evenodd" /></svg>} label="Promociones" />
+                                <NavLink onClick={() => handleNavigate('buying-groups')} isActive={view === 'buying-groups'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" /></svg>} label="Grupos de Compra" />
                                 <NavLink onClick={() => handleNavigate('guides')} isActive={view === 'guides'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" /></svg>} label="Descargas" />
                                 <NavLink onClick={() => handleNavigate('transparency')} isActive={view === 'transparency'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2H4zm5 2a1 1 0 00-1 1v1a1 1 0 001 1h2a1 1 0 001-1V5a1 1 0 00-1-1H9zM8 9a1 1 0 00-1 1v3a1 1 0 102 0v-3a1 1 0 00-1-1zm4 0a1 1 0 100 2h1a1 1 0 100-2h-1z" clipRule="evenodd" /></svg>} label="Transparencia" />
                                 <NavLink onClick={() => handleNavigate('communications')} isActive={view === 'communications'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" /></svg>} label="Comunicaciones" />
