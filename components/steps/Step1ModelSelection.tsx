@@ -57,7 +57,7 @@ const Step1ModelSelection: React.FC<Step1ModelSelectionProps> = ({ onUpdate, sel
 
                 {/* Countertop Selection */}
                 <div>
-                    <label htmlFor="countertop-line" className="block text-sm font-medium text-slate-700 mb-2">Selección de encimera de baño</label>
+                    <label htmlFor="countertop-line" className="block text-sm font-medium text-slate-700 mb-2">SELECCIÓN DE ENCIMERAS DE BAÑO / LAVABOS</label>
                     <div
                         onClick={onCountertopSelectRequest}
                         className="w-full p-3 bg-slate-200 border border-slate-300 rounded-lg shadow-sm text-slate-500 cursor-pointer hover:bg-slate-300 transition-colors flex justify-between items-center"
