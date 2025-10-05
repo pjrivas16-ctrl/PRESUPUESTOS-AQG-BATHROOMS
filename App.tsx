@@ -1,4 +1,5 @@
 
+
 // Fix: Import useState, useEffect, useRef, useCallback, and useMemo from React to resolve multiple hook-related errors.
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 // Fix: Import PriceDetails from types.ts to use a shared type definition.
@@ -418,6 +419,7 @@ const App: React.FC = () => {
     const [isCustomModalOpen, setCustomModalOpen] = useState(false);
     const [isDrainerModalOpen, setDrainerModalOpen] = useState(false);
     const [isVisitModalOpen, setVisitModalOpen] = useState(false);
+    const [isCountertopModalOpen, setCountertopModalOpen] = useState(false);
 
     // Initial load from localStorage
     useEffect(() => {
@@ -915,7 +917,7 @@ const App: React.FC = () => {
 
         if (currentItemConfig.productLine === 'KITS') {
             switch (stepId) {
-                case 1: return <Step1ModelSelection selectedProductLine={currentItemConfig.productLine} onUpdate={handleProductLineSelect} quantity={currentItemConfig.quantity} onUpdateQuantity={(q) => handleUpdateQuoteItem({ quantity: q })} />;
+                case 1: return <Step1ModelSelection selectedProductLine={currentItemConfig.productLine} onUpdate={handleProductLineSelect} quantity={currentItemConfig.quantity} onUpdateQuantity={(q) => handleUpdateQuoteItem({ quantity: q })} onCountertopSelectRequest={() => setCountertopModalOpen(true)} />;
                 case 10: return <Step2KitSelection onUpdate={handleUpdateQuoteItem} currentItemConfig={currentItemConfig} />;
                 case 12: return <Step5Summary items={quoteItems} totalPrice={finalTotalPrice} onReset={handleResetQuote} onSaveRequest={() => setSaveModalOpen(true)} onGeneratePdfRequest={() => handleGeneratePdf()} onPrintRequest={handlePrint} onStartNew={() => { resetQuoteState(); setCurrentStep(1); }} onEdit={handleEditItem} onDelete={handleDeleteItem} calculatePriceDetails={calculatePriceDetails} appliedDiscounts={appliedDiscounts} onUpdateDiscounts={setAppliedDiscounts} />;
                 default: return null;
@@ -923,7 +925,7 @@ const App: React.FC = () => {
         }
 
         switch (stepId) {
-            case 1: return <Step1ModelSelection selectedProductLine={currentItemConfig.productLine} onUpdate={handleProductLineSelect} quantity={currentItemConfig.quantity} onUpdateQuantity={(q) => handleUpdateQuoteItem({ quantity: q })} />;
+            case 1: return <Step1ModelSelection selectedProductLine={currentItemConfig.productLine} onUpdate={handleProductLineSelect} quantity={currentItemConfig.quantity} onUpdateQuantity={(q) => handleUpdateQuoteItem({ quantity: q })} onCountertopSelectRequest={() => setCountertopModalOpen(true)} />;
             case 2: return <Step1Dimensions quote={currentItemConfig} onUpdate={(width, length) => handleUpdateQuoteItem({ width, length })} />;
             case 3: return <Step2Model selectedModel={currentItemConfig.model} productLine={currentItemConfig.productLine} onSelect={(model) => handleUpdateQuoteItem({ model })} />;
             case 4: return <Step3Color {...updateColorProps} productLine={currentItemConfig.productLine} />;
@@ -1160,6 +1162,12 @@ const App: React.FC = () => {
                 <InfoModal title="Colección DRAINER" onClose={() => setDrainerModalOpen(false)}>
                      <p>Para platos de ducha <strong>DRAINER</strong>, es necesario contactar con fábrica para especificar las medidas y características deseadas.</p>
                      <p>El precio se calculará de forma personalizada.</p>
+                </InfoModal>
+            )}
+            {isCountertopModalOpen && (
+                <InfoModal title="Próximamente" onClose={() => setCountertopModalOpen(false)}>
+                    <p>La funcionalidad para configurar encimeras de baño estará disponible próximamente en la aplicación.</p>
+                    <p>Gracias por tu paciencia.</p>
                 </InfoModal>
             )}
         </div>
