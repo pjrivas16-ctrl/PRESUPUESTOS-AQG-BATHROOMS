@@ -17,7 +17,7 @@ const BuyingGroupsPage: React.FC = () => {
     
     const electrostocksUrl = 'https://www.dropbox.com/scl/fi/zekupqkqm4gl8li4v04sb/CONDICIONESCOMERCIALES-GRUPO-ELECTROSTOCKS.pdf?rlkey=hmzhofynm13tm4v1dsnkcmhi7&st=y29gx58i&dl=0';
     const materialBuildingUrl = 'https://www.dropbox.com/scl/fi/i8ssgpq6r8dlym6pi524g/CONDICIONES-COMERCIALES-MATERIAL-BUILDING.pdf?rlkey=xyy4cvg43e5u1tnrc90sk7nx6&st=bv5t8se3&dl=0';
-    const isolanaUrl = 'https://www.dropbox.com/scl/fi/dcov69ybt8u2m6pdolyzk/CONDICIONES-COMERCIALES-ISOLANA.pdf?rlkey=8vjvn7njl0ndnw0ntveq5gjyg&st=eusw5zpo&dl=0';
+    const isolanaUrl = 'https://www.dropbox.com/scl/fi/jhc7y4go5ez3wnet1q93d/CONDICIONES-COMERCIALES-ISOLANA.pdf?rlkey=aazowzl9miewbhj7mait2ywlu&st=4uq1gc3w&dl=0';
 
     return (
         <div className="animate-fade-in h-full">
