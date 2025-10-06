@@ -16,7 +16,7 @@ const Card: React.FC<{ title: string; description: string; children: React.React
 const BuyingGroupsPage: React.FC = () => {
     
     const electrostocksUrl = 'https://www.dropbox.com/scl/fi/zekupqkqm4gl8li4v04sb/CONDICIONESCOMERCIALES-GRUPO-ELECTROSTOCKS.pdf?rlkey=hmzhofynm13tm4v1dsnkcmhi7&st=y29gx58i&dl=0';
-    const materialBuildingUrl = 'https://www.dropbox.com/scl/fi/onkq2r3zcy89wntnih15m/CONDICIONES-COMERCIALES-MATERIAL-BUILDING.pdf?rlkey=k4h96g66rtnyd7e9zrd4zncfj&st=p2ks6nyr&dl=0';
+    const materialBuildingUrl = 'https://www.dropbox.com/scl/fi/i8ssgpq6r8dlym6pi524g/CONDICIONES-COMERCIALES-MATERIAL-BUILDING.pdf?rlkey=xyy4cvg43e5u1tnrc90sk7nx6&st=bv5t8se3&dl=0';
     const isolanaUrl = 'https://www.dropbox.com/scl/fi/dcov69ybt8u2m6pdolyzk/CONDICIONES-COMERCIALES-ISOLANA.pdf?rlkey=8vjvn7njl0ndnw0ntveq5gjyg&st=eusw5zpo&dl=0';
 
     return (
