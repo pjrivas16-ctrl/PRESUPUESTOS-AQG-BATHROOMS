@@ -96,6 +96,10 @@ const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onPlanVisit }) 
                         <li className="flex justify-between items-center"><span className="font-semibold">ENCIMERAS:</span> <span className="font-bold text-teal-600">20 días lab.</span></li>
                         <li className="flex justify-between items-center"><span className="font-semibold">PLATOS CUSTOM:</span> <span className="font-bold text-teal-600">20 días lab.</span></li>
                     </ul>
+                    <div className="mt-3 pt-3 border-t border-slate-200 text-xs text-amber-800 text-left">
+                        <p className="font-bold">NOTA PARA OBRAS DE VOLUMEN:</p>
+                        <p>Para proyectos de gran volumen, la mercancía se fabrica bajo pedido y no se suministra desde el stock de fábrica. Por lo tanto, los tiempos de expedición pueden variar. Se ruega consultar plazos.</p>
+                    </div>
                 </InfoCard>
 
                 <ContactCard
