@@ -64,7 +64,7 @@ const SalesPlanPage: React.FC = () => {
 
                 <InfoCard
                     title="Plan Comercial 2026"
-                    description="Descarga el documento oficial con el plan comercial detallado para el año 2026. Incluye objetivos, estrategias de mercado, análisis de competencia y el plan de acción para todo el equipo."
+                    description="Este documento es un recordatorio de las herramientas y promociones clave que utilizaremos para captar nuevos clientes y potenciar las ventas. Descárgalo para tener siempre a mano los argumentos principales de nuestra estrategia comercial."
                     icon={<DocumentChartBarIcon />}
                 >
                      <a
