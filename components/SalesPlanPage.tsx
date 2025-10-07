@@ -31,6 +31,12 @@ const DocumentChartBarIcon = () => (
     </svg>
 );
 
+const SparklesIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.898 20.562L16.25 22.25l-.648-1.688a4.5 4.5 0 00-2.353-2.353L11.25 18l1.688-.648a4.5 4.5 0 002.353-2.353L16.25 13l.648 1.688a4.5 4.5 0 002.353 2.353L21 18l-1.688.648a4.5 4.5 0 00-2.353 2.353z" />
+    </svg>
+);
+
 
 const SalesPlanPage: React.FC = () => {
     const planComercialUrl = 'https://www.dropbox.com/scl/fi/7z5otjvlqbr05v2gdil6k/PLAN-COMERCIAL-2026.pdf?rlkey=jahdk555aawt74mm31w12rbwg&st=yr61q3bq&dl=0';
@@ -69,6 +75,22 @@ const SalesPlanPage: React.FC = () => {
                     >
                         Descargar Plan Comercial
                     </a>
+                </InfoCard>
+
+                <InfoCard
+                    title="Novedad: Rejillas PVD como Elemento Diferenciador"
+                    description="Hemos incorporado rejillas con acabado PVD (Physical Vapor Deposition) para varias de nuestras colecciones. Este acabado de alta gama, conocido por su durabilidad y estética premium, es una poderosa herramienta para distinguirse de la competencia."
+                    icon={<SparklesIcon />}
+                >
+                    <p className="text-sm font-semibold text-slate-600">Disponibilidad:</p>
+                     <ul className="list-disc list-inside text-sm space-y-1">
+                        <li><strong>CLASSIC, FLAT, STRUCT:</strong> Rejillas estándar en acabados PVD Oro Cepillado, Oro Rosa y Gun Metal.</li>
+                        <li><strong>LUXE:</strong> Rejillas de formato especial en los mismos acabados PVD, aportando un plus de exclusividad.</li>
+                    </ul>
+                    <p className="text-sm font-semibold text-slate-600 mt-3">Tu Misión:</p>
+                    <p className="text-sm">
+                        Presenta las rejillas PVD como un extra de lujo y diseño. Es el argumento perfecto para justificar precios, añadir valor a la venta o cerrar negociaciones ofreciendo un detalle que la competencia no tiene. ¡Convierte un simple desagüe en una declaración de estilo!
+                    </p>
                 </InfoCard>
             </div>
         </div>
