@@ -25,8 +25,16 @@ const SpearheadIcon = () => (
     </svg>
 );
 
+const DocumentChartBarIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+);
+
 
 const SalesPlanPage: React.FC = () => {
+    const planComercialUrl = 'https://www.dropbox.com/scl/fi/7z5otjvlqbr05v2gdil6k/PLAN-COMERCIAL-2026.pdf?rlkey=jahdk555aawt74mm31w12rbwg&st=yr61q3bq&dl=0';
+
     return (
         <div className="animate-fade-in h-full p-4 md:p-8 overflow-y-auto">
             <h2 className="text-2xl font-extrabold text-slate-800 tracking-tight mb-2">Plan de Ventas 2026</h2>
@@ -46,6 +54,21 @@ const SalesPlanPage: React.FC = () => {
                     <p className="text-sm">
                         Utiliza el CLASSIC para conseguir la primera venta. Una vez dentro, tu labor es presentar el resto de nuestro porfolio (SOFTUM, LUXE, acabados TECH, etc.), donde reside el verdadero valor y margen para todos. CLASSIC abre la puerta; tu profesionalidad vende la solución completa.
                     </p>
+                </InfoCard>
+
+                <InfoCard
+                    title="Plan Comercial 2026"
+                    description="Descarga el documento oficial con el plan comercial detallado para el año 2026. Incluye objetivos, estrategias de mercado, análisis de competencia y el plan de acción para todo el equipo."
+                    icon={<DocumentChartBarIcon />}
+                >
+                     <a
+                        href={planComercialUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block w-full px-4 py-2 text-sm font-semibold text-center text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors"
+                    >
+                        Descargar Plan Comercial
+                    </a>
                 </InfoCard>
             </div>
         </div>
