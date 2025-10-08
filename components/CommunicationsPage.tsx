@@ -52,7 +52,7 @@ const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onPlanVisit }) 
     };
 
     return (
-        <div className="animate-fade-in h-full">
+        <div className="animate-fade-in h-full p-4 md:p-8 overflow-y-auto">
             <h2 className="text-2xl font-extrabold text-slate-800 tracking-tight mb-2">Comunicaciones</h2>
             <p className="text-slate-500 mb-6">Contacta con el departamento adecuado para agilizar tus gestiones.</p>
             

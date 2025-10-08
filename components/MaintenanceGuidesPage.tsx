@@ -68,7 +68,7 @@ const MaintenanceGuidesPage: React.FC = () => {
     );
 
     return (
-        <div className="animate-fade-in h-full">
+        <div className="animate-fade-in h-full p-4 md:p-8 overflow-y-auto">
             <h2 className="text-2xl font-extrabold text-slate-800 tracking-tight mb-2">Descargas</h2>
             <p className="text-slate-500 mb-6">Descarga nuestros catálogos, guías de instalación y otros documentos de interés.</p>
     

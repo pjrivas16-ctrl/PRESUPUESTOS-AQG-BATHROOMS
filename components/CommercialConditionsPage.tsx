@@ -18,7 +18,7 @@ const ToolCard: React.FC<{ title: string; description: string; children: React.R
 const CommercialConditionsPage: React.FC = () => {
     
     return (
-        <div className="animate-fade-in h-full">
+        <div className="animate-fade-in h-full p-4 md:p-8 overflow-y-auto">
             <h2 className="text-2xl font-extrabold text-slate-800 tracking-tight mb-2">Promociones</h2>
             <p className="text-slate-500 mb-6">Aquí encontrarás las promociones y argumentos de venta activos que puedes ofrecer a tus clientes.</p>
             
@@ -90,7 +90,7 @@ const CommercialConditionsPage: React.FC = () => {
                  {/* Card 4: Showroom Amortization */}
                 <ToolCard
                     title="Amortización de Exposición"
-                    description="Facilita que tus clientes expongan producto AQG en su tienda. El cliente puede comprar el producto para su exposición y recupera la inversión con un descuento en sus futuros pedidos."
+                    description="Facilita que tus clientes exponham producto AQG en su tienda. El cliente puede comprar el producto para su exposición y recupera la inversión con un descuento en sus futuros pedidos."
                     icon={
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />

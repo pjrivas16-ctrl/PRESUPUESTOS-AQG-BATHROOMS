@@ -291,8 +291,8 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
     };
 
     return (
-        <div className="animate-fade-in h-full flex flex-col">
-            <div className="flex-shrink-0 p-4 md:p-0">
+        <div className="animate-fade-in h-full flex flex-col p-4 md:p-8">
+            <div className="flex-shrink-0">
                 <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">Mis Presupuestos</h2>
                 <p className="text-slate-500 mb-6">Gestiona tus presupuestos guardados. Puedes ver los detalles, duplicarlos o tramitar el pedido.</p>
 
@@ -313,7 +313,7 @@ const MyQuotesPage: React.FC<MyQuotesPageProps> = ({ user, onDuplicateQuote, onV
                 </div>
             </div>
 
-            <div className="flex-grow overflow-y-auto pt-6 -mx-4 px-4 md:mx-0 md:px-0 pb-4">
+            <div className="flex-grow overflow-y-auto pt-6 pb-4">
                 {filteredQuotes.length > 0 ? (
                     <div className="space-y-3">
                         {filteredQuotes.map(quote => (

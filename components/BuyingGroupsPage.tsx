@@ -19,7 +19,7 @@ const BuyingGroupsPage: React.FC = () => {
     const materialBuildingUrl = 'https://www.dropbox.com/scl/fi/i8ssgpq6r8dlym6pi524g/CONDICIONES-COMERCIALES-MATERIAL-BUILDING.pdf?rlkey=xyy4cvg43e5u1tnrc90sk7nx6&st=bv5t8se3&dl=0';
 
     return (
-        <div className="animate-fade-in h-full">
+        <div className="animate-fade-in h-full p-4 md:p-8 overflow-y-auto">
             <h2 className="text-2xl font-extrabold text-slate-800 tracking-tight mb-2">Grupos de Compra</h2>
             <p className="text-slate-500 mb-6">Aquí encontrarás las condiciones comerciales especiales pactadas con los diferentes grupos de compra.</p>
             
