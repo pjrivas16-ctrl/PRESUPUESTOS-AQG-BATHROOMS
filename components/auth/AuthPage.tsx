@@ -3,6 +3,7 @@ import LoginPage from './LoginPage';
 import RegisterPage from './RegisterPage';
 import ForgotPasswordPage from './ForgotPasswordPage';
 import type { StoredUser } from '../../types';
+import { updateUser, findUserByEmail } from '../../utils/authUtils';
 
 interface AuthPageProps {
     onLogin: (email: string, password: string) => Promise<void>;
@@ -14,16 +15,21 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onRegister }) => {
 
     const handleUpdatePassword = (email: string, newPassword: string): Promise<void> => {
         return new Promise((resolve, reject) => {
-            const users = JSON.parse(localStorage.getItem('users') || '[]') as StoredUser[];
-            const userIndex = users.findIndex(u => u.email.toLowerCase() === email.toLowerCase());
-
-            if (userIndex > -1) {
-                users[userIndex].password = newPassword;
-                localStorage.setItem('users', JSON.stringify(users));
+            const updatedUser = updateUser(email, { password: newPassword });
+            if (updatedUser) {
                 resolve();
             } else {
-                reject(new Error('No se ha encontrado el usuario.'));
+                reject(new Error('No se pudo actualizar la contraseña.'));
             }
+        });
+    };
+    
+    const handleCheckUserExists = (email: string): Promise<boolean> => {
+        return new Promise((resolve) => {
+            setTimeout(() => { // Simulate network delay
+                const user = findUserByEmail(email);
+                resolve(!!user);
+            }, 500);
         });
     };
 
@@ -31,7 +37,12 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onRegister }) => {
         case 'register':
             return <RegisterPage onRegister={onRegister} onNavigateToLogin={() => setView('login')} />;
         case 'forgotPassword':
-            return <ForgotPasswordPage onPasswordUpdated={() => setView('login')} onNavigateToLogin={() => setView('login')} onUpdatePassword={handleUpdatePassword} />;
+            return <ForgotPasswordPage 
+                onPasswordUpdated={() => setView('login')} 
+                onNavigateToLogin={() => setView('login')} 
+                onUpdatePassword={handleUpdatePassword}
+                onCheckUserExists={handleCheckUserExists}
+            />;
         case 'login':
         default:
             return <LoginPage onLogin={onLogin} onNavigateToRegister={() => setView('register')} onNavigateToForgotPassword={() => setView('forgotPassword')} />;

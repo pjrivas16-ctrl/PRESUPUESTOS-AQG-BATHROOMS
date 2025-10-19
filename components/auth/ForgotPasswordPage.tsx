@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import type { StoredUser } from '../../types';
 
 interface ForgotPasswordPageProps {
     onPasswordUpdated: () => void;
     onNavigateToLogin: () => void;
     onUpdatePassword: (email: string, newPassword: string) => Promise<void>;
+    onCheckUserExists: (email: string) => Promise<boolean>;
 }
 
-const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onPasswordUpdated, onNavigateToLogin, onUpdatePassword }) => {
+const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onPasswordUpdated, onNavigateToLogin, onUpdatePassword, onCheckUserExists }) => {
     const [step, setStep] = useState(1); // 1 for email, 2 for new password
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -16,23 +16,20 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onPasswordUpdat
     const [success, setSuccess] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleEmailSubmit = (e: React.FormEvent) => {
+    const handleEmailSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setIsLoading(true);
 
-        setTimeout(() => {
-            const users = JSON.parse(localStorage.getItem('users') || '[]') as StoredUser[];
-            const userExists = users.some(u => u.email.toLowerCase() === email.toLowerCase());
-            
-            setIsLoading(false);
-            if (userExists) {
-                setSuccess('Email verificado. Por favor, introduce tu nueva contraseña.');
-                setStep(2);
-            } else {
-                setError('No existe ninguna cuenta registrada con este email.');
-            }
-        }, 500);
+        const userExists = await onCheckUserExists(email);
+        
+        setIsLoading(false);
+        if (userExists) {
+            setSuccess('Email verificado. Por favor, introduce tu nueva contraseña.');
+            setStep(2);
+        } else {
+            setError('No existe ninguna cuenta registrada con este email.');
+        }
     };
 
     const handlePasswordSubmit = async (e: React.FormEvent) => {

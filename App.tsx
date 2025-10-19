@@ -10,6 +10,7 @@ import {
 } from './constants';
 import { authorizedEmails } from './authorizedUsers';
 import { calculateItemPrice as calculateItemPriceUtil, calculatePriceDetails as calculatePriceDetailsUtil } from './utils/priceUtils';
+import { findUserByEmail, addUser, updateUser } from './utils/authUtils';
 
 
 import StepTracker from './components/StepTracker';
@@ -426,8 +427,7 @@ const App: React.FC = () => {
     useEffect(() => {
         const loggedInUserEmail = localStorage.getItem('loggedInUser');
         if (loggedInUserEmail) {
-            const users = JSON.parse(localStorage.getItem('users') || '[]') as StoredUser[];
-            const user = users.find(u => u.email === loggedInUserEmail);
+            const user = findUserByEmail(loggedInUserEmail);
             if (user) {
                 setCurrentUser(user);
                 setView('welcome');
@@ -527,8 +527,7 @@ const App: React.FC = () => {
     const handleLogin = useCallback(async (email: string, password: string): Promise<void> => {
         return new Promise((resolve, reject) => {
             setTimeout(() => {
-                const users = JSON.parse(localStorage.getItem('users') || '[]') as StoredUser[];
-                const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+                const user = findUserByEmail(email);
 
                 if (user && user.password === password) {
                     setCurrentUser(user);
@@ -550,19 +549,16 @@ const App: React.FC = () => {
                 if (!authorizedEmails.map(e => e.toLowerCase()).includes(lowercasedEmail)) {
                     return reject(new Error('Este email no está autorizado para registrarse.'));
                 }
-
-                const users = JSON.parse(localStorage.getItem('users') || '[]') as StoredUser[];
                 
-                const existingUser = users.find(u => u.email.toLowerCase() === lowercasedEmail);
-                if (existingUser) {
-                    return reject(new Error('Ya existe una cuenta registrada con este email.'));
+                try {
+                    addUser(newUser);
+                    handleLogin(newUser.email, newUser.password).then(resolve).catch(reject);
+                } catch (err) {
+                     if (err instanceof Error) {
+                        return reject(err);
+                    }
+                    return reject(new Error('Un error inesperado ocurrió durante el registro.'));
                 }
-
-                const userToStore: StoredUser = { ...newUser, email: lowercasedEmail };
-                const updatedUsers = [...users, userToStore];
-                localStorage.setItem('users', JSON.stringify(updatedUsers));
-                
-                handleLogin(newUser.email, newUser.password).then(resolve).catch(reject);
             }, 500);
         });
     }, [handleLogin]);
@@ -1141,13 +1137,13 @@ const App: React.FC = () => {
                 isOpen={isSettingsModalOpen} 
                 onClose={() => setSettingsModalOpen(false)}
                 onSave={(settings) => {
-                    const updatedUser = { ...currentUser, ...settings };
-                    setCurrentUser(updatedUser);
-                    try {
-                         const users = JSON.parse(localStorage.getItem('users') || '[]') as StoredUser[];
-                         const updatedUsers = users.map(u => u.email === updatedUser.email ? { ...u, ...settings } : u);
-                         localStorage.setItem('users', JSON.stringify(updatedUsers));
-                    } catch(e) { console.error(e); }
+                    if (!currentUser) return;
+                    const savedUser = updateUser(currentUser.email, settings);
+                    if (savedUser) {
+                        setCurrentUser(savedUser);
+                    } else {
+                        alert("Hubo un error al guardar los ajustes.");
+                    }
                 }}
                 user={currentUser}
                 onExport={handleExportData}
