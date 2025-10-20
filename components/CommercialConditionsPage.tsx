@@ -19,7 +19,7 @@ const CommercialConditionsPage: React.FC = () => {
     
     return (
         <div className="animate-fade-in h-full p-4 md:p-8 overflow-y-auto">
-            <h2 className="text-2xl font-extrabold text-slate-800 tracking-tight mb-2">Promociones</h2>
+            <h2 className="text-2xl font-extrabold text-slate-800 tracking-tight mb-2">PROMOS CLIENTES</h2>
             <p className="text-slate-500 mb-6">Aquí encontrarás las promociones y argumentos de venta activos que puedes ofrecer a tus clientes.</p>
             
             <div className="flex flex-col gap-6">
