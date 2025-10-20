@@ -28,6 +28,12 @@ const DocumentIcon = () => (
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
     </svg>
 );
+const GiftIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H7.5a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h17.25" />
+    </svg>
+);
+
 
 const TransparencyPage: React.FC = () => {
     return (
@@ -90,6 +96,21 @@ const TransparencyPage: React.FC = () => {
                         <p className="font-semibold text-slate-600">Incentivo por Venta Combinada:</p>
                         <p className="text-xs text-slate-500">Si un cliente nuevo que se acoge a la <strong>Promo de Bienvenida</strong> adquiere también el <strong>Pack Expositor</strong>, la comisión de las ventas de la Promo de Bienvenida se incrementa del 8% al <strong className="font-bold text-teal-600">10%</strong>.</p>
                     </div>
+                </InfoCard>
+
+                <InfoCard
+                    title="Bonificación por Apertura/Recuperación de Clientes"
+                    description="Incentivo especial por la apertura de nuevas cuentas de cliente o la recuperación de clientes con más de 12 meses de inactividad. Consulta los detalles de la bonificación en el documento adjunto."
+                    icon={<GiftIcon />}
+                >
+                    <a
+                        href="https://www.dropbox.com/scl/fi/9mlzkdblqtst3og68dm14/BONIFICACIONES-RED-COMERCIAL-2025.pdf?rlkey=cungricidchibbqkdvva97u61&st=cy1rvdxt&dl=0"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block w-full px-4 py-2 text-sm font-semibold text-center text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors"
+                    >
+                        Descargar Documento de Bonificaciones
+                    </a>
                 </InfoCard>
             </div>
         </div>
