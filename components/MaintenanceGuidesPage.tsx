@@ -53,6 +53,7 @@ const MaintenanceGuidesPage: React.FC = () => {
     const countertopGuideUrl = 'https://www.dropbox.com/scl/fi/hn23b3zqodh6zicvkkn5a/Gu-a-de-instalaci-n-y-mantenimiento-de-encimeras.pdf?rlkey=yjypmncjg5dl5xa7y0aonevvb&st=y3ahmt4g&dl=0';
     const technicalSheetsUrl = 'https://www.dropbox.com/scl/fo/4ksaaabub0m25ixpus2cv/AEHKMko7CHfzytbLdVyrYXI?rlkey=wen76391vg197v1ey0kbg05st&st=9ljlb12n&dl=0';
     const condicionesComercialesUrl = 'https://www.dropbox.com/scl/fi/56pv2tm2d3ihg9et477ee/plantillas-CONDICIONES-COMERCIALES-DEF.-AQG.pdf?rlkey=o5nrfqcf897q4mjxhzgnkdrul&st=yye14x8y&dl=0';
+    const rejillasUrl = 'https://www.dropbox.com/scl/fi/mosvs0ugcyndl1xmvjnxi/FOLLETO-REJILLAS-AQG-2026.pdf?rlkey=saexfsx2fa7jbkd9mw0ksmkic&st=i1osn9c6&dl=0';
 
     const Button: React.FC<{ onClick?: () => void; disabled?: boolean; children: React.ReactNode }> = ({ onClick, disabled, children }) => (
          <button
@@ -130,6 +131,16 @@ const MaintenanceGuidesPage: React.FC = () => {
                     actions={
                         <Button onClick={() => window.open(countertopGuideUrl, '_blank')}>
                             Descargar Guía
+                        </Button>
+                    }
+                />
+                 <ResourceCard
+                    title="Folleto Rejillas Novedad 2026"
+                    description="Descubre las nuevas rejillas PVD y lacadas disponibles para nuestras colecciones. Un toque de diseño y exclusividad que marca la diferencia."
+                    icon={<DownloadIcon />}
+                    actions={
+                        <Button onClick={() => window.open(rejillasUrl, '_blank')}>
+                            Descargar Folleto
                         </Button>
                     }
                 />
