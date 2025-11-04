@@ -24,6 +24,7 @@ export const authorizedEmails: string[] = [
     'koneri@koneri.es',
     'comercialmdpino@gmail.com',
     'carlosnuno@dysser.es',
+    'carlos@dysser.com',
     'yolanda@dysser.es',
     'anapayerasjakobsen@hotmail.com',
     'representacionesloer2023@gmail.com',
