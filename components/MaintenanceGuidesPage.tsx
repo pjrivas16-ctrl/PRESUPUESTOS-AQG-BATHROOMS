@@ -47,6 +47,7 @@ const BookIcon = () => (
 const MaintenanceGuidesPage: React.FC = () => {
     
     const altaClienteUrl = 'https://www.dropbox.com/scl/fi/wrpn3w9bf4j17fz7f2hcf/Plantilla_Apertura-clientes-y-SEPA.docx?rlkey=9jhb9tbdvj5wbyfh07hgd20r7&st=u1h5dlv7&dl=0';
+    const datosFiscalesUrl = 'https://www.dropbox.com/scl/fi/v15319ywhcz36k792ocmb/DATOS-FISCALES-AQG.pdf?rlkey=wopdaqd32hqxb6ptlkp4puxbv&st=k9bjk3rr&dl=0';
     const calendarioUrl = 'https://www.dropbox.com/scl/fi/oa1mn5y3amr5b0pf2s9hq/Calendario-laboral-AQG-2025.xlsx?rlkey=xbu1ly58qj4ujuz7wz4vochrw&st=6034lwdn&dl=0';
     const dossierMaterialesUrl = 'https://www.dropbox.com/scl/fi/z85ns38klzj1attd9f9r0/DOSSIER-1.0-FORMACIONES-AQG-PROPIEDADES-DE-MATERIALES-EMPLEADOS.pdf?rlkey=phz21t0vb3qg95or9yznkgw3h&st=d6s0c6un&dl=0';
     const showerTrayGuideUrl = 'https://www.dropbox.com/scl/fi/hem0jemc8hwwmp8jpv5rt/Guia-de-instalaci-n-platos-de-ducha-ES-EN.pdf?rlkey=q8qvp59tkxv35r0eytpvakq44&st=elqn0fju&dl=0';
@@ -74,6 +75,16 @@ const MaintenanceGuidesPage: React.FC = () => {
             <p className="text-slate-500 mb-6">Descarga nuestros catálogos, guías de instalación y otros documentos de interés.</p>
     
             <div className="flex flex-col gap-6">
+                 <ResourceCard
+                    title="Datos Fiscales AQG"
+                    description="Descarga nuestra ficha de datos fiscales para que el cliente pueda darnos de alta como proveedor en su sistema."
+                    icon={<DocumentIcon />}
+                    actions={
+                        <Button onClick={() => window.open(datosFiscalesUrl, '_blank')}>
+                            Descargar Datos Fiscales
+                        </Button>
+                    }
+                />
                  <ResourceCard
                     title="Alta de Cliente y SEPA"
                     description="Documentos necesarios para dar de alta un nuevo cliente."
