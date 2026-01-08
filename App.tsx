@@ -1,5 +1,3 @@
-
-
 // Fix: Import useState, useEffect, useRef, useCallback, and useMemo from React to resolve multiple hook-related errors.
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 // Fix: Import PriceDetails from types.ts to use a shared type definition.
@@ -24,6 +22,7 @@ import Step5Summary from './components/steps/Step5Summary';
 import Step2KitSelection from './components/steps/kits/Step2KitSelection';
 import NextPrevButtons from './components/NextPrevButtons';
 import AuthPage from './components/auth/AuthPage';
+import GatewayPage from './components/auth/GatewayPage';
 import MyQuotesPage from './components/MyQuotesPage';
 import CommercialConditionsPage from './components/CommercialConditionsPage';
 import MaintenanceGuidesPage from './components/MaintenanceGuidesPage';
@@ -395,6 +394,9 @@ const InfoModal: React.FC<{ title: string; children: React.ReactNode; onClose: (
 
 const App: React.FC = () => {
     // --- STATE MANAGEMENT ---
+    const [isGatewayAuthorized, setIsGatewayAuthorized] = useState<boolean>(() => {
+        return sessionStorage.getItem('gateway_auth') === 'true';
+    });
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [view, setView] = useState<'auth' | 'welcome' | 'quote' | 'my-quotes' | 'conditions' | 'guides' | 'transparency' | 'communications' | 'buying-groups' | 'sales-plan'>('auth');
 
@@ -571,6 +573,11 @@ const App: React.FC = () => {
             setIsSidebarOpen(false);
         }
     }, []);
+
+    const handleGatewayAuthorized = () => {
+        setIsGatewayAuthorized(true);
+        sessionStorage.setItem('gateway_auth', 'true');
+    };
 
     // --- NAVIGATION & VIEW HANDLERS ---
     
@@ -995,6 +1002,10 @@ const App: React.FC = () => {
     };
 
     const renderView = () => {
+        if (!isGatewayAuthorized) {
+            return <GatewayPage onAuthorized={handleGatewayAuthorized} />;
+        }
+
         if (!currentUser) {
             return <AuthPage onLogin={handleLogin} onRegister={handleRegister} />;
         }
@@ -1080,7 +1091,7 @@ const App: React.FC = () => {
 
     return (
         <div className="h-screen w-screen bg-slate-100 font-sans flex text-slate-800">
-             {currentUser && (
+             {(currentUser && isGatewayAuthorized) && (
                 <>
                     {/* --- Mobile Header --- */}
                     <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-sm border-b border-slate-200 flex items-center justify-between px-4 z-40">
@@ -1111,7 +1122,7 @@ const App: React.FC = () => {
                                 <NavLink onClick={() => handleNavigate('conditions')} isActive={view === 'conditions'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a1 1 0 011-1h14a1 1 0 011 1v5a.997.997 0 01-.293-.707zM5 6a1 1 0 100 2 1 1 0 000-2z" clipRule="evenodd" /></svg>} label="PROMOS CLIENTES" />
                                 <NavLink onClick={() => handleNavigate('buying-groups')} isActive={view === 'buying-groups'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" /></svg>} label="Grupos de Compra" />
                                 <NavLink onClick={() => handleNavigate('guides')} isActive={view === 'guides'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" /></svg>} label="Descargas" />
-                                <NavLink onClick={() => handleNavigate('transparency')} isActive={view === 'transparency'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2H4zm5 2a1 1 0 00-1 1v1a1 1 0 001 1h2a1 1 0 001-1V5a1 1 0 00-1-1H9zM8 9a1 1 0 00-1 1v3a1 1 0 102 0v-3a1 1 0 00-1-1zm4 0a1 1 0 100 2h1a1 1 0 100-2h-1z" clipRule="evenodd" /></svg>} label="Transparencia" />
+                                <NavLink onClick={() => handleNavigate('transparency')} isActive={view === 'transparency'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2H4zm5 2a1 1 0 00-1 1v1a1 1 0 001 1h2a1 1 0 001-1V5a1 1 0 00-1-1H9zM8 9a1 1 0 00-1 1v3a1 1 0 102 0v-3a1 1 0 01-1-1zm4 0a1 1 0 100 2h1a1 1 0 100-2h-1z" clipRule="evenodd" /></svg>} label="Transparencia" />
                                 <NavLink onClick={() => handleNavigate('communications')} isActive={view === 'communications'} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" /></svg>} label="Comunicaciones" />
                             </div>
                         </nav>
@@ -1128,7 +1139,7 @@ const App: React.FC = () => {
                 </>
              )}
 
-            <main className={`main-content flex-grow flex flex-col h-screen ${!currentUser ? 'items-center justify-center' : ''} ${isSidebarOpen ? 'md:w-[calc(100vw-288px)]' : 'w-full'} pt-16 md:pt-0`}>
+            <main className={`main-content flex-grow flex flex-col h-screen ${(!currentUser || !isGatewayAuthorized) ? 'items-center justify-center' : ''} ${(isSidebarOpen && isGatewayAuthorized) ? 'md:w-[calc(100vw-288px)]' : 'w-full'} pt-16 md:pt-0`}>
                 {renderView()}
             </main>
             
