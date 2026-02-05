@@ -46,13 +46,12 @@ const BookIcon = () => (
 
 const MaintenanceGuidesPage: React.FC = () => {
     
-    const altaClienteUrl = 'https://www.dropbox.com/scl/fi/wrpn3w9bf4j17fz7f2hcf/Plantilla_Apertura-clientes-y-SEPA.docx?rlkey=9jhb9tbdvj5wbyfh07hgd20r7&st=u1h5dlv7&dl=0';
-    const datosFiscalesUrl = 'https://www.dropbox.com/scl/fi/v15319ywhcz36k792ocmb/DATOS-FISCALES-AQG.pdf?rlkey=wopdaqd32hqxb6ptlkp4puxbv&st=k9bjk3rr&dl=0';
+    const altaCliente2026Url = 'https://www.dropbox.com/scl/fi/98z1hj2uz1ddru33vlv9t/ALTA-DE-CLIENTE-AQG.pdf?rlkey=flrl3ru3ulvsgn28s90orr52j&st=2pyzpmg2&dl=0';
     const calendarioUrl = 'https://www.dropbox.com/scl/fi/oa1mn5y3amr5b0pf2s9hq/Calendario-laboral-AQG-2025.xlsx?rlkey=xbu1ly58qj4ujuz7wz4vochrw&st=6034lwdn&dl=0';
     const dossierMaterialesUrl = 'https://www.dropbox.com/scl/fi/z85ns38klzj1attd9f9r0/DOSSIER-1.0-FORMACIONES-AQG-PROPIEDADES-DE-MATERIALES-EMPLEADOS.pdf?rlkey=phz21t0vb3qg95or9yznkgw3h&st=d6s0c6un&dl=0';
     const showerTrayGuideUrl = 'https://www.dropbox.com/scl/fi/hem0jemc8hwwmp8jpv5rt/Guia-de-instalaci-n-platos-de-ducha-ES-EN.pdf?rlkey=q8qvp59tkxv35r0eytpvakq44&st=elqn0fju&dl=0';
     const countertopGuideUrl = 'https://www.dropbox.com/scl/fi/hn23b3zqodh6zicvkkn5a/Gu-a-de-instalaci-n-y-mantenimiento-de-encimeras.pdf?rlkey=yjypmncjg5dl5xa7y0aonevvb&st=y3ahmt4g&dl=0';
-    const technicalSheetsUrl = 'https://www.dropbox.com/scl/fo/4ksaaabub0m25ixpus2cv/AEHKMko7CHfzytbLdVyrYXI?rlkey=wen76391vg197v1ey0kbg05st&st=9ljlb12n&dl=0';
+    const technicalSheetsUrl = 'https://www.dropbox.com/scl/fo/4ksaaabub0m25ixpus2cv/AEHKMko7CHfzytbLdVyrYXI?rlkey=wen76391vg197v1ey0bg05st&st=9ljlb12n&dl=0';
     const condicionesComercialesUrl = 'https://www.dropbox.com/scl/fi/56pv2tm2d3ihg9et477ee/plantillas-CONDICIONES-COMERCIALES-DEF.-AQG.pdf?rlkey=o5nrfqcf897q4mjxhzgnkdrul&st=yye14x8y&dl=0';
     const rejillasUrl = 'https://www.dropbox.com/scl/fi/mosvs0ugcyndl1xmvjnxi/FOLLETO-REJILLAS-AQG-2026.pdf?rlkey=saexfsx2fa7jbkd9mw0ksmkic&st=i1osn9c6&dl=0';
 
@@ -76,22 +75,12 @@ const MaintenanceGuidesPage: React.FC = () => {
     
             <div className="flex flex-col gap-6">
                  <ResourceCard
-                    title="Datos Fiscales AQG"
-                    description="Descarga nuestra ficha de datos fiscales para que el cliente pueda darnos de alta como proveedor en su sistema."
-                    icon={<DocumentIcon />}
-                    actions={
-                        <Button onClick={() => window.open(datosFiscalesUrl, '_blank')}>
-                            Descargar Datos Fiscales
-                        </Button>
-                    }
-                />
-                 <ResourceCard
-                    title="Alta de Cliente y SEPA"
-                    description="Documentos necesarios para dar de alta un nuevo cliente."
+                    title="ALTA DE CLIENTE"
+                    description="ALTA DE CLIENTE, SEPA y DATOS FISCALES AQG (Gestión 2026)"
                     icon={<DownloadIcon />}
                     actions={
-                        <Button onClick={() => window.open(altaClienteUrl, '_blank')}>
-                            Descargar Documento
+                        <Button onClick={() => window.open(altaCliente2026Url, '_blank')}>
+                            Descargar Documentación
                         </Button>
                     }
                 />
