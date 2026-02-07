@@ -46,7 +46,7 @@ const BookIcon = () => (
 
 const MaintenanceGuidesPage: React.FC = () => {
     
-    const altaCliente2026Url = 'https://www.dropbox.com/scl/fi/98z1hj2uz1ddru33vlv9t/ALTA-DE-CLIENTE-AQG.pdf?rlkey=flrl3ru3ulvsgn28s90orr52j&st=2pyzpmg2&dl=0';
+    const altaCliente2026Url = 'https://www.dropbox.com/scl/fi/71qr8t0ah6qon0v1qua03/ALTA-DE-CLIENTE-AQG.pdf?rlkey=r2xxcczoxaefonn4u0g2p2ste&st=s5cyfgdb&dl=0';
     const calendarioUrl = 'https://www.dropbox.com/scl/fi/oa1mn5y3amr5b0pf2s9hq/Calendario-laboral-AQG-2025.xlsx?rlkey=xbu1ly58qj4ujuz7wz4vochrw&st=6034lwdn&dl=0';
     const dossierMaterialesUrl = 'https://www.dropbox.com/scl/fi/z85ns38klzj1attd9f9r0/DOSSIER-1.0-FORMACIONES-AQG-PROPIEDADES-DE-MATERIALES-EMPLEADOS.pdf?rlkey=phz21t0vb3qg95or9yznkgw3h&st=d6s0c6un&dl=0';
     const showerTrayGuideUrl = 'https://www.dropbox.com/scl/fi/hem0jemc8hwwmp8jpv5rt/Guia-de-instalaci-n-platos-de-ducha-ES-EN.pdf?rlkey=q8qvp59tkxv35r0eytpvakq44&st=elqn0fju&dl=0';
